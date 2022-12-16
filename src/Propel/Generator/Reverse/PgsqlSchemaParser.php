@@ -13,10 +13,12 @@ use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\ForeignKey;
+use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
+use Propel\Generator\Platform\PlatformInterface;
 use stdClass;
 
 /**
@@ -258,7 +260,8 @@ class PgsqlSchemaParser extends AbstractSchemaParser
             is_nullable,
             numeric_precision,
             numeric_scale,
-            character_maximum_length
+            character_maximum_length,
+            identity_generation
         FROM information_schema.columns
         WHERE
             table_schema IN ($searchPath) AND table_name = ?
@@ -276,28 +279,15 @@ class PgsqlSchemaParser extends AbstractSchemaParser
 
             $name = $row['column_name'];
             $type = $row['data_type'];
-            $default = $row['column_default'];
+            $default = trim($row['column_default']) ?: null;
             $isNullable = ($row['is_nullable'] === true || strtoupper($row['is_nullable']) === 'YES');
+            $identityGeneration = trim($row['identity_generation']) ?: null;
 
             // Check to ensure that this column isn't an array data type
             if ($type === 'ARRAY') {
                 $this->warn(sprintf('Array datatypes are not currently supported [%s.%s]', $table->getName(), $name));
 
                 continue;
-            }
-
-            $autoincrement = null;
-
-            // if column has a default
-            if ((strlen(trim($default)) > 0)) {
-                if (!preg_match('/^nextval\(/', $default)) {
-                    $strDefault = preg_replace('/::[\W\D]*/', '', $default);
-                } else {
-                    $autoincrement = true;
-                    $default = null;
-                }
-            } else {
-                $default = null;
             }
 
             $propelType = $this->getMappedPropelType($type);
@@ -310,10 +300,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
                 $size = null;
             }
 
-            if (substr(strtoupper($type), 0, 6) === 'SERIAL') {
-                $autoincrement = true;
-                $default = null;
-            }
+            $autoIncrementType = $this->getAutoIncrementType($type, $default, $identityGeneration);
 
             $column = new Column($name);
             $column->setTable($table);
@@ -322,22 +309,52 @@ class PgsqlSchemaParser extends AbstractSchemaParser
             if ($scale) {
                 $column->getDomain()->replaceScale($scale);
             }
-
-            if ($default !== null) {
-                if ($this->isColumnDefaultExpression($default)) {
-                    $defaultType = ColumnDefaultValue::TYPE_EXPR;
-                } else {
-                    $defaultType = ColumnDefaultValue::TYPE_VALUE;
-                    $default = str_replace("'", '', $strDefault);
-                }
-                $column->getDomain()->setDefaultValue(new ColumnDefaultValue($default, $defaultType));
+            
+            
+            if ($default !== null && !$autoIncrementType) {
+                $columnDefaultValue = $this->getColumnDefaultValue($default);
+                $column->getDomain()->setDefaultValue($columnDefaultValue);
             }
 
-            $column->setAutoIncrement((bool)$autoincrement);
+            $column->setAutoIncrement($autoIncrementType !== null);
+            $autoIncrementType && $table->setIdMethod($autoIncrementType);
+
             $column->setNotNull(!$isNullable);
 
             $table->addColumn($column);
         }
+    }
+
+    protected function getColumnDefaultValue($default): ?ColumnDefaultValue
+    {
+        if ($default === null) {
+            return null;
+        }
+        if($default instanceof ColumnDefaultValue){
+            return $default;
+        }
+        if ($this->isColumnDefaultExpression($default)) {
+            $defaultType = ColumnDefaultValue::TYPE_EXPR;
+        } else {
+            $defaultType = ColumnDefaultValue::TYPE_VALUE;
+            $strDefault = preg_replace('/::[\W\D]*/', '', $default);
+            $default = str_replace("'", '', $strDefault);
+        }
+        return new ColumnDefaultValue($default, $defaultType);
+    }
+
+    protected function getAutoIncrementType(string $type, ?string $default, ?string $identityGeneration): ?string
+    {
+        if ($default && preg_match('/^nextval\(/', $default)) {
+            return IdMethod::SEQUENCE;
+        }
+        if (substr(strtoupper($type), 0, 6) === 'SERIAL') {// serial type
+            return IdMethod::SERIAL;
+        }
+        if (in_array($identityGeneration, ['ALWAYS', 'BY DEFAULT'], true)) {// identity type
+            return IdMethod::IDENTITY;
+        }
+        return null;
     }
 
     /**

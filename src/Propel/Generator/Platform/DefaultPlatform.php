@@ -201,7 +201,7 @@ class DefaultPlatform implements PlatformInterface
      */
     public function getNativeIdMethod(): string
     {
-        return PlatformInterface::IDENTITY;
+        return IdMethod::IDENTITY;
     }
 
     /**
@@ -250,6 +250,15 @@ class DefaultPlatform implements PlatformInterface
     public function getAutoIncrement(): string
     {
         return 'IDENTITY';
+    }
+
+    /**
+     * Returns the RDBMS-specific SQL fragment for autoincrement.
+     *
+     * @return string
+     */
+    public function getAutoIncrementClause(string $idMethod): ?string{
+        return ($idMethod === IdMethod::NATIVE) ? $this->getAutoIncrement() : null;
     }
 
     /**
@@ -399,26 +408,25 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      */
     public function getColumnDDL(Column $col): string
     {
-        $domain = $col->getDomain();
-
-        $ddl = [$this->quoteIdentifier($col->getName())];
-        $sqlType = $domain->getSqlType();
-        if ($this->hasSize($sqlType) && $col->isDefaultSqlType($this)) {
-            $ddl[] = $sqlType . $col->getSizeDefinition();
-        } else {
-            $ddl[] = $sqlType;
-        }
-        if ($default = $this->getColumnDefaultValueDDL($col)) {
-            $ddl[] = $default;
-        }
-        if ($notNull = $this->getNullString($col->isNotNull())) {
-            $ddl[] = $notNull;
-        }
-        if ($autoIncrement = $col->getAutoIncrementString()) {
-            $ddl[] = $autoIncrement;
-        }
+        $ddl = array_filter([
+            $this->quoteIdentifier($col->getName()),
+            $this->getColumnTypeDeclaration($col),
+            $this->getColumnDefaultValueDDL($col),
+            $this->getNullString($col->isNotNull()),
+            $col->getAutoIncrementString()
+        ]);
 
         return implode(' ', $ddl);
+    }
+
+    protected function getColumnTypeDeclaration(Column $column): string
+    {
+        $sqlType = $column->getDomain()->getSqlType();
+        if ($this->hasSize($sqlType) && $column->isDefaultSqlType($this)) {
+            return $sqlType . $column->getSizeDefinition();
+        }
+
+        return $sqlType;
     }
 
     /**
@@ -430,40 +438,47 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      */
     public function getColumnDefaultValueDDL(Column $col): string
     {
-        $default = '';
-        $defaultValue = $col->getDefaultValue();
-        if ($defaultValue !== null) {
-            $default .= 'DEFAULT ';
-            if ($defaultValue->isExpression()) {
-                $default .= $defaultValue->getValue();
-            } else {
-                if ($col->isTextType()) {
-                    $default .= $this->quote($defaultValue->getValue());
-                } elseif (in_array($col->getType(), [PropelTypes::BOOLEAN, PropelTypes::BOOLEAN_EMU])) {
-                    $default .= $this->getBooleanString($defaultValue->getValue());
-                } elseif ($col->getType() == PropelTypes::ENUM) {
-                    $default .= array_search($defaultValue->getValue(), $col->getValueSet());
-                } elseif ($col->isSetType()) {
-                    $val = trim($defaultValue->getValue());
-                    $values = [];
-                    foreach (explode(',', $val) as $v) {
-                        $values[] = trim($v);
-                    }
-                    $default .= SetColumnConverter::convertToInt($values, $col->getValueSet());
-                } elseif ($col->isPhpArrayType()) {
-                    $value = $this->getPhpArrayString($defaultValue->getValue());
-                    if ($value === null) {
-                        $default = '';
-                    } else {
-                        $default .= $value;
-                    }
-                } else {
-                    $default .= $defaultValue->getValue();
-                }
-            }
+        $defaultValueExpression = $this->getDefaultValueExpression($col);
+
+        return ($defaultValueExpression === null) ? '' : 'DEFAULT ' . $defaultValueExpression;
+    }
+
+    protected function getDefaultValueExpression(Column $col): ?string
+    {
+        $columnDefaultValue = $col->getDefaultValue();
+        if ($columnDefaultValue === null) {
+            return null;
+        }
+        $defaultValue = $columnDefaultValue->getValue();
+
+        if ($columnDefaultValue->isExpression()) {
+            return $defaultValue;
+        }
+        if ($col->isTextType()) {
+            return $this->quote($defaultValue);
+        }
+        
+        if (in_array($col->getType(), [PropelTypes::BOOLEAN, PropelTypes::BOOLEAN_EMU])) {
+            return $this->getBooleanString($defaultValue);
+        }
+        
+        if ($col->getType() == PropelTypes::ENUM) {
+            return array_search($defaultValue, $col->getValueSet());
         }
 
-        return $default;
+        if ($col->isSetType()) {
+            $valuesCsv = trim($defaultValue);
+            $valuesList = explode(',', $valuesCsv);
+            $values = array_map('trim', $valuesList);
+
+            return SetColumnConverter::convertToInt($values, $col->getValueSet());
+        }
+
+        if ($col->isPhpArrayType()) {
+            return $this->getPhpArrayString($defaultValue);
+        }
+
+        return $defaultValue;
     }
 
     /**
@@ -515,7 +530,8 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     public function getPrimaryKeyDDL(Table $table): string
     {
         if ($table->hasPrimaryKey()) {
-            return 'PRIMARY KEY (' . $this->getColumnListDDL($table->getPrimaryKey()) . ')';
+            $pkColumnNames =  $this->getColumnListDDL($table->getPrimaryKey());
+            return 'PRIMARY KEY (' . $pkColumnNames . ')';
         }
 
         return '';
@@ -534,9 +550,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
             return '';
         }
 
-        $pattern = "
-ALTER TABLE %s DROP CONSTRAINT %s;
-";
+        $pattern = "\nALTER TABLE %s DROP CONSTRAINT %s;\n";
 
         return sprintf(
             $pattern,
@@ -558,9 +572,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
             return '';
         }
 
-        $pattern = "
-ALTER TABLE %s ADD %s;
-";
+        $pattern = "\nALTER TABLE %s ADD %s;\n";
 
         return sprintf(
             $pattern,
@@ -595,9 +607,7 @@ ALTER TABLE %s ADD %s;
      */
     public function getAddIndexDDL(Index $index): string
     {
-        $pattern = "
-CREATE %sINDEX %s ON %s (%s);
-";
+        $pattern = "\nCREATE %sINDEX %s ON %s (%s);\n";
 
         return sprintf(
             $pattern,
@@ -617,9 +627,7 @@ CREATE %sINDEX %s ON %s (%s);
      */
     public function getDropIndexDDL(Index $index): string
     {
-        $pattern = "
-DROP INDEX %s;
-";
+        $pattern = "\nDROP INDEX %s;\n";
 
         return sprintf(
             $pattern,
@@ -685,9 +693,7 @@ DROP INDEX %s;
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
         }
-        $pattern = "
-ALTER TABLE %s ADD %s;
-";
+        $pattern = "\nALTER TABLE %s ADD %s;\n";
 
         return sprintf(
             $pattern,
@@ -708,9 +714,7 @@ ALTER TABLE %s ADD %s;
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return null;
         }
-        $pattern = "
-ALTER TABLE %s DROP CONSTRAINT %s;
-";
+        $pattern = "\nALTER TABLE %s DROP CONSTRAINT %s;\n";
 
         return sprintf(
             $pattern,
@@ -743,12 +747,10 @@ ALTER TABLE %s DROP CONSTRAINT %s;
             $this->getColumnListDDL($fk->getForeignColumnObjects()),
         );
         if ($fk->hasOnUpdate()) {
-            $script .= "
-    ON UPDATE " . $fk->getOnUpdate();
+            $script .= "\nON UPDATE " . $fk->getOnUpdate();
         }
         if ($fk->hasOnDelete()) {
-            $script .= "
-    ON DELETE " . $fk->getOnDelete();
+            $script .= "\nON DELETE " . $fk->getOnDelete();
         }
 
         return $script;
@@ -761,8 +763,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      */
     public function getCommentLineDDL(string $comment): string
     {
-        $pattern = "-- %s
-";
+        $pattern = "-- %s\n";
 
         return sprintf($pattern, $comment);
     }
@@ -1079,9 +1080,7 @@ ALTER TABLE %s RENAME COLUMN %s TO %s;
     public function getModifyColumnDDL(ColumnDiff $columnDiff): string
     {
         $toColumn = $columnDiff->getToColumn();
-        $pattern = "
-ALTER TABLE %s MODIFY %s;
-";
+        $pattern = "\nALTER TABLE %s MODIFY %s;\n";
 
         return sprintf(
             $pattern,

@@ -104,6 +104,8 @@ class MigrationTestCase extends TestCaseFixturesDatabase
             return false;
         }
         $sql = $this->database->getPlatform()->getModifyDatabaseDDL($diff);
+        echo "\nExecuting:\n";
+        var_export($sql );
 
         $this->con->beginTransaction();
         if (!$sql) {

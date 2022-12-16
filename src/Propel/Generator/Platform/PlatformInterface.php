@@ -23,6 +23,8 @@ use Propel\Runtime\Connection\ConnectionInterface;
 interface PlatformInterface
 {
     /**
+     * @deprecated use \Propel\Generator\Model\IdMethod::IDENTITY
+     * 
      * Constant for auto-increment id method.
      *
      * @var string
@@ -30,6 +32,8 @@ interface PlatformInterface
     public const IDENTITY = 'identity';
 
     /**
+     * @deprecated use \Propel\Generator\Model\IdMethod::SEQUENCE
+     * 
      * Constant for sequence id method.
      *
      * @var string
@@ -37,6 +41,8 @@ interface PlatformInterface
     public const SEQUENCE = 'sequence';
 
     /**
+     * @deprecated use \Propel\Generator\Model\IdMethod::SERIAL
+     * 
      * Constant for serial id method (postgresql).
      *
      * @var string
@@ -115,6 +121,13 @@ interface PlatformInterface
      * @return string
      */
     public function getAutoIncrement(): string;
+
+    /**
+     * Returns the RDBMS-specific SQL fragment for autoincrement.
+     *
+     * @return string|null
+     */
+    public function getAutoIncrementClause(string $idType): ?string;
 
     /**
      * Returns the DDL SQL for a Column object.

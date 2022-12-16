@@ -32,7 +32,7 @@ use Propel\Runtime\Util\UuidConverter;
  * @author Byron Foster <byron_foster@yahoo.com> (Torque)
  * @author Hugo Hamon <webmaster@apprendre-php.com> (Propel)
  */
-class Table extends ScopedMappingModel implements IdMethod
+class Table extends ScopedMappingModel
 {
     use BehaviorableTrait;
 
@@ -79,6 +79,11 @@ class Table extends ScopedMappingModel implements IdMethod
 
     private ?string $phpName = null;
 
+    /**
+     * @see \Propel\Generator\Model\IdMethod
+     *
+     * @var string
+     */
     private string $idMethod;
 
     private bool $allowPkInsert = false;
@@ -211,7 +216,8 @@ class Table extends ScopedMappingModel implements IdMethod
             $this->commonName = $this->database->getTablePrefix() . $this->commonName;
         }
 
-        $this->idMethod = $this->getAttribute('idMethod', $this->database->getDefaultIdMethod());
+        $idMethod = $this->getAttribute('idMethod', $this->database->getDefaultIdMethod());
+        $this->setIdMethod($idMethod);
         $this->allowPkInsert = $this->booleanValue($this->getAttribute('allowPkInsert'));
 
         $this->skipSql = $this->booleanValue($this->getAttribute('skipSql'));
@@ -1377,7 +1383,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function setIdMethod(string $idMethod): void
     {
-        $this->idMethod = $idMethod;
+        $this->idMethod = IdMethod::normalizeIdMethodName($idMethod, $this->getPlatform());
     }
 
     /**

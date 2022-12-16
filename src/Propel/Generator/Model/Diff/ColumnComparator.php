@@ -30,7 +30,9 @@ class ColumnComparator
         if ($changedProperties = self::compareColumns($fromColumn, $toColumn)) {
             if ($fromColumn->hasPlatform() || $toColumn->hasPlatform()) {
                 $platform = $fromColumn->hasPlatform() ? $fromColumn->getPlatform() : $toColumn->getPlatform();
-                if ($platform->getColumnDDL($fromColumn) == $platform->getColumnDDl($toColumn)) {
+                $fromDDL = $platform->getColumnDDL($fromColumn);
+                $toDDL = $platform->getColumnDDl($toColumn);
+                if (empty($changedProperties['idMethod']) && $platform->getColumnDDL($fromColumn) === $platform->getColumnDDl($toColumn)) {
                     return false;
                 }
             }
@@ -101,6 +103,12 @@ class ColumnComparator
 
         if ($fromColumn->isAutoIncrement() !== $toColumn->isAutoIncrement()) {
             $changedProperties['autoIncrement'] = [$fromColumn->isAutoIncrement(), $toColumn->isAutoIncrement()];
+        }
+
+        $fromIdMethod = $fromColumn->getTable()->getIdMethod();
+        $toIdMethod = $toColumn->getTable()->getIdMethod();
+        if ( $toColumn->isAutoIncrement() && $fromIdMethod !== $toIdMethod) {
+            $changedProperties['idMethod'] = [$fromIdMethod, $toIdMethod];
         }
 
         return $changedProperties;

@@ -1590,19 +1590,18 @@ class Column extends MappingModel
      */
     public function getAutoIncrementString(): string
     {
-        if ($this->isAutoIncrement() && $this->parentTable->getIdMethod() === IdMethod::NATIVE) {
-            return $this->getPlatform()->getAutoIncrement();
+        if( !$this->isAutoIncrement() ){
+            return false;
+        }
+        $idMethod = $this->parentTable->getIdMethod();
+        $autoIncrementClause = $this->getPlatform()->getAutoIncrementClause($idMethod);
+
+        if ($autoIncrementClause !== null) {
+            return $autoIncrementClause;
         }
 
-        if ($this->isAutoIncrement()) {
-            throw new EngineException(sprintf(
-                'You have specified autoIncrement for column "%s", but you have not specified idMethod="native" for table "%s".',
-                $this->name,
-                $this->parentTable->getName(),
-            ));
-        }
-
-        return '';
+        $columnName = $this->getFullyQualifiedName();
+        throw new EngineException("Column `$columnName` auto increment id method `$idMethod` is not compatible with current platform.");
     }
 
     /**
