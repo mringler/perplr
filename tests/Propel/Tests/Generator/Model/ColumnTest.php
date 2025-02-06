@@ -621,7 +621,7 @@ class ColumnTest extends ModelTestCase
             [ColumnType::SMALLINT, 'int', true],
             [ColumnType::TINYINT, 'int', true],
             [ColumnType::INTEGER, 'int', true],
-            [ColumnType::BIGINT, 'string', false],
+            [ColumnType::BIGINT, 'int', false],
             [ColumnType::FLOAT, 'float', true],
             [ColumnType::DOUBLE, 'float', true],
             [ColumnType::NUMERIC, 'string', false],
@@ -649,7 +649,7 @@ class ColumnTest extends ModelTestCase
     public static function provideMappingUuidTypes()
     {
         return [
-            // column type, php type, 
+            // column type, php type,
             [ColumnType::UUID, 'string'],
             [ColumnType::UUID_BINARY, 'string'],
         ];
