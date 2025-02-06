@@ -114,6 +114,7 @@ enum ColumnType
             self::ENUM_BINARY,
             self::SET_BINARY
             => 'int',
+            self::BIGINT => PHP_INT_SIZE < 8 ? 'string' : 'int',
             self::REAL,
             self::FLOAT,
             self::DOUBLE
