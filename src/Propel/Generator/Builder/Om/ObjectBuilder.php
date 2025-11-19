@@ -9,6 +9,7 @@
 namespace Propel\Generator\Builder\Om;
 
 use Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes\ColumnCodeProducerFactory;
+use Propel\Generator\Builder\Om\ObjectBuilder\InternalAccessorCodeProducer;
 use Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\AbstractIncomingRelationCode;
 use Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\AbstractManyToManyCodeProducer;
 use Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\FkRelationCodeProducer;
@@ -36,6 +37,11 @@ use Propel\Runtime\Exception\PropelException;
  */
 class ObjectBuilder extends AbstractObjectBuilder
 {
+    /**
+     * @var InternalAccessorCodeProducer
+     */
+    protected InternalAccessorCodeProducer $internalAccessorCodeProducer;
+
     /**
      * @var array<\Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes\ColumnCodeProducer>
      */
@@ -75,6 +81,7 @@ class ObjectBuilder extends AbstractObjectBuilder
     {
         parent::init($table, $generatorConfig);
 
+        $this->internalAccessorCodeProducer = new InternalAccessorCodeProducer($this->getTable(), $this);
         $this->columnCodeProducers = [];
         $this->fkRelationCodeProducers = [];
         $this->incomingRelationCodeProducers = [];
@@ -400,6 +407,8 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
         foreach ($this->columnCodeProducers as $producer) {
             $producer->addMutator($script);
         }
+
+        $this->internalAccessorCodeProducer->addInternalAccessors($script);
 
         if (array_any($table->getColumns(), fn (Column $column) => $column->isLobType())) {
             $this->addWriteResource($script);
@@ -1239,7 +1248,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
         \$criteria = new Criteria(" . $this->getTableMapClass() . "::DATABASE_NAME);
 ";
         foreach ($this->getTable()->getColumns() as $col) {
-            $accessValueStatement = $this->getAccessValueStatement($col);
+            $accessValueStatement = $this->internalAccessorCodeProducer->getAccessValueStatement($col);
             $columnConstant = $this->getColumnConstant($col);
             $columnName = $col->getName();
             $script .= "
@@ -1798,17 +1807,13 @@ $indent};";
             \$con = Propel::getServiceContainer()->getReadConnection({$tableMapClass}::DATABASE_NAME);
         }
 
-        // We don't need to alter the object instance pool; we're just modifying this instance
-        // already in the pool.
-
         \$dataFetcher = {$queryClassName}::create(null, \$this->buildPkeyCriteria())->fetch(\$con);
         \$row = \$dataFetcher->fetch();
         \$dataFetcher->close();
         if (!\$row || \$row === true) {
             throw new PropelException('Cannot find matching row in the database to reload object values.');
         }
-        \$this->hydrate(\$row, 0, true, \$dataFetcher->getIndexType()); // rehydrate
-";
+        \$this->hydrate(\$row, 0, true, \$dataFetcher->getIndexType()); // rehydrate";
 
         // support for lazy load columns
         foreach ($table->getColumns() as $col) {
@@ -1816,30 +1821,28 @@ $indent};";
                 continue;
             }
             $clo = $col->getLowercasedName();
-            $script .= "
+            $script .= "\n
         // Reset the $clo lazy-load column
         \$this->{$clo} = null;
-        \$this->{$clo}_isLoaded = false;
-";
+        \$this->{$clo}_isLoaded = false;";
         }
 
-        $script .= "
-        if (\$deep) {";
-
+        $onReloadCode = '';
         foreach ($this->fkRelationCodeProducers as $producer) {
-            $producer->addOnReloadCode($script);
+            $producer->addOnReloadCode($onReloadCode);
         }
-
         foreach ($this->incomingRelationCodeProducers as $producer) {
-            $producer->addOnReloadCode($script);
+            $producer->addOnReloadCode($onReloadCode);
         }
-
         foreach ($this->crossRelationCodeProducers as $producer) {
-            $producer->addOnReloadCode($script);
+            $producer->addOnReloadCode($onReloadCode);
         }
-
+        if ($onReloadCode) {
+            $script .= "\n
+        if (\$deep) {{$onReloadCode}
+        }";
+        }
         $script .= "
-        }
     }\n";
     }
 
@@ -2243,12 +2246,6 @@ $indent};";
         }
 
         if (count($table->getForeignKeys())) {
-            $script .= "
-        // We call the save method on the following object(s) if they
-        // were passed to this object by their corresponding set
-        // method. This object relates to these object(s) by a
-        // foreign key reference.\n";
-
             foreach ($this->fkRelationCodeProducers as $producer) {
                 $producer->addDeleteScheduledItemsCode($script);
             }
@@ -2256,7 +2253,6 @@ $indent};";
 
         $script .= "
         if (\$this->isNew() || \$this->isModified()) {
-            // persist changes
             if (\$this->isNew()) {
                 \$this->doInsert(\$con);
                 \$affectedRows += 1;";
@@ -2460,8 +2456,7 @@ $indent};";
         }
         $query = 'INSERT INTO ' . $this->quoteIdentifier($table->getName()) . ' (%s) VALUES (%s)';
         $script = "
-        \$modifiedColumns = [];
-        \$index = 0;";
+        \$modifiedColumns = [];";
 
         foreach ($table->getPrimaryKey() as $column) {
             if (!$column->isAutoIncrement()) {
@@ -2502,28 +2497,29 @@ $indent};";
             } catch (Exception \$e) {
                 throw new PropelException('Unable to get sequence id.', 0, \$e);
             }
-        }
-";
-        }
-
-        $script .= "
-
-         // check the columns in natural order for more readable SQL queries";
-        foreach ($table->getColumns() as $column) {
-            $constantName = $this->getColumnConstant($column);
-            $identifier = var_export($this->quoteIdentifier($column->getName()), true);
-            $script .= "
-        if (\$this->isColumnModified($constantName)) {
-            \$modifiedColumns[':p' . \$index++] = $identifier;
         }";
         }
 
+        $tableMapClass = $this->getTableMapClass();
+
         $script .= "
+
+        \$columnIdentifiers = {$tableMapClass}::getFieldNames(TableMap::TYPE_COLNAME);
+        \$fieldNames = {$tableMapClass}::getFieldNames(TableMap::TYPE_FIELDNAME);
+        \$placeholdersToFieldName = [];
+        \$index = 0;
+        foreach (\$columnIdentifiers as \$columnIndex => \$columnIdentifier) {
+            if (!\$this->isColumnModified(\$columnIdentifier)) {
+                continue;
+            }
+            \$placeholder = ':p' . \$index++;
+            \$placeholdersToFieldName[\$placeholder] = \$fieldNames[\$columnIndex];
+        }
 
         \$sql = sprintf(
             '$query',
-            implode(', ', \$modifiedColumns),
-            implode(', ', array_keys(\$modifiedColumns)),
+            implode(', ', \$placeholdersToFieldName),
+            implode(', ', array_keys(\$placeholdersToFieldName)),
         );
 
         try {
@@ -2531,13 +2527,19 @@ $indent};";
             if (!\$stmt) {
                 throw new RuntimeException(\"Failed to build PreparedStatement for SQL '\$sql'\");
             }
+            foreach (\$placeholdersToFieldName as \$placeholder => \$fieldName) {
+                \$value = \$this->getFieldValueByFieldName(\$fieldName);
+                \$pdoType = \$this->getPdoTypeByFieldName(\$fieldName);
+                \$stmt->bindValue(\$placeholder, \$value, \$pdoType);
+            }
             foreach (\$modifiedColumns as \$identifier => \$columnName) {
-                switch (\$columnName) {";
+                
+            }";
 
         $tab = '                        ';
         foreach ($table->getColumns() as $column) {
             $columnNameCase = var_export($this->quoteIdentifier($column->getName()), true);
-            $accessValueStatement = $this->getAccessValueStatement($column);
+            $accessValueStatement = $this->internalAccessorCodeProducer->getAccessValueStatement($column);
             $bindValueStatement = $platform->getColumnBindingPHP($column, '$identifier', $accessValueStatement, $tab);
             $script .= "
                     case $columnNameCase:$bindValueStatement
@@ -2585,30 +2587,7 @@ $indent};";
         return $script;
     }
 
-    /**
-     * Get the statement how a column value is accessed in the script.
-     *
-     * Note that this is not necessarily just the getter. If the value is
-     * stored on the model in an encoded format, the statement returned by
-     * this method includes the statement to decode the value.
-     *
-     * @param \Propel\Generator\Model\Column $column
-     *
-     * @return string
-     */
-    protected function getAccessValueStatement(Column $column): string
-    {
-        $columnName = $column->getLowercasedName();
-
-        if ($column->isUuidBinaryType()) {
-            $uuidSwapFlag = $this->getUuidSwapFlagLiteral();
-
-            return "UuidConverter::uuidToBin(\$this->$columnName, $uuidSwapFlag)";
-        }
-
-        return "\$this->$columnName";
-    }
-
+    
     /**
      * get the doUpdate() method code
      *
