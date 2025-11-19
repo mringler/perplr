@@ -1140,24 +1140,23 @@ class QueryBuilder extends AbstractOMBuilder
         } elseif ($col->getType() == PropelTypes::ENUM) {
             $script .= "
         \$valueSet = " . $this->getTableMapClassName() . '::getValueSet(' . $this->getColumnConstant($col) . ");
-        if (is_scalar(\$$variableName)) {
-            if (!in_array(\$$variableName, \$valueSet)) {
-                throw new PropelException(sprintf('Value \"%s\" is not accepted in this enumerated column', \$$variableName));
+        \$isArrayInput = is_array(\$$variableName);
+        if (!\$isArrayInput) {
+            \$$variableName = [\$$variableName];
+        }
+        \$enumItemIndexes = [];
+        foreach (\$$variableName as \$value) {
+            \$resolvedEnumItemIndex = array_search(\$value, \$valueSet);
+            if (is_bool(\$resolvedEnumItemIndex)) {
+                throw new PropelException(sprintf('Value \"%s\" is not accepted in this enumerated column', \$value));
             }
-            \$$variableName = array_search(\$$variableName, \$valueSet);
-        } elseif (is_array(\$$variableName)) {
-            \$convertedValues = [];
-            foreach (\$$variableName as \$value) {
-                if (!in_array(\$value, \$valueSet)) {
-                    throw new PropelException(sprintf('Value \"%s\" is not accepted in this enumerated column', \$value));
-                }
-                \$convertedValues[] = array_search(\$value, \$valueSet);
-            }
-            \$$variableName = \$convertedValues;
-            if (\$comparison === null) {
-                \$comparison = Criteria::IN;
-            }
-        }";
+            \$enumItemIndexes[] = \$resolvedEnumItemIndex;
+        }
+        \$$variableName = \$isArrayInput ? \$enumItemIndexes : \$enumItemIndexes[0];
+        if (!\$comparison && \$isArrayInput) {
+            \$comparison = Criteria::IN;
+        }
+        ";
         } elseif ($col->isTextType()) {
             $script .= "
         if (\$comparison === null && is_array(\$$variableName)) {

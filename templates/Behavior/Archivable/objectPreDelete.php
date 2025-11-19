@@ -1,5 +1,5 @@
 <?php if ($isAddHooks) : ?>
-if ($ret) {
+if ($doContinue) {
     if ($this->archiveOnDelete) {
         // do nothing yet. The object will be archived later when calling <?php echo $queryClassName ?>::delete().
     } else {

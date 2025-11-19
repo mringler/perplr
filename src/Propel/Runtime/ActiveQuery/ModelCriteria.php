@@ -1078,15 +1078,15 @@ class ModelCriteria extends BaseModelCriteria
         return $this;
     }
 
-   /**
-    * @deprecated use aptly named Criteria::addSubquery().
-    *
-    * @param \Propel\Runtime\ActiveQuery\Criteria $subQueryCriteria Criteria to build the subquery from
-    * @param string|null $alias alias for the subQuery
-    * @param bool $addAliasAndSelectColumns Set to false if you want to manually add the aliased select columns
-    *
-    * @return static
-    */
+    /**
+     * @deprecated use aptly named Criteria::addSubquery().
+     *
+     * @param \Propel\Runtime\ActiveQuery\Criteria $subQueryCriteria Criteria to build the subquery from
+     * @param string|null $alias alias for the subQuery
+     * @param bool $addAliasAndSelectColumns Set to false if you want to manually add the aliased select columns
+     *
+     * @return static
+     */
     public function addSelectQuery(Criteria $subQueryCriteria, ?string $alias = null, bool $addAliasAndSelectColumns = true)
     {
         return $this->addSubquery($subQueryCriteria, $alias, $addAliasAndSelectColumns);

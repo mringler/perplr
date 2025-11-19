@@ -10,6 +10,7 @@ namespace Propel\Generator\Builder\Om;
 
 use Propel\Generator\Builder\Om\TableMapBuilder\TableMapBuilderValidation;
 use Propel\Generator\Builder\Util\EntityObjectClassNames;
+use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\PropelTypes;
@@ -1397,6 +1398,7 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
      */
     protected function addRemoveSelectColumns(string &$script): void
     {
+        $eagerLoadColumns = array_filter($this->getTable()->getColumns(), fn (Column $col) => $col->isLazyLoad());
         $script .= "
     /**
      * Remove all the columns needed to create a new object.
@@ -1415,28 +1417,20 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
     public static function removeSelectColumns(Criteria \$criteria, ?string \$alias = null): void
     {
         if (\$alias === null) {";
-        foreach ($this->getTable()->getColumns() as $col) {
-            if (!$col->isLazyLoad()) {
-                $script .= "
+        foreach ($eagerLoadColumns as $col) {
+            $script .= "
             \$criteria->removeSelectColumn({$col->getFQConstantName()});";
-            } // if !col->isLazyLoad
-        } // foreach
+        }
         $script .= "
         } else {";
-        foreach ($this->getTable()->getColumns() as $col) {
-            if (!$col->isLazyLoad()) {
-                $script .= "
+        foreach ($eagerLoadColumns as $col) {
+            $script .= "
             \$criteria->removeSelectColumn(\$alias . '." . $col->getName() . "');";
-            } // if !col->isLazyLoad
-        } // foreach
+        }
         $script .= "
-        }";
-        $script .= "
+        }
+    }\n";
     }
-";
-    }
-
- // addRemoveSelectColumns()
 
     /**
      * Adds the getTableMap() method which is a convenience method for apps to get DB metadata.
@@ -1563,20 +1557,16 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
                 \$values = [\$values];
             }
             foreach (\$values as \$value) {";
-                $i = 0;
-                foreach ($table->getPrimaryKey() as $col) {
-                    if ($i === 0) {
-                        $script .= "
-                \$criterion = \$criteria->getNewCriterion(" . $this->getColumnConstant($col) . ", \$value[$i]);";
-                    } else {
-                        $script .= "
-                \$criterion->addAnd(\$criteria->getNewCriterion(" . $this->getColumnConstant($col) . ", \$value[$i]));";
-                    }
-                    $i++;
+                foreach ($table->getPrimaryKey() as $i => $col) {
+                    $columnConstant = $this->getColumnConstant($col);
+                    $buildFilterStatement = "\$criteria->getNewCriterion($columnConstant, \$value[$i])";
+                    $script .= ($i === 0) ? "
+                \$filter = $buildFilterStatement;"
+                    : "
+                \$filter->addAnd($buildFilterStatement);";
                 }
                 $script .= "
-                \$criteria->addOr(\$criterion);";
-                $script .= "
+                \$criteria->addOr(\$filter);
             }";
             } /* if count(table->getPrimaryKeys()) */
         }
@@ -1640,37 +1630,31 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
 ";
 
         foreach ($table->getColumns() as $col) {
-            if (
-                $col->isPrimaryKey()
+            $columnConstant = $this->getColumnConstant($col);
+            $isAutoIncrementPk = $col->isPrimaryKey()
                 && $col->isAutoIncrement()
-                && $table->getIdMethod() !== 'none'
-                && !$table->isAllowPkInsert()
-            ) {
-                $columnConstant = $this->getColumnConstant($col);
+                && $table->getIdMethod() !== 'none';
+
+            if ($isAutoIncrementPk && !$table->isAllowPkInsert()) {
                 $script .= "
         if (\$criteria->hasUpdateValue($columnConstant)) {
             throw new PropelException('Cannot insert a value for auto-increment primary key ($columnConstant)');
-        }
-";
+        }\n";
                 if (!$this->getPlatform()->supportsInsertNullPk()) {
                     $script .= "
         // remove pkey col since this table uses auto-increment and passing a null value for it is not valid
-        \$criteria->remove(" . $this->getColumnConstant($col) . ");
-";
+        \$criteria->remove($columnConstant);\n";
                 }
             } elseif (
-                $col->isPrimaryKey()
-                && $col->isAutoIncrement()
-                && $table->getIdMethod() !== 'none'
+                $isAutoIncrementPk
                 && $table->isAllowPkInsert()
                 && !$this->getPlatform()->supportsInsertNullPk()
             ) {
                 $script .= "
         // remove pkey col if it is null since this table does not accept that
-        if (\$criteria->containsKey(" . $this->getColumnConstant($col) . ') && !$criteria->hasUpdateValue(' . $this->getColumnConstant($col) . ") ) {
-            \$criteria->remove(" . $this->getColumnConstant($col) . ");
-        }
-";
+        if (\$criteria->containsKey($columnConstant) && !\$criteria->hasUpdateValue($columnConstant) ) {
+            \$criteria->remove($columnConstant);
+        }\n";
             }
         }
 
@@ -1680,9 +1664,7 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
 
         // use transaction because \$criteria could contain info
         // for more than one table (I guess, conceivably)
-        return \$con->transaction(function () use (\$con, \$query) {
-            return \$query->doInsert(\$con);
-        });
+        return \$con->transaction(fn () => \$query->doInsert(\$con));
     }
 ";
     }

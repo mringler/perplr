@@ -727,8 +727,6 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
     protected function addApplyDefaultValuesBody(string &$script): void
     {
         $table = $this->getTable();
-        // FIXME - Apply support for PHP default expressions here
-        // see: http://propel.phpdb.org/trac/ticket/378
 
         foreach ($table->getColumns() as $column) {
             $def = $column->getDefaultValue();
@@ -736,7 +734,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
                 continue;
             }
 
-            $clo = $column->getLowercasedName();
+            $columnName = $column->getLowercasedName();
             $defaultValue = ColumnCodeProducerFactory::create($column, $this)->getDefaultValueString();
             if ($column->isTemporalType()) {
                 $dateTimeClass = $this->resolveColumnDateTimeClass($column);
@@ -746,7 +744,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
                 $defaultValue = "new $assumedClassName($defaultValue )";
             }
             $script .= "
-        \$this->{$clo} = $defaultValue;";
+        \$this->{$columnName} = $defaultValue;";
         }
     }
 
@@ -873,10 +871,8 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
     protected function addHasOnlyDefaultValuesClose(string &$script): void
     {
         $script .= "
-        return true;";
-        $script .= "
-    }
-";
+        return true;
+    }\n";
     }
 
     /**
@@ -909,13 +905,13 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
     /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
-     * An offset (0-based \"start column\") is specified so that objects can be hydrated
+     * An offset (0-based) is specified so that objects can be hydrated
      * with a subset of the columns in the resultset rows. This is needed, for example,
      * for results of JOIN queries where the resultset row includes columns from two or
      * more tables.
      *
      * @param array \$row The row returned by DataFetcher->fetch().
-     * @param int \$startcol 0-based offset column which indicates which resultset column to start with.
+     * @param int \$rowOffset Specifies position of first object value in row array.
      * @param bool \$rehydrate Whether this object is being re-hydrated from the database.
      * @param string \$indexType The index type of \$row. Mostly DataFetcher->getIndexType().
                                   One of the class type constants TableMap::TYPE_PHPNAME, TableMap::TYPE_CAMELNAME
@@ -939,7 +935,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
     protected function addHydrateOpen(string &$script): void
     {
         $script .= "
-    public function hydrate(array \$row, int \$startcol = 0, bool \$rehydrate = false, string \$indexType = TableMap::TYPE_NUM): int
+    public function hydrate(array \$row, int \$rowOffset = 0, bool \$rehydrate = false, string \$indexType = TableMap::TYPE_NUM): int
     {";
     }
 
@@ -957,82 +953,77 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
         $table = $this->getTable();
         $platform = $this->getPlatform();
 
-        $tableMapClassName = $this->getTableMapClassName();
+        $tableMap = $this->getTableMapClassName();
 
         $script .= "
-        try {
-            \$useNumericIndex = \$indexType === TableMap::TYPE_NUM;";
-
-        $rowOffset = 0;
-        foreach ($table->getColumns() as $col) {
-            if ($col->isLazyLoad()) {
+        if (\$indexType !== TableMap::TYPE_NUM) {
+            \$row = $tableMap::translateFieldNames(\$row, \$indexType, TableMap::TYPE_NUM);
+        }
+        try {";
+        $n = 0;
+        foreach ($table->getColumns() as $column) {
+            if ($column->isLazyLoad()) {
                 continue;
             }
-
-            $script .= "\n
-            \$rowIndex = \$useNumericIndex ? \$startcol + $rowOffset : $tableMapClassName::translateFieldName('{$col->getPhpName()}', TableMap::TYPE_PHPNAME, \$indexType);
-            \$columnValue = \$row[\$rowIndex];";
-            $clo = $col->getLowercasedName();
-            if ($col->getType() === PropelTypes::CLOB_EMU && $this->getPlatform() instanceof OraclePlatform) {
+                $script .= "
+            \$columnValue = \$row[$n + \$rowOffset];";
+            $columnName = $column->getLowercasedName();
+            if ($column->getType() === PropelTypes::CLOB_EMU && $this->getPlatform() instanceof OraclePlatform) {
                 // PDO_OCI returns a stream for CLOB objects, while other PDO adapters return a string...
                 $script .= "
-            \$this->$clo = stream_get_contents(\$columnValue);";
-            } elseif ($col->isLobType() && !$platform->hasStreamBlobImpl()) {
+            \$this->$columnName = stream_get_contents(\$columnValue);\n";
+            } elseif ($column->isLobType() && !$platform->hasStreamBlobImpl()) {
                 $script .= "
-            \$this->$clo = \$this->writeResource(\$columnValue);";
-            } elseif ($col->isTemporalType()) {
-                $dateTimeClass = $this->resolveColumnDateTimeClass($col);
-                $handleMysqlDate = false;
+            \$this->$columnName = \$this->writeResource(\$columnValue);\n";
+            } elseif ($column->isTemporalType()) {
                 if ($this->getPlatform() instanceof MysqlPlatform) {
-                    if (in_array($col->getType(), [PropelTypes::TIMESTAMP, PropelTypes::DATETIME], true)) {
-                        $handleMysqlDate = true;
-                        $mysqlInvalidDateString = '0000-00-00 00:00:00';
-                    } elseif ($col->getType() === PropelTypes::DATE) {
-                        $handleMysqlDate = true;
-                        $mysqlInvalidDateString = '0000-00-00';
-                    }
-                    // 00:00:00 is a valid time, so no need to check for that.
-                }
-                if ($handleMysqlDate) {
-                    $script .= "
+                    $isDateTimeType = in_array($column->getType(), [PropelTypes::TIMESTAMP, PropelTypes::DATETIME], true);
+                    $isDate = $column->getType() === PropelTypes::DATE;
+
+                    if ($isDateTimeType || $isDate) {
+                        $mysqlInvalidDateString = $isDateTimeType ? '0000-00-00 00:00:00' : '0000-00-00';
+                        $script .= "
             if (\$columnValue === '$mysqlInvalidDateString') {
                 \$columnValue = null;
-            }";
+            }\n";
+                    }
                 }
+                $dateTimeClass = $this->resolveColumnDateTimeClass($column);
                 $script .= "
-            \$this->$clo = (\$columnValue !== null) ? PropelDateTime::newInstance(\$columnValue, null, '$dateTimeClass') : null;";
-            } elseif ($col->isUuidBinaryType()) {
+            \$this->$columnName = (\$columnValue !== null) ? PropelDateTime::newInstance(\$columnValue, null, '$dateTimeClass') : null;";
+            } elseif ($column->isUuidBinaryType()) {
                 $uuidSwapFlag = $this->getUuidSwapFlagLiteral();
                 $script .= "
             if (is_resource(\$columnValue)) {
                 \$columnValue = stream_get_contents(\$columnValue);
             }
-            \$this->$clo = UuidConverter::binToUuid(\$columnValue, $uuidSwapFlag);";
-            } elseif ($col->isPhpPrimitiveType()) {
+            \$this->$columnName = UuidConverter::binToUuid(\$columnValue, $uuidSwapFlag);\n";
+            } elseif ($column->isPhpPrimitiveType()) {
+                $phpType = $column->getPhpType();
                 $script .= "
-            \$this->$clo = \$columnValue !== null ? ({$col->getPhpType()})\$columnValue : null;";
-            } elseif ($col->getType() === PropelTypes::OBJECT) {
+            \$this->$columnName = \$columnValue === null ? null : ($phpType)\$columnValue;\n";
+            } elseif ($column->getType() === PropelTypes::OBJECT) {
                 $script .= "
-            \$this->$clo = \$columnValue;";
-            } elseif ($col->getType() === PropelTypes::PHP_ARRAY) {
-                $cloUnserialized = $clo . '_unserialized';
+            \$this->$columnName = \$columnValue;";
+            } elseif ($column->getType() === PropelTypes::PHP_ARRAY) {
+                $cloUnserialized = $columnName . '_unserialized';
                 $script .= "
-            \$this->$clo = \$columnValue;
-            \$this->$cloUnserialized = null;";
-            } elseif ($col->isSetType()) {
-                $cloConverted = $clo . '_converted';
+            \$this->$columnName = \$columnValue;
+            \$this->$cloUnserialized = null;\n";
+            } elseif ($column->isSetType()) {
+                $cloConverted = $columnName . '_converted';
                 $script .= "
-            \$this->$clo = \$columnValue;
-            \$this->$cloConverted = null;";
-            } elseif ($col->isPhpObjectType()) {
-                $assumedClassName = $this->declareClass($col->getPhpType());
+            \$this->$columnName = \$columnValue;
+            \$this->$cloConverted = null;\n";
+            } elseif ($column->isPhpObjectType()) {
+                $phpType = $column->getPhpType();
                 $script .= "
-            \$this->$clo = (\$columnValue === null) ? null : new $assumedClassName(\$columnValue);";
+            \$this->$columnName = (\$columnValue !== null) ? new  $phpType(\$columnValue) : null;\n";
             } else {
                 $script .= "
-            \$this->$clo = \$columnValue;";
+            \$this->$columnName = \$columnValue;\n";
             }
-            $rowOffset++;
+            $n++;
         }
 
         if ($this->getBuildProperty('generator.objectModel.addSaveMethod')) {
@@ -1050,11 +1041,10 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
 
         $this->applyBehaviorModifier('postHydrate', $script, '            ');
 
-        $ownClassName = $this->getStubObjectBuilder()->getClassName();
         $script .= "
-            return \$startcol + $rowOffset;
+            return \$rowOffset + $n;
         } catch (Exception \$e) {
-            throw new PropelException('Error populating $ownClassName object', 0, \$e);
+            throw new PropelException(sprintf('Error populating %s object', " . var_export($this->getStubObjectBuilder()->getClassName(), true) . "), 0, \$e);
         }";
     }
 
@@ -1470,9 +1460,8 @@ $indent};";
         $script .= "
     /**
      * Retrieves a field from the object by Position as specified in the xml schema.
-     * Zero-based.
      *
-     * @param int \$pos Position in XML schema
+     * @param int \$pos Zero-based position in XML schema
      *
      * @return mixed Value of field at \$pos
      */
@@ -1568,6 +1557,7 @@ $indent};";
     {
         $defaultKeyType = $this->getDefaultKeyType();
         $table = $this->getTable();
+        $tableMapClassName = $this->getTableMapClassName();
         $script .= "
     /**
      * Populates the object using an array.
@@ -1589,20 +1579,19 @@ $indent};";
      */
     public function fromArray(array \$arr, string \$keyType = TableMap::$defaultKeyType)
     {
-        \$keys = " . $this->getTableMapClassName() . "::getFieldNames(\$keyType);
-";
+        \$keys = {$tableMapClassName}::getFieldNames(\$keyType);\n";
+
         foreach ($table->getColumns() as $num => $col) {
             $cfc = $col->getPhpName();
             $script .= "
         if (array_key_exists(\$keys[$num], \$arr)) {
             \$this->set$cfc(\$arr[\$keys[$num]]);
         }";
-        } /* foreach */
+        }
         $script .= "
 
         return \$this;
-    }
-";
+    }\n";
     }
 
     /**
@@ -1641,8 +1630,7 @@ $indent};";
         \$this->fromArray(\$parser->toArray(\$data), \$keyType);
 
         return \$this;
-    }
-";
+    }\n";
     }
 
     /**
@@ -1728,18 +1716,19 @@ $indent};";
                 ->filterByPrimaryKey(\$this->getPrimaryKey());";
         if ($this->getBuildProperty('generator.objectModel.addHooks')) {
             $script .= "
-            \$ret = \$this->preDelete(\$con);";
+            \$doContinue = \$this->preDelete(\$con);";
             // apply behaviors
             $this->applyBehaviorModifier('preDelete', $script, '            ');
             $script .= "
-            if (\$ret) {
-                \$deleteQuery->delete(\$con);
-                \$this->postDelete(\$con);";
+            if (!\$doContinue) {
+                return;
+            }
+            \$deleteQuery->delete(\$con);
+            \$this->postDelete(\$con);";
             // apply behaviors
             $this->applyBehaviorModifier('postDelete', $script, '                ');
             $script .= "
-                \$this->setDeleted(true);
-            }";
+            \$this->setDeleted(true);";
         } else {
             // apply behaviors
             $this->applyBehaviorModifier('preDelete', $script, '            ');
@@ -1767,8 +1756,7 @@ $indent};";
     protected function addDeleteClose(string &$script): void
     {
         $script .= "
-    }
-";
+    }\n";
     }
 
     /**
@@ -1836,7 +1824,7 @@ $indent};";
         }
 
         $script .= "
-        if (\$deep) { // also de-associate any related objects?";
+        if (\$deep) {";
 
         foreach ($this->fkRelationCodeProducers as $producer) {
             $producer->addOnReloadCode($script);
@@ -1852,8 +1840,7 @@ $indent};";
 
         $script .= "
         }
-    }
-";
+    }\n";
     }
 
     /**
@@ -2092,9 +2079,9 @@ $indent};";
      */
     protected function addSetPrimaryKeySinglePK(string &$script): void
     {
-        $pkeys = $this->getTable()->getPrimaryKey();
-        $col = $pkeys[0];
+        $col = $this->getTable()->getPrimaryKey()[0];
         $clo = $col->getLowercasedName();
+        $columnPhpName = $col->getPhpName();
         $ctype = $col->getPhpType();
 
         $script .= "
@@ -2107,9 +2094,8 @@ $indent};";
      */
     public function setPrimaryKey(?$ctype \$key = null): void
     {
-        \$this->set" . $col->getPhpName() . "(\$key);
-    }
-";
+        \$this->set{$columnPhpName}(\$key);
+    }\n";
     }
 
     /**
@@ -2131,15 +2117,13 @@ $indent};";
      */
     public function setPrimaryKey(array \$keys): void
     {";
-        $i = 0;
-        foreach ($this->getTable()->getPrimaryKey() as $pk) {
+        foreach ($this->getTable()->getPrimaryKey() as $i => $pk) {
+            $phpName = $pk->getPhpName();
             $script .= "
-        \$this->set" . $pk->getPhpName() . "(\$keys[$i]);";
-            $i++;
+        \$this->set{$phpName}(\$keys[$i]);";
         }
         $script .= "
-    }
-";
+    }\n";
     }
 
     /**
@@ -2251,7 +2235,7 @@ $indent};";
             return 0;
         }
 
-        \$affectedRows = 0; // initialize var to track total num of affected rows
+        \$affectedRows = 0;
         \$this->alreadyInSave = true;\n";
         if ($reloadOnInsert || $reloadOnUpdate) {
             $script .= "
@@ -2789,37 +2773,38 @@ $indent};";
         if ($this->getBuildProperty('generator.objectModel.addHooks')) {
             // save with runtime hooks
             $script .= "
-            \$ret = \$this->preSave(\$con);
+            \$doContinue = \$this->preSave(\$con);
             \$isInsert = \$this->isNew();";
             $this->applyBehaviorModifier('preSave', $script, '            ');
             $script .= "
             if (\$isInsert) {
-                \$ret = \$ret && \$this->preInsert(\$con);";
+                \$doContinue = \$doContinue && \$this->preInsert(\$con);";
             $this->applyBehaviorModifier('preInsert', $script, '                ');
             $script .= "
             } else {
-                \$ret = \$ret && \$this->preUpdate(\$con);";
+                \$doContinue = \$doContinue && \$this->preUpdate(\$con);";
             $this->applyBehaviorModifier('preUpdate', $script, '                ');
             $script .= "
             }
-            if (\$ret) {
-                \$affectedRows = \$this->doSave(\$con" . ($reloadOnUpdate || $reloadOnInsert ? ', $skipReload' : '') . ");
-                if (\$isInsert) {
-                    \$this->postInsert(\$con);";
+
+            if (!\$doContinue) {
+                return 0;
+            }
+            
+            \$affectedRows = \$this->doSave(\$con" . ($reloadOnUpdate || $reloadOnInsert ? ', $skipReload' : '') . ");
+            if (\$isInsert) {
+                \$this->postInsert(\$con);";
             $this->applyBehaviorModifier('postInsert', $script, '                    ');
             $script .= "
-                } else {
-                    \$this->postUpdate(\$con);";
+            } else {
+                \$this->postUpdate(\$con);";
             $this->applyBehaviorModifier('postUpdate', $script, '                    ');
             $script .= "
-                }
-                \$this->postSave(\$con);";
+            }
+            \$this->postSave(\$con);";
             $this->applyBehaviorModifier('postSave', $script, '                ');
             $script .= "
-                " . $this->getTableMapClassName() . "::addInstanceToPool(\$this);
-            } else {
-                \$affectedRows = 0;
-            }
+            " . $this->getTableMapClassName() . "::addInstanceToPool(\$this);
 
             return \$affectedRows;";
         } else {
@@ -2899,42 +2884,36 @@ $indent};";
     /**
      * Checks and repairs the internal consistency of the object.
      *
-     * This method is executed after an already-instantiated object is re-hydrated
-     * from the database. It exists to check any foreign keys to make sure that
-     * the objects related to the current object are correct based on foreign key.
-     *
-     * You can override this method in the stub class, but you should always invoke
-     * the base method from the overridden method (i.e. parent::ensureConsistency()),
-     * in case your model changes.
+     * Used to clear resolved fk-related objects that became obsolete after
+     * re-hydration.
      *
      * @return void
      */
     public function ensureConsistency(): void
     {";
-        foreach ($table->getColumns() as $col) {
-            $clo = $col->getLowercasedName();
-
-            if ($col->isForeignKey()) {
-                foreach ($col->getForeignKeys() as $fk) {
-                    $tblFK = $table->getDatabase()->getTable($fk->getForeignTableName());
-                    $colFK = $tblFK->getColumn($fk->getMappedForeignColumn($col->getName()));
-                    $attributeName = $this->getFKVarName($fk);
-
-                    if (!$colFK) {
-                        continue;
-                    }
-
-                    $script .= "
-        if (\$this->" . $attributeName . " !== null && \$this->$clo !== \$this->" . $attributeName . '->get' . $colFK->getPhpName() . "()) {
-            \$this->$attributeName = null;
-        }";
+        foreach ($table->getColumns() as $column) {
+            if (!$column->isForeignKey()) {
+                continue;
+            }
+            $columnName = $column->getLowercasedName();
+            foreach ($column->getForeignKeys() as $fk) {
+                $foreignTable = $table->getDatabase()->getTable($fk->getForeignTableName());
+                $foreignColumn = $foreignTable->getColumn($fk->getMappedForeignColumn($column->getName()));
+                if (!$foreignColumn) {
+                    continue;
                 }
+                $relatedObjectAttributeName = $this->getFKVarName($fk);
+                $foreignColumnPhpName = $foreignColumn->getPhpName();
+
+                $script .= "
+        if (\$this->$relatedObjectAttributeName && \$this->$columnName !== \$this->{$relatedObjectAttributeName}->get{$foreignColumnPhpName}()) {
+            \$this->$relatedObjectAttributeName = null;
+        }";
             }
         }
 
         $script .= "
-    }
-";
+    }\n";
     }
 
     /**
@@ -3315,15 +3294,13 @@ $indent};";
     }
 
     /**
-     * @param string $script
-     *
      * @return void
      */
     protected function addCreateFromFilter(string &$script): void
     {
         $this->declareClass(FilterCollector::class);
         $table = $this->getTable();
-        $objectVar = '$' . lcfirst($table->getPhpName());
+        $objectVar = '$' . $table->getName();
 
         $script .= "
     /**

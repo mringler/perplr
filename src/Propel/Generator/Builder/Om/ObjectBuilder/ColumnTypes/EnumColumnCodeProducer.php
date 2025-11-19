@@ -117,12 +117,13 @@ class EnumColumnCodeProducer extends ColumnCodeProducer
     #[\Override]
     protected function addMutatorBody(string &$script): void
     {
-        $col = $this->column;
-        $clo = $col->getLowercasedName();
+        $columnName = $this->column->getLowercasedName();
+        $tableMapClassName = $this->getTableMapClassName();
+        $columnConstantLiteral = $this->objectBuilder->getColumnConstant($this->column);
 
         $script .= "
         if (\$v !== null) {
-            \$valueSet = " . $this->getTableMapClassName() . '::getValueSet(' . $this->objectBuilder->getColumnConstant($col) . ");
+            \$valueSet = {$tableMapClassName}::getValueSet($columnConstantLiteral);
             \$keyId = array_search(\$v, \$valueSet);
             if (!is_int(\$keyId)) {
                 throw new PropelException(sprintf('Value \"%s\" is not accepted in this enumerated column', \$v));
@@ -130,9 +131,9 @@ class EnumColumnCodeProducer extends ColumnCodeProducer
             \$v = \$keyId;
         }
 
-        if (\$this->$clo !== \$v) {
-            \$this->$clo = \$v;
-            \$this->modifiedColumns[" . $this->objectBuilder->getColumnConstant($col) . "] = true;
+        if (\$this->$columnName !== \$v) {
+            \$this->$columnName = \$v;
+            \$this->modifiedColumns[$columnConstantLiteral] = true;
         }\n";
     }
 }
