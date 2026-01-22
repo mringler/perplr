@@ -224,14 +224,7 @@ class QueryBuilder extends AbstractOMBuilder
         $this->addFilterByPrimaryKey($script);
         $this->addFilterByPrimaryKeys($script);
         foreach ($this->getTable()->getColumns() as $col) {
-            $this->addFilterByCol($script, $col);
-            if ($col->isNamePlural()) {
-                if ($col->getType() === PropelTypes::PHP_ARRAY) {
-                    $this->addFilterByArrayCol($script, $col);
-                } elseif ($col->isSetType()) {
-                    $this->addFilterBySetCol($script, $col);
-                }
-            }
+            $this->addColumnCode($script, $col);
         }
         foreach ($this->getTable()->getForeignKeys() as $fk) {
             $this->addFilterByFk($script, $fk);
@@ -558,7 +551,7 @@ class QueryBuilder extends AbstractOMBuilder
                 break;
             }";
 
-            $script .= "
+        $script .= "
     /**
      * Find object by primary key using raw SQL to go fast.
      * Bypass doSelect() and the object formatter by using generated code.
@@ -758,7 +751,7 @@ class QueryBuilder extends AbstractOMBuilder
     {
         $this->declareClass('Propel\\Runtime\\Exception\\LogicException');
 
-            $script .= "
+        $script .= "
         throw new LogicException('The {$this->getObjectName()} object has no primary key');
     }\n";
     }
@@ -959,6 +952,24 @@ class QueryBuilder extends AbstractOMBuilder
     }
 
     /**
+     * @param string $script
+     * @param \Propel\Generator\Model\Column $col
+     *
+     * @return void
+     */
+    protected function addColumnCode(string &$script, Column $col): void
+    {
+        $this->addFilterByCol($script, $col);
+        if ($col->isNamePlural()) {
+            if ($col->getType() === PropelTypes::PHP_ARRAY) {
+                $this->addFilterByArrayCol($script, $col);
+            } elseif (in_array($col->getType(), [PropelTypes::SET_BINARY, PropelTypes::SET_NATIVE], true)) {
+                $this->addFilterBySetCol($script, $col);
+            }
+        }
+    }
+
+    /**
      * Adds the filterByCol method for this object.
      *
      * @param string $script The script will be modified in this method.
@@ -1049,7 +1060,7 @@ class QueryBuilder extends AbstractOMBuilder
         $script .= "
      * @param string|null \$comparison Operator to use for the column comparison, defaults to Criteria::EQUAL";
 
-        if ($col->isSetType() || $col->getType() === PropelTypes::ENUM) {
+        if ($col->isBinarySetType() || $col->isBinaryEnumType()) {
             $script .= "
      *
      * @throws \Propel\Runtime\Exception\PropelException";
@@ -1106,15 +1117,48 @@ class QueryBuilder extends AbstractOMBuilder
 
             return \$this;
         }";
-        } elseif ($col->isSetType()) { // TODO
+        } elseif ($col->getType() === PropelTypes::SET_NATIVE) {
             $this->declareClasses(
-                'Propel\Common\Util\SetColumnConverter',
-                'Propel\Common\Exception\SetColumnConverterException',
+                '\Propel\Common\Util\SetColumnConverter',
+            );
+            $columnConstant = $this->getColumnConstant($col);
+            $script .= "
+        \$binaryOperator = match(\$comparison) {
+            null,
+            Criteria::CONTAINS_ALL => Criteria::BINARY_ALL,
+            Criteria::CONTAINS_SOME,
+            Criteria::IN => Criteria::BINARY_AND,
+            Criteria::CONTAINS_NONE => Criteria::BINARY_NONE,
+            default => null,
+        };
+
+        if (\$binaryOperator) {
+            if (!\${$variableName} && in_array(\$binaryOperator, [Criteria::BINARY_AND, Criteria::BINARY_ALL], true)) {
+                return \$this;
+            }
+            if (!\${$variableName} && \$binaryOperator === Criteria::BINARY_NONE) {
+                \$itemBitmask = -1; // none but empty set (Propel-specific behavior)
+            } else {
+                \$valueSet = $tableMapClassName::getValueSet($columnConstant);
+                \$itemBitmask = SetColumnConverter::convertToBitmask(\$$variableName, \$valueSet);
+            }
+
+            \$this->addUsingOperator(\$resolvedColumn, \$itemBitmask, \$binaryOperator);
+            if (\$binaryOperator === Criteria::BINARY_NONE) {
+                \$this->addOr(\$resolvedColumn, null, Criteria::ISNULL);
+            }
+
+            return \$this;
+        }\n";
+        } elseif ($col->isBinarySetType()) {
+            $this->declareClasses(
+                '\Propel\Common\Util\SetColumnConverter',
+                '\Propel\Common\Exception\SetColumnConverterException',
             );
             $script .= "
         \$valueSet = $tableMapClassName::getValueSet(" . $this->getColumnConstant($col) . ");
         try {
-            \${$variableName} = SetColumnConverter::convertToInt(\${$variableName}, \$valueSet);
+            \${$variableName} = SetColumnConverter::convertToBitmask(\${$variableName}, \$valueSet);
         } catch (SetColumnConverterException \$e) {
             throw new PropelException(sprintf('Value \"%s\" is not accepted in this set column', \$e->getValue()), \$e->getCode(), \$e);
         }
@@ -1129,7 +1173,6 @@ class QueryBuilder extends AbstractOMBuilder
             }
             \$comparison = Criteria::BINARY_AND;
         } elseif (\$comparison == Criteria::CONTAINS_NONE) {
-            \$resolvedColumn = \$this->resolveLocalColumnByName('$colName');
             if (\${$variableName} !== 0) {
                 \$this->addAnd(\$resolvedColumn, \${$variableName}, Criteria::BINARY_NONE);
             }
@@ -1137,7 +1180,7 @@ class QueryBuilder extends AbstractOMBuilder
 
             return \$this;
         }";
-        } elseif ($col->getType() == PropelTypes::ENUM) {
+        } elseif ($col->isBinaryEnumType()) {
             $script .= "
         \$valueSet = " . $this->getTableMapClassName() . '::getValueSet(' . $this->getColumnConstant($col) . ");
         if (is_scalar(\$$variableName)) {
@@ -1310,7 +1353,7 @@ class QueryBuilder extends AbstractOMBuilder
             $value = ($rightValueOrColumn instanceof Column)
                 ? "{$objectName}->get" . $rightValueOrColumn->getPhpName() . '()'
                 : var_export($rightValueOrColumn, true);
-                $script .= "
+            $script .= "
                 ->addUsingOperator(\$this->resolveLocalColumnByName('$columnName'), $value, \$comparison)";
         }
 
@@ -2129,7 +2172,7 @@ class QueryBuilder extends AbstractOMBuilder
                 ->add($columnConstant, \$obj->get{ $columnPhpName }())";
             }
 
-                $script .= "G
+            $script .= "G
                 ->delete(\$con);";
         }
         $script .= "

@@ -284,7 +284,7 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
     }
 
     /**
-     * Adds the valueSet constants for ENUM and SET columns.
+     * Adds the valueSet constants for ENUM_BINARY and SET_BINARY columns.
      *
      * @param string $script The script will be modified in this method.
      *
@@ -311,7 +311,7 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
     }
 
     /**
-     * Adds the valueSet attributes for ENUM columns.
+     * Adds the valueSet attributes for ENUM_BINARY columns.
      *
      * @param string $script The script will be modified in this method.
      *
@@ -332,17 +332,14 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
             }
             $columnConstant = $col->getConstantName();
             $columnConstantFq = $col->getFQConstantName();
+            $valueSetConstants = array_map([$this, 'getValueSetConstant'], $col->getValueSet());
+            $indent = '            ';
+            $values = array_map(fn ($valueSetConstant) => "\n{$indent}self::{$columnConstant}_{$valueSetConstant},", $valueSetConstants);
+            $valuesCsv = implode('', $values);
+
             $script .= "
-        $columnConstantFq => [";
-
-            foreach ($col->getValueSet() as $value) {
-                $valueSetConstant = $this->getValueSetConstant($value);
-                $script .= "
-            self::{$columnConstant}_{$valueSetConstant},";
-            }
-
-            $script .= '
-        ],';
+        $columnConstantFq => [$valuesCsv
+            ],";
         }
         $script .= "
     ];\n";
@@ -359,7 +356,7 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
     {
         $script .= "
     /**
-     * Gets the list of values for all ENUM and SET columns
+     * Gets the list of values for all ENUM_BINARY and SET_BINARY columns
      *
      * @return array<string, array<string>>
      */
