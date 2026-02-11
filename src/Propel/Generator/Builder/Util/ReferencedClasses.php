@@ -99,6 +99,8 @@ class ReferencedClasses
     /**
      * Resolve the future class name of one of the to-be-built classes for the given table.
      *
+     * @psalm-param \Propel\Generator\Config\GeneratorConfig::KEY_* $classType
+     *
      * @param string $classType
      * @param \Propel\Generator\Model\Table $table
      * @param bool $fullyQualified

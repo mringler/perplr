@@ -34,51 +34,79 @@ class GeneratorConfig extends ConfigurationManager implements GeneratorConfigInt
     protected const PLURALIZER = PluralizerInterface::class;
 
     /**
-     * Config key for name of object class (base class).
+     * Config key of builder class for base object model class code in {@see static::getConfiguredBuilder()}.
      *
      * @var string
      */
     public const KEY_OBJECT_BASE = 'object';
 
     /**
-     * Config key for name of object stub class (model class).
+     * Config key of builder class for user query class code stub in {@see static::getConfiguredBuilder()}.
      *
      * @var string
      */
     public const KEY_OBJECT_STUB = 'objectstub';
 
     /**
-     * Config key for name of query class (base class).
+     * Config key of builder class for query class code in {@see static::getConfiguredBuilder()}.
      *
      * @var string
      */
     public const KEY_QUERY_BASE = 'query';
 
     /**
-     * Config key for name of query stub.
+     * Config key of builder class for user query class code stub in {@see static::getConfiguredBuilder()}.
      *
      * @var string
      */
     public const KEY_QUERY_STUB = 'querystub';
 
     /**
-     * Config key for name of table mapclass.
+     * Config key of builder class for table map code in {@see static::getConfiguredBuilder()}.
      *
      * @var string
      */
     public const KEY_TABLEMAP = 'tablemap';
 
     /**
-     * @var \Propel\Generator\Util\BehaviorLocator
-     */
-    protected $behaviorLocator;
-
-    /**
-     * Config key for name of query class (base class).
+     * Config key of builder class for collection class code in {@see static::getConfiguredBuilder()}.
      *
      * @var string
      */
     public const KEY_COLLECTION = 'collection';
+
+    /**
+     * Config key of builder class for interface stub code in {@see static::getConfiguredBuilder()}.
+     *
+     * @var string
+     */
+    public const KEY_INTERFACE = 'interface';
+
+    /**
+     * Config key of builder class for query with single table inheritance code in {@see static::getConfiguredBuilder()}.
+     *
+     * @var string
+     */
+    public const KEY_QUERY_INHERITANCE = 'queryinheritance';
+
+    /**
+     * Config key of builder class for query stub with single table inheritance code in {@see static::getConfiguredBuilder()}.
+     *
+     * @var string
+     */
+    public const KEY_QUERY_INHERITANCE_STUB = 'queryinheritancestub';
+
+    /**
+     * Config key of builder class for model stub with single table inheritance code in {@see static::getConfiguredBuilder()}.
+     *
+     * @var string
+     */
+    public const KEY_OBJECT_INHERITANCE_STUB = 'objectmultiextend';
+
+    /**
+     * @var \Propel\Generator\Util\BehaviorLocator
+     */
+    protected $behaviorLocator;
 
     /**
      * Connections configured in the `generator` section of the configuration file
@@ -194,6 +222,8 @@ class GeneratorConfig extends ConfigurationManager implements GeneratorConfigInt
     /**
      * Returns a configured data model builder class for specified table and
      * based on type ('object', 'query', 'tableMap' etc.).
+     *
+     * @psalm-param \Propel\Generator\Config\GeneratorConfig::KEY_* $type
      *
      * @param \Propel\Generator\Model\Table $table
      * @param string $type

@@ -45,6 +45,8 @@ class EntityObjectClassNames
     }
 
     /**
+     * @psalm-param \Propel\Generator\Config\GeneratorConfig::KEY_* $builderType
+     *
      * @param bool $inLocalNamespace
      * @param string|bool $aliasPrefix
      * @param string $builderType

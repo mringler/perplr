@@ -36,6 +36,8 @@ class BuilderFactory
     }
 
     /**
+     * @psalm-param \Propel\Generator\Config\GeneratorConfig::KEY_* $type
+     *
      * @param \Propel\Generator\Model\Table $table
      * @param string $type
      *
