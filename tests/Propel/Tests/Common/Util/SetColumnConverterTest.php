@@ -27,42 +27,42 @@ class SetColumnConverterTest extends TestCase
      *
      * @return void
      */
-    public function testConvertToIntValidValues(array $values, $validInteger)
+    public function testconvertToBitmaskValidValues(array $values, $validInteger)
     {
         $valueSet = ['a', 'b', 'c', 'd', 'e', 'f'];
-        $intValue = SetColumnConverter::convertToInt($values, $valueSet);
+        $intValue = SetColumnConverter::convertToBitmask($values, $valueSet);
         $this->assertSame($validInteger, $intValue);
     }
 
     /**
      * @return void
      */
-    public function testConvertToIntStringValue()
+    public function testconvertToBitmaskStringValue()
     {
         $valueSet = ['a', 'b', 'c', 'd', 'e', 'f'];
-        $intValue = SetColumnConverter::convertToInt('c', $valueSet);
+        $intValue = SetColumnConverter::convertToBitmask('c', $valueSet);
         $this->assertSame(4, $intValue);
     }
 
     /**
      * @return void
      */
-    public function testConvertToIntNullValue()
+    public function testconvertToBitmaskNullValue()
     {
         $valueSet = ['a', 'b', 'c', 'd', 'e', 'f'];
-        $intValue = SetColumnConverter::convertToInt(null, $valueSet);
+        $intValue = SetColumnConverter::convertToBitmask(null, $valueSet);
         $this->assertSame(0, $intValue);
     }
 
     /**
      * @return void
      */
-    public function testConvertToIntValueNotInSet()
+    public function testconvertToBitmaskValueNotInSet()
     {
         $this->expectException(SetColumnConverterException::class);
 
         $valueSet = ['a', 'b', 'c', 'd', 'e', 'f'];
-        SetColumnConverter::convertToInt(['g'], $valueSet);
+        SetColumnConverter::convertToBitmask(['g'], $valueSet);
     }
 
     /**
@@ -73,32 +73,32 @@ class SetColumnConverterTest extends TestCase
      *
      * @return void
      */
-    public function testConvertIntToArrayValidValues(array $validArray, $intValue)
+    public function testconvertBitmaskToArrayValidValues(array $validArray, $intValue)
     {
         $valueSet = ['a', 'b', 'c', 'd', 'e', 'f'];
-        $arrayValue = SetColumnConverter::convertIntToArray($intValue, $valueSet);
+        $arrayValue = SetColumnConverter::convertBitmaskToArray($intValue, $valueSet);
         $this->assertEquals($validArray, $arrayValue);
     }
 
     /**
      * @return void
      */
-    public function testConvertIntToArrayNullValue()
+    public function testconvertBitmaskToArrayNullValue()
     {
         $valueSet = ['a', 'b', 'c', 'd', 'e', 'f'];
-        $arrayValue = SetColumnConverter::convertIntToArray(null, $valueSet);
+        $arrayValue = SetColumnConverter::convertBitmaskToArray(null, $valueSet);
         $this->assertSame([], $arrayValue);
     }
 
     /**
      * @return void
      */
-    public function testConvertIntToArrayIntOutOfRange()
+    public function testconvertBitmaskToArrayIntOutOfRange()
     {
         $this->expectException(SetColumnConverterException::class);
 
         $valueSet = ['a', 'b', 'c', 'd', 'e', 'f'];
-        SetColumnConverter::convertIntToArray('65', $valueSet);
+        SetColumnConverter::convertBitmaskToArray('65', $valueSet);
     }
 
     public function convertValuesProvider()

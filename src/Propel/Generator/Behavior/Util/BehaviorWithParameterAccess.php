@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Behavior\Util;
 
+use Propel\Common\Util\SetColumnConverter;
 use Propel\Generator\Exception\SchemaException;
 use Propel\Generator\Model\Behavior;
 use function array_map;
@@ -130,9 +131,7 @@ abstract class BehaviorWithParameterAccess extends Behavior
      */
     protected function explodeCsv(string $stringValue): ?array
     {
-        $stringValue = trim($stringValue);
-
-        return trim($stringValue) ? array_map('trim', explode(',', $stringValue)) : null;
+        return SetColumnConverter::itemsCsvToArray($stringValue) ?: null;
     }
 
     /**

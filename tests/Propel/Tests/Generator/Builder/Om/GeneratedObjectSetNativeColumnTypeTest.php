@@ -294,4 +294,22 @@ EOF;
         }
         $this->assertNotEquals($tags[0], $tags[1]);
     }
+
+    /**
+     * @return void
+     */
+    public function testFindOneOrCreate(): void
+    {
+        $e = NativeSetEntityQuery::create('e')
+            ->filterByTags('baz')
+            ->filterByBar(['foo', 'bar'])
+            ->where('e.Defaults & ?', 4)
+            ->where('e.BEARS = ?', 'baz,kevin')
+            ->findOneOrCreate();
+        $this->assertInstanceOf(NativeSetEntity::class, $e);
+        $this->assertTrue($e->isNew());
+        $expected = ['Id' => null, 'Tags' => ['baz'], 'Bar' => ['foo', 'bar'], 'Defaults' => ['foo baz'], 'Bears' => ['baz', 'kevin']];
+        $this->assertEquals($expected, $e->toArray());
+
+    }
 }

@@ -180,4 +180,21 @@ class SetNativeColumnCodeProducer extends AbstractArrayColumnCodeProducer
             }
         }\n";
     }
+
+    /**
+     * @see \Propel\Generator\Builder\Om\ObjectBuilder::addCreateFromFilter()
+     *
+     * @param string $valueExpression The variable expression holding the value (i.e. '$value')
+     *
+     * @return string
+     */
+    #[\Override]
+    public function buildCreateFromFilterValueExpression(string $valueExpression): string
+    {
+        $this->declareClasses('Propel\Common\Util\SetColumnConverter');
+        $tableMapClassName = $this->getTableMapClassName();
+        $columnConstant = $this->objectBuilder->getColumnConstant($this->column);
+
+        return "SetColumnConverter::rawInputToSetItems($valueExpression, $tableMapClassName::getValueSet($columnConstant))";
+    }
 }

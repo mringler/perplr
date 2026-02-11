@@ -6,6 +6,7 @@ namespace Propel\Generator\Model;
 
 use Exception;
 use LogicException;
+use Propel\Common\Util\SetColumnConverter;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Platform\PlatformInterface;
 use function array_map;
@@ -1443,12 +1444,9 @@ class Column extends MappingModel
      */
     public function setValueSet($valueSet): void
     {
-        if (is_string($valueSet)) {
-            $valueSet = explode(',', $valueSet);
-            $valueSet = array_map('trim', $valueSet);
-        }
-
-        $this->valueSet = $valueSet;
+        $this->valueSet = is_string($valueSet)
+            ? SetColumnConverter::itemsCsvToArray($valueSet)
+            : $valueSet;
     }
 
     /**
@@ -1534,7 +1532,7 @@ class Column extends MappingModel
      */
     public function hasDefaultValue(): bool
     {
-        return (bool)$this->getDefaultValue()?->isValue();
+        return (bool)$this->getDefaultValue()?->isValueType();
     }
 
     /**

@@ -474,4 +474,16 @@ class ColumnCodeProducer extends ObjectCodeProducer
     protected function addMutatorAddition(string &$script): void
     {
     }
+
+    /**
+     * @see \Propel\Generator\Builder\Om\ObjectBuilder::addCreateFromFilter()
+     *
+     * @param string $valueExpression The variable expression holding the value (i.e. '$value')
+     *
+     * @return string
+     */
+    public function buildCreateFromFilterValueExpression(string $valueExpression): string
+    {
+        return $valueExpression;
+    }
 }

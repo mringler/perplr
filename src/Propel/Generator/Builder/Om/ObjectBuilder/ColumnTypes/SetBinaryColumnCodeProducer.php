@@ -109,7 +109,7 @@ class SetBinaryColumnCodeProducer extends AbstractArrayColumnCodeProducer
         if (!\$this->$cloConverted && \$this->$clo !== null) {
             \$valueSet = {$tableMapClassName}::getValueSet($columnConstantExpression);
             try {
-                \$this->$cloConverted = SetColumnConverter::convertIntToArray(\$this->$clo, \$valueSet);
+                \$this->$cloConverted = SetColumnConverter::convertBitmaskToArray(\$this->$clo, \$valueSet);
             } catch (SetColumnConverterException \$e) {
                 throw new PropelException('Unknown stored set key: ' . \$e->getValue(), \$e->getCode(), \$e);
             }
@@ -189,5 +189,22 @@ class SetBinaryColumnCodeProducer extends AbstractArrayColumnCodeProducer
                 \$this->modifiedColumns[" . $this->objectBuilder->getColumnConstant($col) . "] = true;
             }
         }\n";
+    }
+
+    /**
+     * @see \Propel\Generator\Builder\Om\ObjectBuilder::addCreateFromFilter()
+     *
+     * @param string $valueExpression The variable expression holding the value (i.e. '$value')
+     *
+     * @return string
+     */
+    #[\Override]
+    public function buildCreateFromFilterValueExpression(string $valueExpression): string
+    {
+        $this->declareClasses('Propel\Common\Util\SetColumnConverter');
+        $tableMapClassName = $this->getTableMapClassName();
+        $columnConstant = $this->objectBuilder->getColumnConstant($this->column);
+
+        return "SetColumnConverter::convertBitmaskToArray($valueExpression, $tableMapClassName::getValueSet($columnConstant))";
     }
 }
