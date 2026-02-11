@@ -24,7 +24,7 @@
         if (!$this->enumerated_column_converted && $this->enumerated_column !== null) {
             $valueSet = TableTableMap::getValueSet(TableTableMap::COL_ENUMERATED_COLUMN);
             try {
-                $this->enumerated_column_converted = SetColumnConverter::convertIntToArray($this->enumerated_column, $valueSet);
+                $this->enumerated_column_converted = SetColumnConverter::convertBitmaskToArray($this->enumerated_column, $valueSet);
             } catch (SetColumnConverterException $e) {
                 throw new PropelException('Unknown stored set key: ' . $e->getValue(), $e->getCode(), $e);
             }

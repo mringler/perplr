@@ -8,6 +8,8 @@
 
 namespace Propel\Generator\Model;
 
+use Propel\Common\Util\SetColumnConverter;
+
 /**
  * An abstract model class to represent objects that belongs to a schema like
  * databases, tables, columns, indices, unices, foreign keys...
@@ -148,9 +150,7 @@ abstract class MappingModel implements MappingModelInterface
      */
     protected function getDefaultValueForSet(string $stringValue): ?array
     {
-        $stringValue = trim($stringValue);
-
-        return !$stringValue ? null : array_map('trim', explode(',', $stringValue));
+        return SetColumnConverter::itemsCsvToArray($stringValue) ?: null;
     }
 
     /**

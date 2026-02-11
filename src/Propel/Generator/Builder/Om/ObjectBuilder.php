@@ -3325,23 +3325,11 @@ $indent};";
             \$value = \$filter->getValue();
 
             match (\$columnIdentifier) {";
-        foreach ($this->getTable()->getColumns() as $col) {
-            $columnName = $col->getFullyQualifiedName(true);
-            $cfc = $col->getPhpName();
-            $valueExpression = '$value';
-
-            if ($col->getType() === PropelTypes::PHP_ARRAY) {
-                $valueExpression = "is_array($valueExpression) ? $valueExpression : static::unserializeArray($valueExpression)";
-            } elseif ($col->getType() === PropelTypes::ENUM) {
-                $tableMapClassName = $this->getTableMapClassName();
-                $columnConstant = $this->getColumnConstant($col);
-                $valueExpression = "$tableMapClassName::getValueSet($columnConstant)[$valueExpression] ?? $valueExpression";
-            } elseif ($col->isSetType()) {
-                $this->declareClasses('Propel\Common\Util\SetColumnConverter');
-                $tableMapClassName = $this->getTableMapClassName();
-                $columnConstant = $this->getColumnConstant($col);
-                $valueExpression = "SetColumnConverter::convertIntToArray($valueExpression, $tableMapClassName::getValueSet($columnConstant))";
-            }
+        foreach ($this->columnCodeProducers as $columnCodeProducer) {
+            $column = $columnCodeProducer->getColumn();
+            $columnName = $column->getFullyQualifiedName(true);
+            $cfc = $column->getPhpName();
+            $valueExpression = $columnCodeProducer->buildCreateFromFilterValueExpression('$value');
 
             $script .= "
                 '$columnName' => {$objectVar}->set$cfc($valueExpression),";

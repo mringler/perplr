@@ -118,4 +118,17 @@ class ArrayColumnCodeProducer extends AbstractArrayColumnCodeProducer
             \$this->modifiedColumns[" . $this->objectBuilder->getColumnConstant($col) . "] = true;
         }\n";
     }
+
+    /**
+     * @see \Propel\Generator\Builder\Om\ObjectBuilder::addCreateFromFilter()
+     *
+     * @param string $valueExpression The variable expression holding the value (i.e. '$value')
+     *
+     * @return string
+     */
+    #[\Override]
+    public function buildCreateFromFilterValueExpression(string $valueExpression): string
+    {
+        return "is_array($valueExpression) ? $valueExpression : static::unserializeArray($valueExpression)";
+    }
 }

@@ -521,7 +521,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
         } elseif ($col->isBinaryEnumType()) {
             $value = array_search($value, $col->getValueSet());
         } elseif ($col->isBinarySetType() && is_string($value)) {
-            $items = array_map('trim', explode(',', $value));
+            $items = SetColumnConverter::itemsCsvToArray($value);
             $value = SetColumnConverter::convertToBitmask($items, $col->getValueSet());
         } elseif ($col->getType() === PropelTypes::SET_NATIVE && is_string($value)) {
             if (str_contains($value, ',')) {

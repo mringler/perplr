@@ -67,7 +67,7 @@ class SetColumnConverter
      *
      * @return list<string>
      */
-    public static function convertIntToArray(?int $val, array $valueSet): array
+    public static function convertBitmaskToArray(?int $val, array $valueSet): array
     {
         if ($val === null) {
             return [];
@@ -79,6 +79,19 @@ class SetColumnConverter
         }
 
         return array_values(array_filter($valueSet, fn ($ix) => (bool)($val & (1 << $ix)), ARRAY_FILTER_USE_KEY));
+    }
+
+    /**
+     * @deprecated Use aptly named {@see static::convertBitmaskToArray()}
+     *
+     * @param int|null $val
+     * @param array<int, string> $valueSet
+     *
+     * @return list<string>
+     */
+    public static function convertIntToArray(?int $val, array $valueSet): array
+    {
+        return static::convertBitmaskToArray($val, $valueSet);
     }
 
     /**
@@ -118,5 +131,37 @@ class SetColumnConverter
         $allowedValuesCsv = implode(',', $setValues);
 
         throw new PropelException("Illegal value in SET $locationDescription: Set '$allowedValuesCsv' does not contain '$unknownValuesCsv'");
+    }
+
+    /**
+     * @param string $itemsCsv
+     *
+     * @return array<string>
+     */
+    public static function itemsCsvToArray(string $itemsCsv): array
+    {
+        if (!trim($itemsCsv)) {
+            return [];
+        }
+        $items = explode(',', $itemsCsv);
+
+        return array_map('trim', $items);
+    }
+
+    /**
+     * Tries to resolve set items for unknown input type.
+     *
+     * @param array<string>|string|int $value
+     * @param array<string> $valueSet
+     *
+     * @return array<string>
+     */
+    public static function rawInputToSetItems(array|string|int $value, array $valueSet): array
+    {
+        return match (gettype($value)) {
+            'string' => self::itemsCsvToArray($value),
+            'integer' => self::convertBitmaskToArray($value, $valueSet),
+            default => (array)$value,
+        };
     }
 }
