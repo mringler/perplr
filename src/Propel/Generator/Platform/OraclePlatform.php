@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Platform;
 
@@ -18,13 +14,17 @@ use Propel\Generator\Model\Index;
 use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
+use function count;
+use function implode;
+use function is_array;
+use function min;
+use function preg_replace;
+use function sprintf;
+use function strlen;
+use function substr;
 
 /**
  * Oracle PlatformInterface implementation.
- *
- * @author Hans Lellelid <hans@xmpl.org> (Propel)
- * @author Martin Poeschl <mpoeschl@marmot.at> (Torque)
- * @author Denis Dalmais
  */
 class OraclePlatform extends DefaultPlatform
 {

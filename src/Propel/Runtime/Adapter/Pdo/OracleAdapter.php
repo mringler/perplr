@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Runtime\Adapter\Pdo;
 
@@ -19,16 +15,18 @@ use Propel\Runtime\Connection\StatementInterface;
 use Propel\Runtime\Exception\InvalidArgumentException;
 use Propel\Runtime\Map\ColumnMap;
 use RuntimeException;
+use function class_exists;
+use function is_array;
+use function is_resource;
+use function rewind;
+use function sprintf;
+use function str_replace;
+use function strlen;
+use function strpos;
+use function substr;
 
 /**
  * Oracle adapter.
- *
- * @author David Giffin <david@giffin.org> (Propel)
- * @author Hans Lellelid <hans@xmpl.org> (Propel)
- * @author Jon S. Stevens <jon@clearink.com> (Torque)
- * @author Brett McLaughlin <bmclaugh@algx.net> (Torque)
- * @author Bill Schneider <bschneider@vecna.com> (Torque)
- * @author Daniel Rall <dlr@finemaltcoding.com> (Torque)
  */
 class OracleAdapter extends PdoAdapter implements SqlAdapterInterface
 {

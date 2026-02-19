@@ -1,12 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Propel\Generator\Model;
 
@@ -21,18 +15,25 @@ use Propel\Generator\Platform\PlatformInterface;
 use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Exception\RuntimeException;
 use Propel\Runtime\Util\UuidConverter;
+use function array_filter;
+use function array_merge;
+use function array_slice;
+use function array_values;
+use function count;
+use function get_class;
+use function implode;
+use function in_array;
+use function is_array;
+use function is_string;
+use function lcfirst;
+use function sprintf;
+use function strrpos;
+use function strtolower;
+use function strtoupper;
+use function substr_replace;
 
 /**
  * Data about a table used in an application.
- *
- * @author Hans Lellelid <hans@xmpl.org> (Propel)
- * @author Leon Messerschmidt <leon@opticode.co.za> (Torque)
- * @author Jason van Zyl <jvanzyl@apache.org> (Torque)
- * @author Martin Poeschl <mpoeschl@marmot.at> (Torque)
- * @author John McNally <jmcnally@collab.net> (Torque)
- * @author Daniel Rall <dlr@collab.net> (Torque)
- * @author Byron Foster <byron_foster@yahoo.com> (Torque)
- * @author Hugo Hamon <webmaster@apprendre-php.com> (Propel)
  */
 class Table extends ScopedMappingModel implements IdMethod
 {

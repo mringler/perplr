@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om;
 
@@ -17,14 +13,25 @@ use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Runtime\ActiveQuery\FilterExpression\ExistsFilter;
+use function addslashes;
+use function array_filter;
+use function array_map;
+use function array_merge;
+use function array_shift;
+use function array_slice;
+use function count;
+use function implode;
+use function sprintf;
+use function str_replace;
+use function strrpos;
+use function substr;
+use function var_export;
 
 /**
  * Generates a base Query class for user object model (OM).
  *
  * This class produces the base query class (e.g. BaseBookQuery) which contains
  * all the custom-built query methods.
- *
- * @author Francois Zaninotto
  */
 class QueryBuilder extends AbstractOMBuilder
 {

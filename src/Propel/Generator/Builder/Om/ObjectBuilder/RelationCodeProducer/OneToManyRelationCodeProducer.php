@@ -1,14 +1,11 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer;
 
 use Propel\Generator\Model\ForeignKey;
+use function lcfirst;
 
 /**
  * A one-to-many relation from an incoming FK.

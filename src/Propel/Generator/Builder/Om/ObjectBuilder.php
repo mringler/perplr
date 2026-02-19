@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om;
 
@@ -25,14 +21,27 @@ use Propel\Generator\Platform\OraclePlatform;
 use Propel\Generator\Platform\PlatformInterface;
 use Propel\Runtime\ActiveQuery\FilterExpression\FilterCollector;
 use Propel\Runtime\Exception\PropelException;
+use function addslashes;
+use function array_any;
+use function array_intersect;
+use function array_keys;
+use function array_map;
+use function array_values;
+use function count;
+use function implode;
+use function in_array;
+use function lcfirst;
+use function sprintf;
+use function strpos;
+use function strrpos;
+use function strtoupper;
+use function var_export;
 
 /**
  * Generates a base Object class for user object model (OM).
  *
  * This class produces the base object class (e.g. BaseMyTable) which contains
  * all the custom-built accessor and setter methods.
- *
- * @author Hans Lellelid <hans@xmpl.org>
  */
 class ObjectBuilder extends AbstractObjectBuilder
 {
@@ -305,7 +314,6 @@ class ObjectBuilder extends AbstractObjectBuilder
             $timeStampBlock = $this->generateTimestampBlock();
             $script .= "{$timeStampBlock}
  *
- * @package propel.generator.{$this->getPackage()}
  * @phpstan-consistent-constructor
  */";
         }

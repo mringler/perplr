@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Platform;
 
@@ -23,12 +19,27 @@ use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use Propel\Generator\Platform\Util\MysqlUuidMigrationBuilder;
+use function addslashes;
+use function array_flip;
+use function array_map;
+use function array_search;
+use function array_unshift;
+use function implode;
+use function in_array;
+use function is_array;
+use function is_numeric;
+use function sprintf;
+use function str_replace;
+use function stripos;
+use function strpos;
+use function strtolower;
+use function strtoupper;
+use function strtr;
+use function substr;
+use function var_export;
 
 /**
  * MySql PlatformInterface implementation.
- *
- * @author Hans Lellelid <hans@xmpl.org> (Propel)
- * @author Martin Poeschl <mpoeschl@marmot.at> (Torque)
  */
 class MysqlPlatform extends DefaultPlatform
 {

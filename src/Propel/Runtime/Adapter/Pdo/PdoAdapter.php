@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Runtime\Adapter\Pdo;
 
@@ -22,6 +18,25 @@ use Propel\Runtime\Exception\InvalidArgumentException;
 use Propel\Runtime\Map\ColumnMap;
 use Propel\Runtime\Map\DatabaseMap;
 use Propel\Runtime\Util\PropelDateTime;
+use function array_keys;
+use function array_map;
+use function array_push;
+use function constant;
+use function defined;
+use function explode;
+use function implode;
+use function in_array;
+use function is_array;
+use function is_resource;
+use function is_string;
+use function preg_replace;
+use function rewind;
+use function sprintf;
+use function str_replace;
+use function strpos;
+use function strrpos;
+use function strtolower;
+use function substr;
 
 /**
  * Base for PDO database adapters.

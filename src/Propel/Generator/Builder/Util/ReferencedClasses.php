@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Util;
 
@@ -16,6 +12,23 @@ use Propel\Generator\Exception\LogicException;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
+use function array_unique;
+use function asort;
+use function explode;
+use function implode;
+use function in_array;
+use function is_string;
+use function is_subclass_of;
+use function preg_match;
+use function preg_replace;
+use function sprintf;
+use function str_replace;
+use function strpos;
+use function strrpos;
+use function substr;
+use function trim;
+use const SORT_FLAG_CASE;
+use const SORT_STRING;
 
 class ReferencedClasses
 {

@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Runtime\Util;
 
@@ -28,8 +24,6 @@ use Propel\Runtime\ActiveQuery\Criteria;
  *     ->doOtherStuff() // executed
  *   ->_endif(); // returns $c
  * @see Criteria
- *
- * @author Francois Zaninotto
  */
 class PropelConditionalProxy
 {

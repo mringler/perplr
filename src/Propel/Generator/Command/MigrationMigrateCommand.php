@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Command;
 
@@ -16,10 +12,12 @@ use Propel\Runtime\Exception\RuntimeException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use function array_key_last;
+use function array_pop;
+use function count;
+use function property_exists;
+use function sprintf;
 
-/**
- * @author William Durand <william.durand1@gmail.com>
- */
 class MigrationMigrateCommand extends AbstractMigrationCommand
 {
     /**

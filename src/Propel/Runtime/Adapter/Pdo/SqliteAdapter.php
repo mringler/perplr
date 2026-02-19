@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Runtime\Adapter\Pdo;
 
@@ -16,11 +12,16 @@ use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Connection\ConnectionWrapper;
 use Propel\Runtime\Connection\PdoConnection;
 use RuntimeException;
+use function class_exists;
+use function get_class;
+use function mb_ereg;
+use function mb_regex_encoding;
+use function method_exists;
+use function phpversion;
+use function sprintf;
 
 /**
  * This is used in order to connect to a SQLite database.
- *
- * @author Hans Lellelid <hans@xmpl.org>
  */
 class SqliteAdapter extends PdoAdapter implements SqlAdapterInterface
 {

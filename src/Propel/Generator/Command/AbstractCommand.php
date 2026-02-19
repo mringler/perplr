@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Command;
 
@@ -19,10 +15,23 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
+use function array_filter;
+use function array_flip;
+use function array_map;
+use function array_merge_recursive;
+use function count;
+use function explode;
+use function iterator_to_array;
+use function preg_match;
+use function sprintf;
+use function str_starts_with;
+use function strpos;
+use function strtolower;
+use function substr;
+use function trim;
+use function urldecode;
+use const ARRAY_FILTER_USE_KEY;
 
-/**
- * @author William Durand <william.durand1@gmail.com>
- */
 abstract class AbstractCommand extends Command
 {
     /**

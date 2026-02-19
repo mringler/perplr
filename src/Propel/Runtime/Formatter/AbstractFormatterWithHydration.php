@@ -1,16 +1,13 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Runtime\Formatter;
 
 use Propel\Runtime\ActiveRecord\ActiveRecordInterface;
 use Propel\Runtime\Collection\ArrayCollection;
 use ReflectionClass;
+use function in_array;
 
 /**
  * @template RowFormat

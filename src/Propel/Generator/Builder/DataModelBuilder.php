@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Builder;
 
@@ -28,6 +24,11 @@ use Propel\Generator\Model\Inheritance;
 use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PlatformInterface;
+use function array_map;
+use function func_get_args;
+use function implode;
+use function is_array;
+use function var_export;
 
 /**
  * This is the base class for any builder class that is using the data model.
@@ -39,8 +40,6 @@ use Propel\Generator\Platform\PlatformInterface;
  * to be able to access the propel generator build properties. You should be
  * safe if you always use the GeneratorConfig to get a configured builder class
  * anyway.
- *
- * @author Hans Lellelid <hans@xmpl.org>
  */
 abstract class DataModelBuilder
 {

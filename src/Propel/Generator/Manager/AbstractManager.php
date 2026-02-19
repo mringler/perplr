@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Manager;
 
@@ -22,16 +18,25 @@ use Propel\Generator\Platform\PlatformInterface;
 use RuntimeException;
 use Symfony\Component\Finder\SplFileInfo;
 use XSLTProcessor;
+use function array_shift;
+use function class_exists;
+use function count;
+use function dirname;
+use function file;
+use function in_array;
+use function is_readable;
+use function realpath;
+use function sprintf;
+use function strpos;
+use function substr;
+use function trim;
+use const DIRECTORY_SEPARATOR;
 
 /**
  * An abstract base Propel manager to perform work related to the XML schema
  * file.
  *
  * Requires PHP XSL extension for XSLT transformations.
- *
- * @author Hans Lellelid <hans@xmpl.org> (Propel)
- * @author Jason van Zyl <jvanzyl@zenplex.com> (Torque)
- * @author Daniel Rall <dlr@finemaltcoding.com> (Torque)
  */
 abstract class AbstractManager
 {

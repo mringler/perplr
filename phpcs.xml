@@ -29,4 +29,26 @@
             <property name="phpVersion" value="8.1"/>
         </properties>
     </rule>
+
+    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes"/>
+
+    <rule ref="SlevomatCodingStandard.Namespaces.ReferenceUsedNamesOnly" >
+        <properties>
+            <property name="allowFallbackGlobalFunctions" value="false"/>
+            <property name="allowFallbackGlobalConstants" value="false"/>
+        </properties>
+    </rule>
+
+    <rule ref="SlevomatCodingStandard.Commenting.ForbiddenAnnotations">
+        <properties>
+            <property name="forbiddenAnnotations" type="array">
+                <element value="@author"/>
+                <element value="@created"/>
+                <element value="@copyright"/>
+                <element value="@license"/>
+                <element value="@package"/>
+                <element value="@version"/>
+            </property>
+        </properties>
+    </rule>
 </ruleset>

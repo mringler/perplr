@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Common\Config;
 
@@ -15,13 +11,32 @@ use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException as SymfonyInvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Finder\Finder;
+use function array_any;
+use function array_filter;
+use function array_key_exists;
+use function array_key_first;
+use function array_keys;
+use function array_merge_recursive;
+use function array_pop;
+use function array_reduce;
+use function array_replace_recursive;
+use function array_reverse;
+use function explode;
+use function file_exists;
+use function getcwd;
+use function implode;
+use function in_array;
+use function is_dir;
+use function is_string;
+use function ksort;
+use function str_ends_with;
+use function var_export;
+use const PHP_EOL;
 
 /**
  * Class ConfigurationManager
  *
  * Class to load and process configuration files. Supported formats are: php, ini (or .properties), yaml, xml, json.
- *
- * @author Cristiano Cinotti
  */
 class ConfigurationManager
 {
@@ -303,7 +318,7 @@ class ConfigurationManager
         $orderedConfigFileNames = [];
         foreach ($finder as $file) {
             $realPath = $file->getRealPath();
-            $isExecutable = array_any(['propel', 'perpl'], fn ($cmd) => str_ends_with($realPath, "/bin/{$cmd}.php"));
+            $isExecutable = $realPath && array_any(['propel', 'perpl'], fn ($cmd) => str_ends_with($realPath, "/bin/{$cmd}.php"));
             if ($isExecutable) {
                 continue;
             }

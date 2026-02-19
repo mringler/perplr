@@ -1,21 +1,20 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Behavior\Sortable;
 
 use Propel\Generator\Builder\Om\AbstractOMBuilder;
 use Propel\Generator\Model\Column;
+use function current;
+use function implode;
+use function preg_replace;
+use function str_replace;
+use function strtolower;
+use function strtoupper;
 
 /**
  * Behavior to add sortable columns and abilities
- *
- * @author François Zaninotto
- * @author heltem <heltem@o2php.com>
  */
 class SortableBehaviorObjectBuilderModifier
 {

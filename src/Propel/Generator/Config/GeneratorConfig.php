@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Config;
 
@@ -22,13 +18,23 @@ use Propel\Generator\Util\BehaviorLocator;
 use Propel\Runtime\Adapter\AdapterFactory;
 use Propel\Runtime\Connection\ConnectionFactory;
 use Propel\Runtime\Connection\ConnectionInterface;
+use function array_key_exists;
+use function array_keys;
+use function class_exists;
+use function implode;
+use function in_array;
+use function interface_exists;
+use function is_array;
+use function is_int;
+use function is_string;
+use function sprintf;
+use function strtolower;
+use function ucfirst;
+use function var_export;
 
 /**
  * A class that holds build properties and provide a class loading mechanism for
  * the generator.
- *
- * @author Hans Lellelid <hans@xmpl.org>
- * @author Cristiano Cinotti
  */
 class GeneratorConfig extends ConfigurationManager implements GeneratorConfigInterface
 {

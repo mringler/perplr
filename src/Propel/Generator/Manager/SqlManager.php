@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Manager;
 
@@ -16,11 +12,16 @@ use Propel\Runtime\Connection\ConnectionFactory;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Connection\Exception\ConnectionException;
 use RuntimeException;
+use function count;
+use function file_exists;
+use function file_get_contents;
+use function file_put_contents;
+use function sprintf;
+use function str_replace;
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Service class for managing SQL.
- *
- * @author William Durand <william.durand1@gmail.com>
  */
 class SqlManager extends AbstractManager
 {

@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om;
 
@@ -17,6 +13,26 @@ use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\VendorInfo;
+use function array_merge;
+use function array_pop;
+use function count;
+use function explode;
+use function file_exists;
+use function gmdate;
+use function ltrim;
+use function method_exists;
+use function preg_match_all;
+use function preg_replace;
+use function preg_replace_callback;
+use function sprintf;
+use function str_replace;
+use function strlen;
+use function strpos;
+use function strtoupper;
+use function strtr;
+use function substr;
+use function var_export;
+use const PREG_SET_ORDER;
 
 /**
  * Baseclass for OM-building classes.
@@ -24,8 +40,6 @@ use Propel\Generator\Model\VendorInfo;
  * OM-building classes are those that build a PHP (or other) class to service
  * a single table. This includes Entity classes, Map classes,
  * Node classes, Nested Set classes, etc.
- *
- * @author Hans Lellelid <hans@xmpl.org>
  */
 abstract class AbstractOMBuilder extends DataModelBuilder
 {
@@ -71,12 +85,6 @@ abstract class AbstractOMBuilder extends DataModelBuilder
         }
 
         $script = "<?php
-
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 " . $script;
 

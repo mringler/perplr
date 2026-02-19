@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Runtime\ActiveQuery;
 
@@ -34,6 +30,26 @@ use Propel\Runtime\Map\Exception\ColumnNotFoundException;
 use Propel\Runtime\Map\RelationMap;
 use Propel\Runtime\Propel;
 use Propel\Runtime\Util\PropelModelPager;
+use function array_key_exists;
+use function array_merge;
+use function array_shift;
+use function array_values;
+use function count;
+use function current;
+use function end;
+use function explode;
+use function in_array;
+use function is_array;
+use function key;
+use function lcfirst;
+use function sprintf;
+use function str_replace;
+use function stripos;
+use function strlen;
+use function strpos;
+use function strrpos;
+use function strtoupper;
+use function substr;
 
 /**
  * This class extends the Criteria by adding runtime introspection abilities
@@ -47,8 +63,6 @@ use Propel\Runtime\Util\PropelModelPager;
  * @method \Propel\Runtime\ActiveQuery\ModelCriteria leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method \Propel\Runtime\ActiveQuery\ModelCriteria rightJoin($relation) Adds a RIGHT JOIN clause to the query
  * @method \Propel\Runtime\ActiveQuery\ModelCriteria innerJoin($relation) Adds a INNER JOIN clause to the query
- *
- * @author François Zaninotto
  */
 class ModelCriteria extends BaseModelCriteria
 {

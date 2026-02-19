@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Command;
 
@@ -13,10 +9,20 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use function array_map;
+use function chdir;
+use function count;
+use function file_exists;
+use function file_get_contents;
+use function file_put_contents;
+use function is_file;
+use function realpath;
+use function sprintf;
+use function str_replace;
+use function substr;
+use function ucfirst;
+use const DIRECTORY_SEPARATOR;
 
-/**
- * @author William Durand <william.durand1@gmail.com>
- */
 class TestPrepareCommand extends AbstractCommand
 {
     /**
@@ -223,11 +229,11 @@ class TestPrepareCommand extends AbstractCommand
     /**
      * @param \Symfony\Component\Console\Output\OutputInterface $output
      * @param string $vendor
-     * @param string $verbose
+     * @param string|bool $verbose
      *
      * @return void
      */
-    protected function runModelBuildCommand(OutputInterface $output, string $vendor, string $verbose): void
+    protected function runModelBuildCommand(OutputInterface $output, string $vendor, string|bool $verbose): void
     {
         $in = new ArrayInput([
             'command' => 'model:build',
@@ -245,11 +251,11 @@ class TestPrepareCommand extends AbstractCommand
     /**
      * @param \Symfony\Component\Console\Output\OutputInterface $output
      * @param string $vendor
-     * @param string $verbose
+     * @param string|bool $verbose
      *
      * @return void
      */
-    protected function runSqlBuildCommand(OutputInterface $output, string $vendor, string $verbose): void
+    protected function runSqlBuildCommand(OutputInterface $output, string $vendor, string|bool $verbose): void
     {
         $in = new ArrayInput([
             'command' => 'sql:build',
@@ -281,11 +287,11 @@ class TestPrepareCommand extends AbstractCommand
     /**
      * @param \Symfony\Component\Console\Output\OutputInterface $output
      * @param array<string> $connectionStrings
-     * @param string $verbose
+     * @param string|bool $verbose
      *
      * @return void
      */
-    protected function runSqlInsert(OutputInterface $output, array $connectionStrings, string $verbose): void
+    protected function runSqlInsert(OutputInterface $output, array $connectionStrings, string|bool $verbose): void
     {
         $in = new ArrayInput([
             'command' => 'sql:insert',

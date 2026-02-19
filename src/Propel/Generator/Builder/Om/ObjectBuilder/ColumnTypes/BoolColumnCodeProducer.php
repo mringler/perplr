@@ -1,14 +1,13 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes;
 
 use Propel\Generator\Builder\Om\ClassTools;
+use function in_array;
+use function preg_match;
+use function ucfirst;
 
 class BoolColumnCodeProducer extends ColumnCodeProducer
 {

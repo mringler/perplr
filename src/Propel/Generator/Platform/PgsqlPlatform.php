@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Platform;
 
@@ -21,13 +17,19 @@ use Propel\Generator\Model\Index;
 use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
+use function filter_var;
+use function implode;
+use function in_array;
+use function preg_replace;
+use function sprintf;
+use function strpos;
+use function strtolower;
+use function strtoupper;
+use function substr;
+use const FILTER_VALIDATE_BOOLEAN;
 
 /**
  * Postgresql PlatformInterface implementation.
- *
- * @author Hans Lellelid <hans@xmpl.org> (Propel)
- * @author Martin Poeschl <mpoeschl@marmot.at> (Torque)
- * @author Niklas Närhinen <niklas@narhinen.net>
  */
 class PgsqlPlatform extends DefaultPlatform
 {
@@ -663,8 +665,6 @@ ALTER TABLE %s RENAME TO %s;
     /**
      * Overrides the implementation from DefaultPlatform
      *
-     * @author Niklas Närhinen <niklas@narhinen.net>
-     *
      * @see DefaultPlatform::getModifyColumnDDL
      *
      * @param \Propel\Generator\Model\Diff\ColumnDiff $columnDiff
@@ -851,8 +851,6 @@ DROP SEQUENCE %s CASCADE;
     /**
      * Overrides the implementation from DefaultPlatform
      *
-     * @author Niklas Närhinen <niklas@narhinen.net>
-     *
      * @see DefaultPlatform::getModifyColumnsDDL
      *
      * @param array<\Propel\Generator\Model\Diff\ColumnDiff> $columnDiffs
@@ -873,8 +871,6 @@ DROP SEQUENCE %s CASCADE;
     /**
      * Overrides the implementation from DefaultPlatform
      *
-     * @author Niklas Närhinen <niklas@narhinen.net>
-     *
      * @see DefaultPlatform::getAddColumnsDLL
      *
      * @param array<\Propel\Generator\Model\Column> $columns
@@ -894,8 +890,6 @@ DROP SEQUENCE %s CASCADE;
 
     /**
      * Overrides the implementation from DefaultPlatform
-     *
-     * @author Niklas Närhinen <niklas@narhinen.net>
      *
      * @see DefaultPlatform::getDropIndexDDL
      *

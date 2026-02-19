@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Platform;
 
@@ -26,11 +22,25 @@ use Propel\Generator\Model\Unique;
 use Propel\Generator\Platform\Util\AlterTableStatementMerger;
 use Propel\Runtime\Connection\ConnectionInterface;
 use ReflectionClass;
+use function array_search;
+use function count;
+use function explode;
+use function implode;
+use function in_array;
+use function is_string;
+use function preg_replace;
+use function sprintf;
+use function str_replace;
+use function strlen;
+use function strpos;
+use function strtolower;
+use function strtr;
+use function substr;
+use function trim;
+use function var_export;
 
 /**
  * Default implementation for the PlatformInterface interface.
- *
- * @author Martin Poeschl <mpoeschl@marmot.at> (Torque)
  */
 class DefaultPlatform implements PlatformInterface
 {

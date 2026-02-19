@@ -1,16 +1,12 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Propel\Runtime\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraints\Type as SymfonyType;
+use function is_array;
+use function is_string;
 
 /**
  * BC wrapper for Symfony's Type constraint supporting both Symfony < 8 and 8+

@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Runtime\ActiveQuery\FilterExpression;
 
@@ -17,6 +13,16 @@ use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Criterion\Exception\InvalidClauseException;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\ColumnMap;
+use function array_map;
+use function count;
+use function implode;
+use function is_array;
+use function is_object;
+use function serialize;
+use function sprintf;
+use function stripos;
+use function strtoupper;
+use function substr;
 
 /**
  * A full filter statement given as a string, i.e. `col = ?`, `col1 = col2`, `col IS NULL`, `1=1`

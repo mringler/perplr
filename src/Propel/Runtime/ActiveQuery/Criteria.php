@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Runtime\ActiveQuery;
 
@@ -42,18 +38,28 @@ use Propel\Runtime\Map\DatabaseMap;
 use Propel\Runtime\Map\TableMap;
 use Propel\Runtime\Propel;
 use Propel\Runtime\Util\PropelConditionalProxy;
+use function array_diff;
+use function array_intersect_key;
+use function array_map;
+use function array_merge;
+use function array_unique;
+use function array_values;
+use function count;
+use function implode;
+use function in_array;
+use function is_array;
+use function is_string;
+use function print_r;
+use function sprintf;
+use function strrpos;
+use function substr;
+use function trigger_deprecation;
+use function trigger_error;
+use function var_export;
+use const E_USER_WARNING;
 
 /**
  * This is a utility class for holding criteria information for a query.
- *
- * @author Hans Lellelid <hans@xmpl.org> (Propel)
- * @author Kaspars Jaudzems <kaspars.jaudzems@inbox.lv> (Propel)
- * @author Frank Y. Kim <frank.kim@clearink.com> (Torque)
- * @author John D. McNally <jmcnally@collab.net> (Torque)
- * @author Brett McLaughlin <bmclaugh@algx.net> (Torque)
- * @author Eric Dobbs <eric@dobbse.net> (Torque)
- * @author Henning P. Schmiedehausen <hps@intermeta.de> (Torque)
- * @author Sam Joseph <sam@neurogrid.com> (Torque)
  */
 class Criteria
 {

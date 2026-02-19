@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Manager;
 
@@ -15,10 +11,18 @@ use Propel\Generator\Model\Database;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Schema\Dumper\DumperInterface;
 use Propel\Runtime\Connection\ConnectionInterface;
+use function count;
+use function file_put_contents;
+use function get_class;
+use function implode;
+use function in_array;
+use function is_array;
+use function preg_match;
+use function sprintf;
+use function str_replace;
+use function var_export;
+use const DIRECTORY_SEPARATOR;
 
-/**
- * @author William Durand <william.durand1@gmail.com>
- */
 class ReverseManager extends AbstractManager
 {
     /**

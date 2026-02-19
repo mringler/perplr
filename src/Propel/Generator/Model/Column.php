@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Model;
 
@@ -12,18 +8,22 @@ use Exception;
 use LogicException;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Platform\PlatformInterface;
+use function array_map;
+use function count;
+use function explode;
+use function in_array;
+use function is_string;
+use function lcfirst;
+use function rtrim;
+use function sprintf;
+use function str_replace;
+use function strrpos;
+use function strtolower;
+use function strtoupper;
+use function substr;
 
 /**
  * A class for holding data about a column used in an application.
- *
- * @author Hans Lellelid <hans@xmpl.org> (Propel)
- * @author Leon Messerschmidt <leon@opticode.co.za> (Torque)
- * @author Jason van Zyl <jvanzyl@apache.org> (Torque)
- * @author Jon S. Stevens <jon@latchkey.com> (Torque)
- * @author Daniel Rall <dlr@finemaltcoding.com> (Torque)
- * @author Byron Foster <byron_foster@yahoo.com> (Torque)
- * @author Bernd Goldschmidt <bgoldschmidt@rapidsoft.de>
- * @author Hugo Hamon <webmaster@apprendre-php.com> (Propel)
  */
 class Column extends MappingModel
 {
@@ -365,11 +365,14 @@ class Column extends MappingModel
             $scale = $this->getAttribute('scale') ? (int)$this->getAttribute('scale') : null;
             $domain->replaceScale($scale);
 
-            $defval = $this->getAttribute('defaultValue', $this->getAttribute('default'));
-            if ($defval !== null && strtolower($defval) !== 'null') {
-                $domain->setDefaultValue(new ColumnDefaultValue($defval, ColumnDefaultValue::TYPE_VALUE));
-            } elseif ($this->getAttribute('defaultExpr') !== null) {
-                $domain->setDefaultValue(new ColumnDefaultValue($this->getAttribute('defaultExpr'), ColumnDefaultValue::TYPE_EXPR));
+            foreach (['defaultValue', 'default', 'defaultExpr'] as $key) {
+                $defaultValue = $this->getAttribute($key);
+                if ($defaultValue === null || strtolower((string)$defaultValue) === 'null') {
+                    continue;
+                }
+                $domain->createDefaultValue($defaultValue, $key === 'defaultExpr');
+
+                break;
             }
 
             if ($this->getAttribute('valueSet')) {

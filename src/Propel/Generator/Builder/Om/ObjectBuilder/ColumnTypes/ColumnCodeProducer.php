@@ -1,16 +1,16 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes;
 
 use Propel\Generator\Builder\Om\ObjectBuilder;
 use Propel\Generator\Builder\Om\ObjectBuilder\ObjectCodeProducer;
 use Propel\Generator\Model\Column;
+use function array_intersect;
+use function explode;
+use function settype;
+use function var_export;
 
 class ColumnCodeProducer extends ObjectCodeProducer
 {
@@ -129,7 +129,7 @@ class ColumnCodeProducer extends ObjectCodeProducer
             return '';
         }
         $defaultValueDescription = $defaultValue->isExpression()
-            ? '(expression) ' . $defaultValue->getValue()
+            ? '(expression) ' . (string)$defaultValue->getValue()
             : $this->getDefaultValueString();
 
         return "

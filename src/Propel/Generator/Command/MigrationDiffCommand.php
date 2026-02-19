@@ -1,10 +1,6 @@
 <?php
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types = 1);
 
 namespace Propel\Generator\Command;
 
@@ -18,10 +14,15 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Output\OutputInterface;
+use function array_merge;
+use function escapeshellarg;
+use function file_put_contents;
+use function implode;
+use function shell_exec;
+use function sprintf;
+use function time;
+use const DIRECTORY_SEPARATOR;
 
-/**
- * @author William Durand <william.durand1@gmail.com>
- */
 class MigrationDiffCommand extends AbstractMigrationCommand
 {
     /**
