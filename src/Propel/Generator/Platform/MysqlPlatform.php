@@ -35,22 +35,27 @@ class MysqlPlatform extends DefaultPlatform
     /**
      * @var string
      */
-    protected $tableEngineKeyword = 'ENGINE';
+    protected string $tableEngineKeyword = 'ENGINE';
 
     /**
      * @var string
      */
-    protected $defaultTableEngine = 'InnoDB';
+    protected string $defaultTableEngine = 'InnoDB';
 
     /**
      * @var string|null
      */
-    protected $serverVersion;
+    protected string|null $serverVersion = null;
 
     /**
      * @var bool
      */
-    protected $useUuidNativeType = false;
+    protected bool $useUuidNativeType = false;
+
+    /**
+     * @var bool
+     */
+    protected bool $ignoreSizeOnIntegerTypes = true;
 
     /**
      * Initializes db specific domain mapping.
@@ -111,6 +116,8 @@ class MysqlPlatform extends DefaultPlatform
             $enable = strtolower($uuidColumnType) === 'native';
             $this->setUuidNativeType($enable);
         }
+
+        $this->ignoreSizeOnIntegerTypes = $mysqlConfig['ignoreSizeOnIntegerTypes'];
     }
 
     /**
@@ -1022,13 +1029,25 @@ ALTER TABLE %s ADD %s %s;
     #[\Override]
     public function hasSize(string $sqlType): bool
     {
-        return !in_array($sqlType, [
+        $unSizedTypes = [
             'MEDIUMTEXT',
             'LONGTEXT',
             'BLOB',
             'MEDIUMBLOB',
             'LONGBLOB',
-        ], true);
+        ];
+
+        if ($this->ignoreSizeOnIntegerTypes) {
+            array_push(
+                $unSizedTypes,
+                PropelTypes::BIGINT,
+                PropelTypes::INTEGER,
+                PropelTypes::SMALLINT,
+                PropelTypes::TINYINT,
+            );
+        }
+
+        return !in_array($sqlType, $unSizedTypes, true);
     }
 
     /**
