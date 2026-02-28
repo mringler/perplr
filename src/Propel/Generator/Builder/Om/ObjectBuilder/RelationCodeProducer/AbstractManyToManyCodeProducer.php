@@ -599,6 +599,8 @@ abstract class AbstractManyToManyCodeProducer extends AbstractRelationCodeProduc
             $inputArgs = "[$inputArgs]";
         }
 
+        $ownStubClassName = $this->objectBuilder->getObjectClassName();
+
         $script .= "
     /**
      * Remove $names of this object through the {$middleTableName->getName()} cross reference table.
@@ -611,6 +613,8 @@ abstract class AbstractManyToManyCodeProducer extends AbstractRelationCodeProduc
         if (!\$this->get{$targetIdentifierPlural}()->contains({$inputArgs})) {
             return \$this;
         }
+
+        assert(\$this instanceof $ownStubClassName);
 
         {$middleModelName} = new {$middleModelClassName}();";
 
