@@ -393,7 +393,7 @@ class Criteria
     protected CombineOperatorManager $filterOperatorManager;
 
     /**
-     * @var \Propel\Runtime\Util\PropelConditionalProxy|null
+     * @var \Propel\Runtime\Util\PropelConditionalProxy<static>|null
      */
     protected $conditionalProxy;
 
@@ -2273,7 +2273,7 @@ class Criteria
      *
      * @param mixed $cond Casts to bool for variable evaluation
      *
-     * @return \Propel\Runtime\ActiveQuery\Criteria|\Propel\Runtime\Util\PropelConditionalProxy
+     * @return static|\Propel\Runtime\Util\PropelConditionalProxy<static>
      */
     public function _if($cond)
     {
@@ -2292,7 +2292,7 @@ class Criteria
      *
      * @throws \Propel\Runtime\Exception\LogicException
      *
-     * @return \Propel\Runtime\ActiveQuery\Criteria|\Propel\Runtime\Util\PropelConditionalProxy
+     * @return static|\Propel\Runtime\Util\PropelConditionalProxy<static>
      */
     public function _elseif($cond)
     {
@@ -2311,7 +2311,7 @@ class Criteria
      *
      * @throws \Propel\Runtime\Exception\LogicException
      *
-     * @return \Propel\Runtime\ActiveQuery\Criteria|\Propel\Runtime\Util\PropelConditionalProxy
+     * @return static|\Propel\Runtime\Util\PropelConditionalProxy<static>
      */
     public function _else()
     {
@@ -2328,7 +2328,7 @@ class Criteria
      *
      * @throws \Propel\Runtime\Exception\LogicException
      *
-     * @return \Propel\Runtime\ActiveQuery\Criteria|\Propel\Runtime\Util\PropelConditionalProxy
+     * @return static|\Propel\Runtime\Util\PropelConditionalProxy<static>
      */
     public function _endif()
     {
@@ -2338,12 +2338,7 @@ class Criteria
 
         $this->conditionalProxy = $this->conditionalProxy->getParentProxy();
 
-        if ($this->conditionalProxy) {
-            return $this->conditionalProxy->getCriteriaOrProxy();
-        }
-
-        // reached last level
-        return $this;
+        return $this->conditionalProxy?->getCriteriaOrProxy() ?? $this;
     }
 
     /**
