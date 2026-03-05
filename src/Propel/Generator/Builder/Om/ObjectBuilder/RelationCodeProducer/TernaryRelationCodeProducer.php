@@ -452,6 +452,7 @@ class TernaryRelationCodeProducer extends AbstractManyToManyCodeProducer
     #[\Override]
     protected function buildDoAdd(string &$script): void
     {
+        $this->referencedClasses->registerFunction('assert');
         $targetIdentifierSingular = $this->names->getTargetIdentifier(false);
         $sourceIdentifierSingular = $this->names->getSourceIdentifier(false);
         $middleModelClassName = $this->middleTableNames->useObjectStubClassName();

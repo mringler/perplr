@@ -3079,6 +3079,7 @@ $indent};";
 
         $hasFkBackReference = array_any($table->getForeignKeys(), fn (ForeignKey $fk) => !$fk->isOneToOne());
         if ($hasFkBackReference) {
+            $this->referencedClasses->registerFunction('assert');
             $ownStubClassName = $this->getObjectClassName();
             $script .= "
         assert(\$this instanceof $ownStubClassName);";

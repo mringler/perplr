@@ -578,6 +578,7 @@ abstract class AbstractManyToManyCodeProducer extends AbstractRelationCodeProduc
      */
     protected function addRemove(string &$script): void
     {
+        $this->referencedClasses->registerFunction('assert');
         $localAttributeName = $this->names->getAttributeWithCollectionName();
         $deletionScheduledAttributeName = $this->names->getAttributeScheduledForDeletionName();
 

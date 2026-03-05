@@ -273,6 +273,7 @@ class ManyToManyRelationCodeProducer extends AbstractManyToManyCodeProducer
     #[\Override]
     protected function buildDoAdd(string &$script): void
     {
+        $this->referencedClasses->registerFunction('assert');
         $middleTableModelClass = $this->middleTableNames->useObjectStubClassName(true, 'Child');
 
         $middleTableIdentifierSingular = $this->names->getMiddleTableIdentifier(false);

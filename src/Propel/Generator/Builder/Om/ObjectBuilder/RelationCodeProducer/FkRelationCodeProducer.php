@@ -165,6 +165,7 @@ class FkRelationCodeProducer extends AbstractRelationCodeProducer
      */
     protected function addMutator(string &$script): void
     {
+        $this->referencedClasses->registerFunction('assert');
         $relationIdentifierSingular = $this->relation->getIdentifier();
         $varName = '$' . lcfirst($relationIdentifierSingular);
         $reverseIdentifierSingular = $this->relation->getIdentifierReversed();
@@ -263,6 +264,7 @@ class FkRelationCodeProducer extends AbstractRelationCodeProducer
                 ->findOne(\$con);";
         }
         if ($fk->isLocalPrimaryKey()) {
+            $this->referencedClasses->registerFunction('assert');
             $script .= "
             // Because this foreign key represents a one-to-one relationship, we will create a bi-directional association.
             assert(\$this instanceof $ownStubClassName);

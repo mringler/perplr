@@ -6,6 +6,7 @@ namespace Propel\Runtime\Util;
 
 use BadMethodCallException;
 use Propel\Runtime\ActiveQuery\Criteria;
+use function in_array;
 
 /**
  * Proxy for conditional statements in a fluid interface.

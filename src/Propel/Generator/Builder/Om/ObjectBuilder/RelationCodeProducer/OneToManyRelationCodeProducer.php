@@ -489,6 +489,7 @@ class OneToManyRelationCodeProducer extends AbstractIncomingRelationCode
      */
     protected function addDoAdd(string &$script): void
     {
+        $this->referencedClasses->registerFunction('assert');
         $targetClassName = $this->targetTableNames->useObjectStubClassName();
         $targetClassNameFq = $this->targetTableNames->useObjectStubClassName(false);
         $relatedObjectClassName = $this->relation->getIdentifierReversed();

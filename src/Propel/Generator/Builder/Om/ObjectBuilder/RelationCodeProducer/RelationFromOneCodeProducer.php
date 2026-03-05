@@ -133,6 +133,7 @@ class RelationFromOneCodeProducer extends AbstractIncomingRelationCode
      */
     protected function addSet(string &$script): void
     {
+        $this->referencedClasses->registerFunction('assert');
         $referrer = $this->relation;
         $modelClassName = $this->targetTableNames->useObjectStubClassName();
         $modelClassNameFq = $this->targetTableNames->useObjectStubClassName(false);
