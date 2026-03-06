@@ -272,7 +272,7 @@ class TernaryRelationCodeProducer extends AbstractManyToManyCodeProducer
         $targetIdentifierPlural = $this->names->getTargetIdentifier(true);
         $relationIdentifier = $this->nameProducer->resolveRelationIdentifier($relationFk, true);
 
-        $relatedObjectClassName = $this->signature->getClassNameImporter($relationFk)->useObjectBaseClassName();
+        $relatedObjectClassName = $relationFk->getForeignTable()->getPhpName();
 
         [$argumentDeclaration, $functionParameters, $phpDoc] = $this->signature->buildFullSignature(['fkToIgnore' => $relationFk, 'withDefaultValues' => SignatureCollector::USE_DEFAULT_NULL]);
         $objectCollectionType = $this->signature->getClassNameImporter($relationFk)->useCollectionClassName(false);
@@ -422,7 +422,7 @@ class TernaryRelationCodeProducer extends AbstractManyToManyCodeProducer
         $targetIdentifierPlural = $this->names->getTargetIdentifier(true);
         $relationIdentifier = $this->nameProducer->resolveRelationIdentifier($fk, true);
 
-        $argsCsv = $this->signature->getClassNameImporter($fk)->useObjectBaseClassName();
+        $argsCsv = $fk->getForeignTable()->getPhpName();
 
         [$argumentDeclarations, $functionParameters, $phpDoc] = $this->signature->buildFullSignature(['fkToIgnore' => $fk, 'withDefaultValues' => SignatureCollector::USE_DEFAULT_NULL]);
 
@@ -452,6 +452,7 @@ class TernaryRelationCodeProducer extends AbstractManyToManyCodeProducer
     #[\Override]
     protected function buildDoAdd(string &$script): void
     {
+        $this->referencedClasses->registerFunction('assert');
         $targetIdentifierSingular = $this->names->getTargetIdentifier(false);
         $sourceIdentifierSingular = $this->names->getSourceIdentifier(false);
         $middleModelClassName = $this->middleTableNames->useObjectStubClassName();
@@ -485,7 +486,10 @@ class TernaryRelationCodeProducer extends AbstractManyToManyCodeProducer
         {$foreignObjectName}->set{$primaryKey->getPhpName()}(\$$paramName);";
         }
 
+        $ownStubClassName = $this->objectBuilder->getObjectClassName();
+
         $script .= "
+        assert(\$this instanceof $ownStubClassName);
         {$foreignObjectName}->set{$sourceIdentifierSingular}(\$this);
 
         \$this->add{$refKObjectClassName}({$foreignObjectName});\n";
