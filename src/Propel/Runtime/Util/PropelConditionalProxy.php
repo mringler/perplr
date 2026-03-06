@@ -24,17 +24,17 @@ use Propel\Runtime\ActiveQuery\Criteria;
  *     ->doOtherStuff() // executed
  *   ->_endif(); // returns $c
  * @see Criteria
- * @template T of \Propel\Runtime\ActiveQuery\Criteria
+ * @template QueryClass of \Propel\Runtime\ActiveQuery\Criteria
  */
 class PropelConditionalProxy
 {
     /**
-     * @var T
+     * @var QueryClass
      */
     protected $criteria;
 
     /**
-     * @var \Propel\Runtime\Util\PropelConditionalProxy<T>|null
+     * @var \Propel\Runtime\Util\PropelConditionalProxy<QueryClass>|null
      */
     protected $parent;
 
@@ -54,9 +54,9 @@ class PropelConditionalProxy
     protected $parentState;
 
     /**
-     * @param T $criteria
+     * @param QueryClass $criteria
      * @param mixed $cond
-     * @param \Propel\Runtime\Util\PropelConditionalProxy<T>|null $proxy
+     * @param \Propel\Runtime\Util\PropelConditionalProxy<QueryClass>|null $proxy
      */
     public function __construct(Criteria $criteria, $cond, ?PropelConditionalProxy $proxy = null)
     {
@@ -74,7 +74,7 @@ class PropelConditionalProxy
      *
      * @param mixed $cond Casts to bool for variable evaluation
      *
-     * @return T|\Propel\Runtime\Util\PropelConditionalProxy<T>
+     * @return QueryClass|\Propel\Runtime\Util\PropelConditionalProxy<QueryClass>
      */
     public function _if($cond)
     {
@@ -86,7 +86,7 @@ class PropelConditionalProxy
      *
      * @param mixed $cond Casts to bool for variable evaluation
      *
-     * @return $this|T
+     * @return $this|QueryClass
      */
     public function _elseif($cond)
     {
@@ -98,7 +98,7 @@ class PropelConditionalProxy
     /**
      * Allows for conditional statements in a fluid interface.
      *
-     * @return $this|T
+     * @return $this|QueryClass
      */
     public function _else()
     {
@@ -109,7 +109,7 @@ class PropelConditionalProxy
      * Returns the parent object
      * Allows for conditional statements in a fluid interface.
      *
-     * @return T|\Propel\Runtime\Util\PropelConditionalProxy<T>
+     * @return QueryClass|\Propel\Runtime\Util\PropelConditionalProxy<QueryClass>
      */
     public function _endif()
     {
@@ -129,7 +129,7 @@ class PropelConditionalProxy
     /**
      * @param mixed $cond
      *
-     * @return $this|T
+     * @return $this|QueryClass
      */
     protected function setConditionalState($cond)
     {
@@ -140,7 +140,7 @@ class PropelConditionalProxy
     }
 
     /**
-     * @return self<T>|null
+     * @return self<QueryClass>|null
      */
     public function getParentProxy(): ?self
     {
@@ -148,7 +148,7 @@ class PropelConditionalProxy
     }
 
     /**
-     * @return $this|T
+     * @return $this|QueryClass
      */
     public function getCriteriaOrProxy()
     {
