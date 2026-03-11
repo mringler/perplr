@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Propel\Generator\Reverse;
 
 use PDO;
+use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
@@ -18,6 +19,7 @@ use Propel\Generator\Platform\MysqlPlatform;
 use Propel\Runtime\Connection\ConnectionInterface;
 use RuntimeException;
 use function array_keys;
+use function assert;
 use function count;
 use function explode;
 use function implode;
@@ -26,7 +28,10 @@ use function is_array;
 use function preg_match;
 use function preg_match_all;
 use function sprintf;
+use function str_ends_with;
 use function str_replace;
+use function str_starts_with;
+use function stripslashes;
 use function strpos;
 use function strtolower;
 use function strtoupper;
@@ -125,7 +130,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
     public function parse(Database $database, array $additionalTables = []): int
     {
         if ($this->getGeneratorConfig() !== null) {
-            $this->addVendorInfo = (bool) $this->getGeneratorConfig()->getConfigProperty('migrations.addVendorInfo');
+            $this->addVendorInfo = (bool)$this->getGeneratorConfig()->getConfigProperty('migrations.addVendorInfo');
         }
 
         $this->parseTables($database);
@@ -327,10 +332,10 @@ class MysqlSchemaParser extends AbstractSchemaParser
             if ($matches[2]) {
                 $cpos = strpos($matches[2], ',');
                 if ($cpos !== false) {
-                    $size = (int) substr($matches[2], 0, $cpos);
-                    $scale = (int) substr($matches[2], $cpos + 1);
+                    $size = (int)substr($matches[2], 0, $cpos);
+                    $scale = (int)substr($matches[2], $cpos + 1);
                 } else {
-                    $size = (int) $matches[2];
+                    $size = (int)$matches[2];
                 }
             }
             if ($matches[3]) {
@@ -370,9 +375,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
         $default = $parsedValue;
 
         if ($parsedValue !== '' && preg_match('/text/', $nativeType)) {
-            // MySQL 8.0+ wraps TEXT defaults with a charset prefix like _utf8mb3'value'
-            // MariaDB wraps TEXT type default values in extra single quotes like 'value'
-            $default = preg_replace('~^(?:_\w+)?\'(.*)\'$~', '$1', $parsedValue);
+            $default = $this->unwrapDefaultValueString($parsedValue);
         }
 
         if ($propelType == PropelTypes::BOOLEAN) {
@@ -395,6 +398,33 @@ class MysqlSchemaParser extends AbstractSchemaParser
         }
 
         return new ColumnDefaultValue($default, $type);
+    }
+
+    /**
+     * Cleanup of default value string expressions as returned from DBMS.
+     *
+     * MariaDB returns a quoted string: "'Saying \'Foo\' means nothing'"
+     * MySQL 8.0+ escapes again and adds a charset prefix: "_utf8mb3\'Saying \\\'Foo\\\' means nothing\'"
+     *
+     * @param string $value
+     *
+     * @throws \Propel\Generator\Exception\EngineException
+     *
+     * @return string
+     */
+    protected function unwrapDefaultValueString(string $value): string
+    {
+        if (str_starts_with($value, '_')) {
+            $value = stripslashes($value); // unescape outer quotes
+            $firstQuotePos = strpos($value, "'");
+            assert($firstQuotePos !== false);
+            $value = substr($value, $firstQuotePos); // remove charset prefix
+        }
+        if ($value !== '' && !(str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+            throw new EngineException("Expected default value to be quoted, but got: `$value`");
+        }
+
+        return stripslashes(substr($value, 1, -1)); // unquote string
     }
 
     /**
@@ -611,7 +641,7 @@ EOT;
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $colName = $row['Column_name'];
             $colSize = $row['Sub_part'];
-            $name = (string) $row['Key_name'];
+            $name = (string)$row['Key_name'];
 
             if ($name === 'PRIMARY') {
                 continue;

@@ -155,6 +155,40 @@ EOT;
     }
 
     /**
+     * @return string[][]
+     */
+    public function TextColumnDefaultValueDataProvider(): array
+    {
+        return [
+            ["_latin1\'Foo\'", 'Foo'],
+            ["_utf8mb3\'Foo\'", 'Foo'],
+            ["_utf8mb3\'Saying \\\'Foo\\\' means nothing\'", "Saying 'Foo' means nothing"],
+            ["_utf8mb3\'Saying \"Foo\" means nothing\'", 'Saying "Foo" means nothing'],
+            ["_utf8mb4\'\'", ''],
+            ["'Saying \'Foo\' means nothing'", "Saying 'Foo' means nothing"],
+            ["'Foo'", 'Foo'],
+            ["''", ''],
+            ['', ''],
+        ];
+    }
+
+    /**
+     * @dataProvider TextColumnDefaultValueDataProvider
+     *
+     * @param string $defaultValue
+     * @param string $expected
+     *
+     * @return void
+     */
+    public function testTextColumnDefaultValue(string $defaultValue, string $expected): void
+    {
+        $parser = new MysqlSchemaParser();
+        $actual = $this->callMethod($parser, 'unwrapDefaultValueString', [$defaultValue]);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    /**
      * @return void
      */
     public function testTextDefaultValues(): void
@@ -176,6 +210,7 @@ EOT;
         $this->con->exec("CREATE TABLE test_text_defaults (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             content_text TEXT DEFAULT ('hello text'),
+            content_text_escaped TEXT DEFAULT ('foo says \'bar\''),
             content_text_empty TEXT DEFAULT (''),
             content_text_not_null TEXT NOT NULL,
             content_text_none TEXT
@@ -198,6 +233,13 @@ EOT;
             $this->assertNotNull($contentText->getDefaultValue(), 'TEXT column default value should be preserved');
             $this->assertEquals(ColumnDefaultValue::TYPE_VALUE, $contentText->getDefaultValue()->getType());
             $this->assertEquals('hello text', $contentText->getDefaultValue()->getValue());
+
+            // TEXT with default value
+            $contentText = $table->getColumn('content_text_escaped');
+            $this->assertNotNull($contentText, 'Column content_text should exist');
+            $this->assertNotNull($contentText->getDefaultValue(), 'TEXT column default value should be preserved');
+            $this->assertEquals(ColumnDefaultValue::TYPE_VALUE, $contentText->getDefaultValue()->getType());
+            $this->assertEquals("foo says 'bar'", $contentText->getDefaultValue()->getValue());
 
             // TEXT with empty string default
             $contentTextEmpty = $table->getColumn('content_text_empty');
