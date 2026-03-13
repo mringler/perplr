@@ -82,20 +82,18 @@ abstract class AbstractOMBuilder extends DataModelBuilder
 
         $ignoredNamespace = ltrim((string)$this->getNamespace(), '\\');
         $useStatements = $this->buildUseStatements($ignoredNamespace ?: 'namespace');
-        if ($useStatements) {
-            $script = $useStatements . $script;
-        }
-
         $namespaceStatement = $this->buildNamespaceStatement();
-        if ($namespaceStatement) {
-            $script = $namespaceStatement . $script;
-        }
+        $strictTypesStatement = $this->declaresStrictTypes() ? "declare(strict_types = 1);\n\n" : '';
 
-        $script = "<?php
+        return $this->clean("<?php\n\n{$strictTypesStatement}{$namespaceStatement}{$useStatements}{$script}");
+    }
 
-" . $script;
-
-        return $this->clean($script);
+    /**
+     * @return bool
+     */
+    protected function declaresStrictTypes(): bool
+    {
+        return (bool)($this->getBuildProperty('generator.declareStrictTypesInBuilders') ?? true);
     }
 
     /**
@@ -212,12 +210,9 @@ abstract class AbstractOMBuilder extends DataModelBuilder
      */
     public function getPackage(): string|null
     {
-        $pkg = ($this->getTable()->getPackage() ?: $this->getDatabaseOrFail()->getPackage());
-        if (!$pkg) {
-            $pkg = (string)$this->getBuildPropertyString('generator.targetPackage');
-        }
-
-        return $pkg;
+        return ($this->getTable()->getPackage()
+            ?: $this->getDatabaseOrFail()->getPackage())
+            ?: (string)$this->getBuildPropertyString('generator.targetPackage');
     }
 
     /**
@@ -270,13 +265,13 @@ abstract class AbstractOMBuilder extends DataModelBuilder
     /**
      * return the string for the class namespace
      *
-     * @return string|null
+     * @return string
      */
-    public function buildNamespaceStatement(): ?string
+    public function buildNamespaceStatement(): string
     {
         $namespace = $this->getNamespace();
 
-        return $namespace ? "namespace $namespace;\n\n" : null;
+        return $namespace ? "namespace $namespace;\n\n" : '';
     }
 
     /**
