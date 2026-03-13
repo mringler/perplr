@@ -46,6 +46,13 @@ abstract class AbstractOMBuilder extends DataModelBuilder
     use PathTrait;
 
     /**
+     * Has to be set on concrete builders
+     *
+     * @var \Propel\Generator\Builder\Om\BuilderType|null
+     */
+    public const BUILDER_TYPE = null;
+
+    /**
      * @param \Propel\Generator\Model\Table $table
      */
     public function __construct(Table $table)

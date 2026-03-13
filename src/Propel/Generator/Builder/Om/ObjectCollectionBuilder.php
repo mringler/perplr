@@ -17,6 +17,11 @@ use function substr;
 class ObjectCollectionBuilder extends AbstractOMBuilder
 {
     /**
+     * @var \Propel\Generator\Builder\Om\BuilderType|null
+     */
+    public const BUILDER_TYPE = BuilderType::Collection;
+
+    /**
      * Used in {@see AbstractOMBuilder::applyBehaviorModifierBase()} to call {@see \Propel\Generator\Model\Behavior::getObjectCollectionBuilderModifier()}.
      *
      * @var string

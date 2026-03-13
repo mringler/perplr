@@ -31,6 +31,11 @@ use const PHP_EOL;
  */
 class TableMapBuilder extends AbstractOMBuilder
 {
+    /**
+     * @var \Propel\Generator\Builder\Om\BuilderType|null
+     */
+    public const BUILDER_TYPE = BuilderType::TableMap;
+
     protected EntityObjectClassNames $tableNames;
 
     /**

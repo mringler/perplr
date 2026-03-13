@@ -46,6 +46,11 @@ use function var_export;
 class ObjectBuilder extends AbstractObjectBuilder
 {
     /**
+     * @var \Propel\Generator\Builder\Om\BuilderType|null
+     */
+    public const BUILDER_TYPE = BuilderType::ObjectBase;
+
+    /**
      * @var array<\Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes\ColumnCodeProducer>
      */
     protected array $columnCodeProducers = [];

@@ -36,6 +36,11 @@ use function var_export;
  */
 class QueryBuilder extends AbstractOMBuilder
 {
+    /**
+     * @var \Propel\Generator\Builder\Om\BuilderType|null
+     */
+    public const BUILDER_TYPE = BuilderType::QueryBase;
+
     protected EntityObjectClassNames $tableNames;
 
     /**
