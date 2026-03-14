@@ -2937,7 +2937,7 @@ $indent};";
         $this->addCopyInto($script);
 
         $script .= $this->renderTemplate('baseObjectCopy', [
-            'objectInstanceCreationCode' => $this->buildObjectInstanceCreationCode('$copyObj', '$clazz'),
+            'objectInstanceCreationCode' => '$copyObj = new $clazz();',
         ]);
     }
 

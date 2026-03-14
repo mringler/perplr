@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om;
 
-use LogicException;
 use Propel\Generator\Builder\Util\EntityObjectClassNames;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\CrossRelation;
@@ -545,30 +544,6 @@ class QueryBuilder extends AbstractOMBuilder
         }
 
         return $statements;
-    }
-
-    /**
-     * Build PHP statement that creates a hash key from column values.
-     *
-     * @param array<\Propel\Generator\Model\Column> $pkColumns Columns used to build hash.
-     * @param string $varLiteral The literal for the variable holding the key in the script.
-     *
-     * @throws \LogicException
-     *
-     * @return string
-     */
-    protected function getBuildPoolKeyStatement(array $pkColumns, string $varLiteral = '$key'): string
-    {
-        $numberOfPks = count($pkColumns);
-        if ($numberOfPks === 0) {
-            throw new LogicException("PoolKeyStatement cannot be created for table without PKs (in {$this->getQualifiedClassName()}).");
-        }
-        if ($numberOfPks === 1) {
-            return "(string)$varLiteral";
-        }
-        $this->declareGlobalFunction('serialize', 'array_map');
-
-        return "serialize(array_map(fn (\$k) => (string)\$k, $varLiteral))";
     }
 
     /**
