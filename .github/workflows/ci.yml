@@ -6,7 +6,22 @@ on:
       - 'main'
       - 'develop'
   pull_request:
+    paths-ignore:
+      - '**.md'
   workflow_dispatch:
+    inputs:
+      phpMinVersion:
+        description: 'PHP min version'
+        required: true
+        default: '8.1'
+      phpMaxVersion:
+        description: 'PHP max version'
+        required: true
+        default: '8.5'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   DB_NAME: 'perpl_tests'
@@ -20,21 +35,21 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-version: [ '8.1', '8.5' ]
+                php-version: [ "${{ inputs.phpMinVersion }}", "${{ inputs.phpMaxVersion }}" ]
                 db-type: [ sqlite, mysql, pgsql, agnostic ]
                 symfony-version: [ '6-min', '6-max', '7-min', '7-max', '8-min', '8-max']
                 exclude:
                   - symfony-version: '7-min'
-                    php-version: '8.1'
+                    php-version: ${{ inputs.phpMinVersion }}
                   - symfony-version: '7-max'
-                    php-version: '8.1'
+                    php-version: ${{ inputs.phpMinVersion }}
                   - symfony-version: '8-min'
-                    php-version: '8.1'
+                    php-version: ${{ inputs.phpMinVersion }}
                   - symfony-version: '8-max'
-                    php-version: '8.1'
+                    php-version: ${{ inputs.phpMinVersion }}
         services:
             postgres:
-                image: ${{ matrix.db-type != 'pgsql' && '' || (matrix.php-version == '8.1' && 'postgres:9' || 'postgres:latest') }}
+                image: ${{ matrix.db-type != 'pgsql' && '' || (matrix.php-version == inputs.phpMinVersion && 'postgres:9' || 'postgres:latest') }}
                 env:
                     POSTGRES_DB: ${{ env.DB_NAME }}
                     POSTGRES_USER: ${{ env.DB_USER }}
@@ -47,7 +62,7 @@ jobs:
                     --health-timeout 5s
                     --health-retries 5
             mysql:
-                image: ${{ matrix.db-type != 'mysql' && '' || (matrix.php-version == '8.1' && 'mariadb:10.2' || 'mysql:latest') }}
+                image: ${{ matrix.db-type != 'mysql' && '' || (matrix.php-version == inputs.phpMinVersion && 'mariadb:10.2' || 'mysql:latest') }}
                 env:
                     MYSQL_ROOT_PASSWORD: ${{ env.DB_PW }}
                     MYSQL_DATABASE: ${{ env.DB_NAME }}
@@ -88,7 +103,7 @@ jobs:
             - name: Run tests
               shell: bash
               run: |
-                if [[ ${{ matrix.php-version }} == '8.1' && ${{ matrix.symfony-version }} == '6-max' ]]; then
+                if [[ ${{ matrix.php-version }} == ${{ inputs.phpMinVersion }} && ${{ matrix.symfony-version }} == '6-max' ]]; then
                   export CODECOVERAGE=1 && vendor/bin/phpunit -c tests/${{ matrix.db-type }}.phpunit.xml --verbose --coverage-clover=tests/coverage.xml
                 else
                   vendor/bin/phpunit -c tests/${{ matrix.db-type }}.phpunit.xml
@@ -97,8 +112,8 @@ jobs:
                 SYMFONY_VERSION: ${{ matrix.symfony-version }}
 
             - name: Code Coverage Report
-              if: success() && matrix.php-version == '8.1' && matrix.symfony-version == '6-max'
-              uses: codecov/codecov-action@v1
+              if: success() && matrix.php-version == inputs.phpMinVersion && matrix.symfony-version == '6-max'
+              uses: codecov/codecov-action@v3
               with:
                   flags: ${{ matrix.php-version }}, ${{ matrix.db-type }}, ${{ matrix.symfony-version }}
                   file: tests/coverage.xml
@@ -110,9 +125,9 @@ jobs:
           fail-fast: false
           matrix:
             include:
-              - php-version: '8.1'
+              - php-version: ${{ inputs.phpMinVersion }}
                 symfony-version: '6-max'
-              - php-version: '8.5'
+              - php-version: 8.4 # should be ${{ inputs.phpMaxVersion }}, but 8.5.4 breaks Psalm atm
                 symfony-version: '8-max'
         steps:
             - uses: actions/checkout@v3
@@ -137,7 +152,7 @@ jobs:
             - id: build-container
               uses: ./.github/actions/setup-php
               with:
-                php-version: 8.4
+                php-version: ${{ inputs.phpMaxVersion }}
                 symfony-version: 6-max
                 cache-key-suffix: cs
             - name: Code Style
@@ -165,7 +180,7 @@ jobs:
             - id: build-container
               uses: ./.github/actions/setup-php
               with:
-                php-version: 8.4
+                php-version: ${{ inputs.phpMaxVersion }}
                 symfony-version: 6-max
                 cache-key-suffix: cs
             - name: Run checks on generated code
