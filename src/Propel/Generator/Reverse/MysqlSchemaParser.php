@@ -24,7 +24,6 @@ use function count;
 use function explode;
 use function implode;
 use function in_array;
-use function is_array;
 use function preg_match;
 use function preg_match_all;
 use function sprintf;
@@ -576,7 +575,7 @@ EOT;
                         $result = null;
                         $regex = sprintf('/ %s (%s)/', $fkaction, $pipedActionsString);
                         preg_match($regex, $fkey, $result);
-                        if ($result && is_array($result) && isset($result[1])) {
+                        if ($result) {
                             $fkactions[$fkaction] = $result[1];
                         }
                     }
