@@ -1,0 +1,62 @@
+#!/usr/bin/env php
+<?php
+
+use Propel\Tests\Attributes\ComparesGeneratedFile;
+use Propel\Tests\TestCase;
+use Symfony\Component\Finder\Finder;
+
+require_once __DIR__ . '/../../autoload.php.dist';
+
+function findTestFileNames(): array
+{
+    $finder = new Finder();
+    $finder->files()->name('*Test.php')->in(__DIR__ . '/../Propel/Tests');
+
+    $fileNames = [];
+    foreach ($finder as $file) {
+        preg_match('/namespace ([^;]+)/m', $file->getContents(), $matches);
+        $namespace = $matches[1] ?? null;
+        if (!$namespace) {
+            continue;
+        }
+        $fileNames[] = "\\$namespace\\" . $file->getBasename('.php');
+    }
+
+    return $fileNames;
+}
+
+function createTestFileReflectionsWithAttribute(array $fileNames): array
+{
+    $reflectionClasses = array_map(fn(string $name) => new \ReflectionClass($name), $fileNames);
+    $isTestCaseWithAttribute = fn(ReflectionClass $r) => $r->isSubclassOf(TestCase::class) && array_any($r->getMethods(), fn($m) => (bool) $m->getAttributes(ComparesGeneratedFile::class));
+
+    return array_filter($reflectionClasses, $isTestCaseWithAttribute);
+}
+
+$fileNames = findTestFileNames();
+$reflectionClasses = createTestFileReflectionsWithAttribute($fileNames);
+
+foreach ($reflectionClasses as $reflection) {
+    foreach ($reflection->getMethods() as $method) {
+        $attributes = $method->getAttributes(ComparesGeneratedFile::class);
+        if (count($attributes) === 0) {
+            continue;
+        }
+        $dataProvider = $method->getName();
+        $test = $reflection->newInstance();
+        // $reflection->getMethod('setUp')->invoke($test);
+
+        /** @var ComparesGeneratedFile $attribute */
+        $attribute = $attributes[0]->newInstance();
+        $data = $test->$dataProvider();
+        foreach ($data as $entry) {
+            $fileName = $entry[$attribute->fileNamePosition];
+            $text = $entry[$attribute->textPosition];
+            $builder = $attribute->textBuilder;
+            if ($builder) {
+                $text = $reflection->getMethod($builder)->invoke($test, $text);
+            }
+            file_put_contents($fileName, $text);
+        }
+    }
+}

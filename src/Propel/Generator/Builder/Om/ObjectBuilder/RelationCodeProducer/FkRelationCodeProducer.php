@@ -258,8 +258,7 @@ class FkRelationCodeProducer extends AbstractRelationCodeProducer
         }
 
         return \$this->$varName;
-    }
-";
+    }\n";
     }
 
     /**

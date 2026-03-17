@@ -6,7 +6,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Propel\Tests\Runtime\TypeTest;
+namespace Propel\Tests\Runtime\TypeTests;
 
 use Propel\Runtime\Util\UuidConverter;
 use Propel\Tests\Bookstore\Book2;

@@ -179,8 +179,7 @@ class ManyToManyRelationCodeProducer extends AbstractManyToManyCodeProducer
         }
 
         return \$this->$attributeName;
-    }
-";
+    }\n";
     }
 
     /**
@@ -308,7 +307,6 @@ class ManyToManyRelationCodeProducer extends AbstractManyToManyCodeProducer
         } elseif (!{$targetObject}->get{$ownIdentifierPlural}($targetGetterParameters)->contains(\$this)) {
             {$targetObject}->get{$ownIdentifierPlural}($targetGetterParameters)->push(\$this);
         }
-    }
-";
+    }\n";
     }
 }
