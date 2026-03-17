@@ -1,33 +1,8 @@
-<?php
+Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\TernaryRelationCodeProducer
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
-namespace Propel\Tests\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer;
+addAttributes():
 
-use Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\TernaryRelationCodeProducer;
-
-/**
- */
-class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
-{
-    /**
-     * @return void
-     */
-    public function testType(): void
-    {
-        $this->assertInstanceOf(TernaryRelationCodeProducer::class, $this->getCodeProducer());
-    }
-
-    /**
-     * @return void
-     */
-    public function testAttributes()
-    {
-        $expected = '
     /**
      * Objects associated via TeamDayType relation (n:m).
      */
@@ -37,31 +12,18 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
      * If $combinationTeamDayTypes contains all objects in TeamDayType relation.
      */
     protected bool $combinationTeamDayTypesIsPartial = false;
-';
-        $this->assertProducedCodeMatches('addAttributes', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testDeletionAttributes()
-    {
-        $expected = '
+
+addScheduledForDeletionAttribute():
+
     /**
      * Items of TeamDayType relation marked for deletion.
      */
     protected ObjectCombinationCollection|null $teamDayTypesScheduledForDeletion = null;
-';
-        $this->assertProducedCodeMatches('addScheduledForDeletionAttribute', $expected);
-    }
 
 
-    /**
-     * @return void
-     */
-    public function testInit()
-    {
-        $expected = '
+addInit():
+
     /**
      * Initializes the combinationTeamDayTypes crossRef collection.
      *
@@ -76,17 +38,10 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
         $this->combinationTeamDayTypes = new ObjectCombinationCollection();
         $this->combinationTeamDayTypesIsPartial = true;
     }
-';
-        $this->assertProducedCodeMatches('addInit', $expected);
-    }
 
 
-    /**
-     * @return void
-     */
-    public function testIsLoaded()
-    {
-        $expected = '
+addIsLoaded():
+
     /**
      * Checks if the combinationTeamDayTypes collection is loaded.
      *
@@ -96,17 +51,10 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
     {
         return $this->combinationTeamDayTypes !== null;
     }
-';
-        $this->assertProducedCodeMatches('addisLoaded', $expected);
-    }
 
 
-    /**
-     * @return void
-     */
-    public function testClear()
-    {
-        $expected = '
+addClear():
+
     /**
      * Clears out the combinationTeamDayTypes collection
      *
@@ -119,27 +67,14 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
     {
         $this->combinationTeamDayTypes = null; // important to set this to NULL since that means it is uninitialized
     }
-';
-        $this->assertProducedCodeMatches('addClear', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testOnReloadCode()
-    {
-        $expected = '
-            $this->combinationTeamDayTypes = null;';
 
-        $this->assertProducedCodeMatches('addOnReloadCode', $expected);
-    }
+addOnReloadCode():
 
-    /**
-     * @return void
-     */
-    public function testDeleteScheduledItemsCode()
-    {
-        $expected = '
+            $this->combinationTeamDayTypes = null;
+
+addDeleteScheduledItemsCode():
+
         if ($this->teamDayTypesScheduledForDeletion !== null && !$this->teamDayTypesScheduledForDeletion->isEmpty()) {
             $pks = [];
             foreach ($this->teamDayTypesScheduledForDeletion as $combination) {
@@ -169,16 +104,10 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
 
             }
         }
-';
-        $this->assertProducedCodeMatches('addDeleteScheduledItemsCode', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testCreateQuery()
-    {
-        $expected = '
+
+addCreateQuery():
+
     /**
      * Returns a new query object pre configured with filters from current object and given arguments to query the database.
      *
@@ -207,26 +136,10 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
 
         return $query;
     }
-';
-        $this->assertProducedCodeMatches('addCreateQuery', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testReserveNamesForGetters()
-    {
-        $reservedNames = $this->getCodeProducer()->reserveNamesForGetters();
-        $expected = ['TeamDayType', 'Team'];
-        $this->assertEqualsCanonicalizing($expected, $reservedNames);
-    }
 
-    /**
-     * @return void
-     */
-    public function testGet()
-    {
-        $expected = '
+addGetters():
+
     /**
      * Gets a combined collection of array{\Team, string, int} objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -310,16 +223,10 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
     {
         return $this->createTeamsQuery($day, $type, $criteria)->find($con);
     }
-';
-        $this->assertProducedCodeMatches('addGetters', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testSet()
-    {
-        $expected = '
+
+addSetters():
+
     /**
      * Sets a collection of TeamDayType objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -354,16 +261,10 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
 
         return $this;
     }
-';
-        $this->assertProducedCodeMatches('addSetters', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testCount()
-    {
-        $expected = '
+
+addCount():
+
     /**
      * Gets the number of TeamDayType objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -415,16 +316,10 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
     {
         return $this->createTeamsQuery($day, $type, $criteria)->count($con);
     }
-';
-        $this->assertProducedCodeMatches('addCount', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testAdd()
-    {
-        $expected = '
+
+addAdders():
+
     /**
      * Associate a Team with this object through the team_user cross reference table.
      *
@@ -448,16 +343,10 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
 
         return $this;
     }
-';
-        $this->assertProducedCodeMatches('addAdders', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testDoAdd()
-    {
-        $expected = '
+
+buildDoAdd():
+
     /**
      * @param \Team $team
      * @param string $day
@@ -486,16 +375,10 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
             $team->getUserDayTypes()->push($userDayTypesEntry);
         }
     }
-';
-        $this->assertProducedCodeMatches('buildDoAdd', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testRemove()
-    {
-        $expected = '
+
+addRemove():
+
     /**
      * Remove team, day, type of this object through the team_user cross reference table.
      *
@@ -537,60 +420,12 @@ class ManyToManyRelationWithParameterCodeTest extends AbstractManyToManyCodeTest
 
         return $this;
     }
-';
-        $this->assertProducedCodeMatches('addRemove', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testClearReferencesCode()
-    {
-        $expected = '
+
+addClearReferencesCode():
+
             if ($this->combinationTeamDayTypes) {
                 foreach ($this->combinationTeamDayTypes as $o) {
                     $o[0]->clearAllReferences($deep);
                 }
-            }';
-
-        $this->assertProducedCodeMatches('addClearReferencesCode', $expected);
-    }
-
-    /**
-     * @return string
-     */
-    protected function getSchema(): string
-    {  
-        return <<<EOF
-<database>
-
-    <table name="user">
-        <column name="id" type="INTEGER" primaryKey="true" autoIncrement="true"/>
-    </table>
-
-    <table name="team_user" isCrossRef="true">
-
-        <!-- additional PKs not used in FK makes this multiple -->
-        <column name="day" type="DATETIME" primaryKey="true" required="true" />
-        <column name="type" type="INTEGER" primaryKey="true" required="true" />
-
-        <column name="user_id" type="INTEGER" primaryKey="true" required="true" />
-        <column name="team_id" type="INTEGER" primaryKey="true" required="true" />
-
-        <foreign-key foreignTable="user">
-            <reference local="user_id" foreign="id" />
-        </foreign-key>
-
-        <foreign-key foreignTable="team">
-            <reference local="team_id" foreign="id" />
-        </foreign-key>
-    </table>
-
-    <table name="team">
-        <column name="id" type="INTEGER" autoIncrement="true" primaryKey="true" required="true"/>
-    </table>
-</database>
-EOF;
-    }
-
-}
+            }

@@ -1,33 +1,8 @@
-<?php
+Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\TernaryRelationCodeProducer
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
-namespace Propel\Tests\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer;
+addAttributes():
 
-use Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\TernaryRelationCodeProducer;
-
-/**
- */
-class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
-{
-    /**
-     * @return void
-     */
-    public function testType(): void
-    {
-        $this->assertInstanceOf(TernaryRelationCodeProducer::class, $this->getCodeProducer());
-    }
-
-    /**
-     * @return void
-     */
-    public function testAttributes()
-    {
-        $expected = '
     /**
      * Objects associated via TeamEvent relation (n:m).
      */
@@ -37,31 +12,18 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
      * If $combinationTeamEvents contains all objects in TeamEvent relation.
      */
     protected bool $combinationTeamEventsIsPartial = false;
-';
-        $this->assertProducedCodeMatches('addAttributes', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testDeletionAttributes()
-    {
-        $expected = '
+
+addScheduledForDeletionAttribute():
+
     /**
      * Items of TeamEvent relation marked for deletion.
      */
     protected ObjectCombinationCollection|null $teamEventsScheduledForDeletion = null;
-';
-        $this->assertProducedCodeMatches('addScheduledForDeletionAttribute', $expected);
-    }
 
 
-    /**
-     * @return void
-     */
-    public function testInit()
-    {
-        $expected = '
+addInit():
+
     /**
      * Initializes the combinationTeamEvents crossRef collection.
      *
@@ -76,17 +38,10 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
         $this->combinationTeamEvents = new ObjectCombinationCollection();
         $this->combinationTeamEventsIsPartial = true;
     }
-';
-        $this->assertProducedCodeMatches('addInit', $expected);
-    }
 
 
-    /**
-     * @return void
-     */
-    public function testIsLoaded()
-    {
-        $expected = '
+addIsLoaded():
+
     /**
      * Checks if the combinationTeamEvents collection is loaded.
      *
@@ -96,17 +51,10 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
     {
         return $this->combinationTeamEvents !== null;
     }
-';
-        $this->assertProducedCodeMatches('addisLoaded', $expected);
-    }
 
 
-    /**
-     * @return void
-     */
-    public function testClear()
-    {
-        $expected = '
+addClear():
+
     /**
      * Clears out the combinationTeamEvents collection
      *
@@ -119,27 +67,14 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
     {
         $this->combinationTeamEvents = null; // important to set this to NULL since that means it is uninitialized
     }
-';
-        $this->assertProducedCodeMatches('addClear', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testOnReloadCode()
-    {
-        $expected = '
-            $this->combinationTeamEvents = null;';
 
-        $this->assertProducedCodeMatches('addOnReloadCode', $expected);
-    }
+addOnReloadCode():
 
-    /**
-     * @return void
-     */
-    public function testDeleteScheduledItemsCode()
-    {
-        $expected = '
+            $this->combinationTeamEvents = null;
+
+addDeleteScheduledItemsCode():
+
         if ($this->teamEventsScheduledForDeletion !== null && !$this->teamEventsScheduledForDeletion->isEmpty()) {
             $pks = [];
             foreach ($this->teamEventsScheduledForDeletion as $combination) {
@@ -173,16 +108,10 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
 
             }
         }
-';
-        $this->assertProducedCodeMatches('addDeleteScheduledItemsCode', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testCreateQuery()
-    {
-        $expected = '
+
+addCreateQuery():
+
     /**
      * Returns a new query object pre configured with filters from current object and given arguments to query the database.
      *
@@ -230,26 +159,10 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
 
         return $query;
     }
-';
-        $this->assertProducedCodeMatches('addCreateQuery', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testReserveNamesForGetters()
-    {
-        $reservedNames = $this->getCodeProducer()->reserveNamesForGetters();
-        $expected = ['TeamEvent', 'Team', 'Event'];
-        $this->assertEqualsCanonicalizing($expected, $reservedNames);
-    }
 
-    /**
-     * @return void
-     */
-    public function testGet()
-    {
-        $expected = '
+addGetters():
+
     /**
      * Gets a combined collection of array{\Team, \Event} objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -348,16 +261,10 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
     {
         return $this->createEventsQuery($team, $criteria)->find($con);
     }
-';
-        $this->assertProducedCodeMatches('addGetters', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testSet()
-    {
-        $expected = '
+
+addSetters():
+
     /**
      * Sets a collection of TeamEvent objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -392,16 +299,10 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
 
         return $this;
     }
-';
-        $this->assertProducedCodeMatches('addSetters', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testCount()
-    {
-        $expected = '
+
+addCount():
+
     /**
      * Gets the number of TeamEvent objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -468,16 +369,10 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
     {
         return $this->createEventsQuery($team, $criteria)->count($con);
     }
-';
-        $this->assertProducedCodeMatches('addCount', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testAdd()
-    {
-        $expected = '
+
+addAdders():
+
     /**
      * Associate a Team with this object through the team_user cross reference table.
      *
@@ -523,16 +418,10 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
 
         return $this;
     }
-';
-        $this->assertProducedCodeMatches('addAdders', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testDoAdd()
-    {
-        $expected = '
+
+buildDoAdd():
+
     /**
      * @param \Team $team
      * @param \Event $event
@@ -568,16 +457,10 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
             $event->getUserTeams()->push($userTeamsEntry);
         }
     }
-';
-        $this->assertProducedCodeMatches('buildDoAdd', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testRemove()
-    {
-        $expected = '
+
+addRemove():
+
     /**
      * Remove team, event of this object through the team_user cross reference table.
      *
@@ -622,64 +505,12 @@ class TernaryRelationCodeTest extends AbstractManyToManyCodeTest
 
         return $this;
     }
-';
-        $this->assertProducedCodeMatches('addRemove', $expected);
-    }
 
-    /**
-     * @return void
-     */
-    public function testClearReferencesCode()
-    {
-        $expected = '
+
+addClearReferencesCode():
+
             if ($this->combinationTeamEvents) {
                 foreach ($this->combinationTeamEvents as $o) {
                     $o[0]->clearAllReferences($deep);
                 }
-            }';
-
-        $this->assertProducedCodeMatches('addClearReferencesCode', $expected);
-    }
-
-    /**
-     * @return string
-     */
-    protected function getSchema(): string
-    {  
-        return <<<EOF
-<database>
-
-    <table name="user">
-        <column name="id" type="INTEGER" primaryKey="true" autoIncrement="true"/>
-    </table>
-
-    <table name="team_user" isCrossRef="true">
-        <column name="user_id" type="INTEGER" primaryKey="true" required="true" />
-        <column name="team_id" type="INTEGER" primaryKey="true" required="true" />
-        <column name="event_id" type="INTEGER" primaryKey="true" required="true" />
-
-        <foreign-key foreignTable="user">
-            <reference local="user_id" foreign="id" />
-        </foreign-key>
-
-        <foreign-key foreignTable="team">
-            <reference local="team_id" foreign="id" />
-        </foreign-key>
-
-        <foreign-key foreignTable="event">
-            <reference local="event_id" foreign="id" />
-        </foreign-key>
-    </table>
-
-    <table name="team">
-        <column name="id" type="INTEGER" autoIncrement="true" primaryKey="true" required="true"/>
-    </table>
-
-    <table name="event">
-        <column name="id" type="INTEGER" autoIncrement="true" primaryKey="true" required="true"/>
-    </table>
-</database>
-EOF;
-    }
-
-}
+            }

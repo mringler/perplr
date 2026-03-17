@@ -1,31 +1,8 @@
-<?php
+Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\ManyToManyRelationCodeProducer
 
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
-namespace Propel\Tests\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer;
+addAttributes():
 
-use Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\ManyToManyRelationCodeProducer;
-
-class ManyToManyNamedRelationCodeTest extends AbstractManyToManyCodeTest
-{
-    /**
-     * @return void
-     */
-    public function testType(): void
-    {
-        $this->assertInstanceOf(ManyToManyRelationCodeProducer::class, $this->getCodeProducer());
-    }
-
-    /**
-     * @return void
-     */
-    public function testAttributes()
-    {
-        $expected = '
     /**
      * Objects associated via LeTeam relation (n:m).
      */
@@ -35,24 +12,70 @@ class ManyToManyNamedRelationCodeTest extends AbstractManyToManyCodeTest
      * If $collLeTeams contains all objects in LeTeam relation.
      */
     protected bool $collLeTeamsIsPartial = false;
-';
-        $this->assertProducedCodeMatches('addAttributes', $expected);
-    }
 
-    public function testDeletionAttributes()
-    {
-        $expected = '
+
+addScheduledForDeletionAttribute():
+
     /**
      * Items of LeTeam relation marked for deletion.
      */
     protected TeamCollection|null $leTeamsScheduledForDeletion = null;
-';
-        $this->assertProducedCodeMatches('addScheduledForDeletionAttribute', $expected);
+
+
+addInit():
+
+    /**
+     * Initializes the collLeTeams crossRef collection.
+     *
+     * By default this just sets the collLeTeams collection to an empty collection (like clearLeTeams());
+     * however, you may wish to override this method in your stub class to provide setting appropriate
+     * to your application -- for example, setting the initial array to the values stored in database.
+     *
+     * @return void
+     */
+    public function initLeTeams(): void
+    {
+        $this->collLeTeams = new TeamCollection();
+        $this->collLeTeamsIsPartial = true;
+        $this->collLeTeams->setModel('\Team');
     }
 
-    public function testDeleteScheduledItemsCode()
+
+addIsLoaded():
+
+    /**
+     * Checks if the collLeTeams collection is loaded.
+     *
+     * @return bool
+     */
+    public function isLeTeamsLoaded(): bool
     {
-        $expected = '
+        return $this->collLeTeams !== null;
+    }
+
+
+addClear():
+
+    /**
+     * Clears out the collLeTeams collection
+     *
+     * This does not modify the database; however, it will remove any associated objects, causing
+     * them to be refetched by subsequent calls to accessor method.
+     *
+     * @return void
+     */
+    public function clearLeTeams(): void
+    {
+        $this->collLeTeams = null; // important to set this to NULL since that means it is uninitialized
+    }
+
+
+addOnReloadCode():
+
+            $this->collLeTeams = null;
+
+addDeleteScheduledItemsCode():
+
         if ($this->leTeamsScheduledForDeletion !== null && !$this->leTeamsScheduledForDeletion->isEmpty()) {
             $pks = [];
             foreach ($this->leTeamsScheduledForDeletion as $entry) {
@@ -77,94 +100,13 @@ class ManyToManyNamedRelationCodeTest extends AbstractManyToManyCodeTest
                 }
             }
         }
-';
-        $this->assertProducedCodeMatches('addDeleteScheduledItemsCode', $expected);
-    }
 
-    public function testClear()
-    {
-        $expected = '
-    /**
-     * Clears out the collLeTeams collection
-     *
-     * This does not modify the database; however, it will remove any associated objects, causing
-     * them to be refetched by subsequent calls to accessor method.
-     *
-     * @return void
-     */
-    public function clearLeTeams(): void
-    {
-        $this->collLeTeams = null; // important to set this to NULL since that means it is uninitialized
-    }
-';
-        $this->assertProducedCodeMatches('addClear', $expected);
-    }
 
-    public function testInit()
-    {
-        $expected = '
-    /**
-     * Initializes the collLeTeams crossRef collection.
-     *
-     * By default this just sets the collLeTeams collection to an empty collection (like clearLeTeams());
-     * however, you may wish to override this method in your stub class to provide setting appropriate
-     * to your application -- for example, setting the initial array to the values stored in database.
-     *
-     * @return void
-     */
-    public function initLeTeams(): void
-    {
-        $this->collLeTeams = new TeamCollection();
-        $this->collLeTeamsIsPartial = true;
-        $this->collLeTeams->setModel(\'\Team\');
-    }
-';
-        $this->assertProducedCodeMatches('addInit', $expected);
-    }
+addCreateQuery():
 
-    public function testOnReloadCode()
-    {
-        $expected = '
-            $this->collLeTeams = null;';
 
-        $this->assertProducedCodeMatches('addOnReloadCode', $expected);
-    }
+addGetters():
 
-    public function testIsLoaded()
-    {
-        $expected = '
-    /**
-     * Checks if the collLeTeams collection is loaded.
-     *
-     * @return bool
-     */
-    public function isLeTeamsLoaded(): bool
-    {
-        return $this->collLeTeams !== null;
-    }
-';
-        $this->assertProducedCodeMatches('addisLoaded', $expected);
-    }
-
-    public function testCreateQuery()
-    {
-        $expected = '';
-        $this->assertProducedCodeMatches('addCreateQuery', $expected);
-    }
-
-    /**
-     * @return void
-     */
-    public function testReserveNamesForGetters()
-    {
-        $reservedNames = $this->getCodeProducer()->reserveNamesForGetters();
-        $expected = ['LeTeam'];
-        $this->assertEqualsCanonicalizing($expected, $reservedNames);
-    }
-
-    public function testGet()
-    {
-        $expected = '
     /**
      * Gets a collection of Team objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -213,13 +155,10 @@ class ManyToManyNamedRelationCodeTest extends AbstractManyToManyCodeTest
 
         return $this->collLeTeams;
     }
-';
-        $this->assertProducedCodeMatches('addGetters', $expected);
-    }
 
-    public function testSet()
-    {
-        $expected = '
+
+addSetters():
+
     /**
      * Sets a collection of LeTeam objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -254,13 +193,10 @@ class ManyToManyNamedRelationCodeTest extends AbstractManyToManyCodeTest
 
         return $this;
     }
-';
-        $this->assertProducedCodeMatches('addSetters', $expected);
-    }
 
-    public function testCount()
-    {
-        $expected = '
+
+addCount():
+
     /**
      * Gets the number of LeTeam objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -295,13 +231,10 @@ class ManyToManyNamedRelationCodeTest extends AbstractManyToManyCodeTest
             ->filterByLeUser($this)
             ->count($con);
     }
-';
-        $this->assertProducedCodeMatches('addCount', $expected);
-    }
 
-    public function testAdd()
-    {
-        $expected = '
+
+addAdders():
+
     /**
      * Associate a LeTeam with this object through the team_user cross reference table.
      *
@@ -323,13 +256,10 @@ class ManyToManyNamedRelationCodeTest extends AbstractManyToManyCodeTest
 
         return $this;
     }
-';
-        $this->assertProducedCodeMatches('addAdders', $expected);
-    }
 
-    public function testDoAdd()
-    {
-        $expected = '
+
+buildDoAdd():
+
     /**
      * @param \Team $leTeam
      *
@@ -353,13 +283,10 @@ class ManyToManyNamedRelationCodeTest extends AbstractManyToManyCodeTest
             $leTeam->getLeUsers()->push($this);
         }
     }
-';
-        $this->assertProducedCodeMatches('buildDoAdd', $expected);
-    }
 
-    public function testRemove()
-    {
-        $expected = '
+
+addRemove():
+
     /**
      * Remove leTeam of this object through the team_user cross reference table.
      *
@@ -397,51 +324,12 @@ class ManyToManyNamedRelationCodeTest extends AbstractManyToManyCodeTest
 
         return $this;
     }
-';
-        $this->assertProducedCodeMatches('addRemove', $expected);
-    }
 
-    public function testClearReferencesCode()
-    {
-        $expected = '
+
+addClearReferencesCode():
+
             if ($this->collLeTeams) {
                 foreach ($this->collLeTeams as $o) {
                     $o->clearAllReferences($deep);
                 }
-            }';
-
-        $this->assertProducedCodeMatches('addClearReferencesCode', $expected);
-    }
-
-    /**
-     * @return string
-     */
-    protected function getSchema(): string
-    {
-        return <<<EOF
-<database>
-    <table name="user">
-        <column name="id" type="INTEGER" primaryKey="true" autoIncrement="true"/>
-    </table>
-
-    <table name="team_user" isCrossRef="true">
-        <column name="team_id" type="INTEGER" primaryKey="true" />
-        <column name="user_id" type="INTEGER" primaryKey="true" />
-
-        <foreign-key foreignTable="user" phpName="LeUser">
-            <reference local="user_id" foreign="id" />
-        </foreign-key>
-
-        <foreign-key foreignTable="team" phpName="LeTeam">
-            <reference local="team_id" foreign="id" />
-        </foreign-key>
-    </table>
-
-    <table name="team">
-        <column name="id" type="INTEGER" autoIncrement="true" primaryKey="true" required="true"/>
-    </table>
-</database>
-EOF;
-    }
-
-}
+            }
