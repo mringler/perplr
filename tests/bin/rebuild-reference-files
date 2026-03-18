@@ -25,6 +25,10 @@ function findTestFileNames(): array
     return $fileNames;
 }
 
+/**
+ * @param array $fileNames
+ * @return ReflectionClass[]
+ */
 function createTestFileReflectionsWithAttribute(array $fileNames): array
 {
     $reflectionClasses = array_map(fn(string $name) => new \ReflectionClass($name), $fileNames);
@@ -33,30 +37,38 @@ function createTestFileReflectionsWithAttribute(array $fileNames): array
     return array_filter($reflectionClasses, $isTestCaseWithAttribute);
 }
 
+function updateFile(TestCase $comparingTest, ComparesGeneratedFile $attribute, array $entry): void
+{
+    $fileName = $attribute->getFileName($entry);
+    if (!str_starts_with($fileName, dirname(__DIR__))) {
+        throw new RuntimeException("Path $fileName is not inside test directory.");
+    }
+    $text = $attribute->textBuilder
+        ? $attribute->buildText($comparingTest, $entry)
+        : $attribute->getText($entry);
+
+    file_put_contents($fileName, $text);
+}
+
 $fileNames = findTestFileNames();
 $reflectionClasses = createTestFileReflectionsWithAttribute($fileNames);
 
 foreach ($reflectionClasses as $reflection) {
-    foreach ($reflection->getMethods() as $method) {
-        $attributes = $method->getAttributes(ComparesGeneratedFile::class);
-        if (count($attributes) === 0) {
-            continue;
-        }
-        $dataProvider = $method->getName();
-        $test = $reflection->newInstance();
-        // $reflection->getMethod('setUp')->invoke($test);
+    $fileComparisonMethods = array_filter($reflection->getMethods(), fn(ReflectionMethod $m) => $m->getAttributes(ComparesGeneratedFile::class));
+    if (!$fileComparisonMethods) {
+        continue;
+    }
+    /** @var \Propel\Tests\TestCase $comparingTest */
+    $comparingTest = $reflection->newInstance();
 
+    foreach ($fileComparisonMethods as $method) {
+        $dataProvider = $method->getName();
         /** @var ComparesGeneratedFile $attribute */
-        $attribute = $attributes[0]->newInstance();
-        $data = $test->$dataProvider();
+        $attribute = $method->getAttributes(ComparesGeneratedFile::class)[0]->newInstance();
+        $data = $comparingTest->$dataProvider();
+
         foreach ($data as $entry) {
-            $fileName = $entry[$attribute->fileNamePosition];
-            $text = $entry[$attribute->textPosition];
-            $builder = $attribute->textBuilder;
-            if ($builder) {
-                $text = $reflection->getMethod($builder)->invoke($test, $text);
-            }
-            file_put_contents($fileName, $text);
+            updateFile($comparingTest, $attribute, $entry);
         }
     }
 }

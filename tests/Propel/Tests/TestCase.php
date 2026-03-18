@@ -206,26 +206,6 @@ class TestCase extends PHPUnitTestCase
     }
 
     /**
-     * Summary of generateCodeFileContent
-     * @param mixed $obj
-     * @param array<string> $methods
-     *
-     * @return string
-     */
-    public function generateCodeFileContent($obj, array $methods): string
-    {
-
-        $code = $obj::class . "\n";
-        foreach ($methods as $method) {
-            $code .= "\n\n{$method}():\n";
-            $this->callMethod($obj, $method, [&$code]);
-
-        }
-
-        return $code . "\n";
-    }
-
-    /**
      * @return void
      */
     public static function setUpBeforeClass(): void
@@ -264,8 +244,8 @@ class TestCase extends PHPUnitTestCase
      */
     public function buildDatabaseFromSchema(
         string $schema,
-        array|null $additionalConfig,
-        PlatformInterface|null $platform,
+        array|null $additionalConfig = null,
+        PlatformInterface|null $platform = null,
     ): Database {
         $config = new QuickGeneratorConfig($additionalConfig);
         $platform ??= new SqlitePlatform();

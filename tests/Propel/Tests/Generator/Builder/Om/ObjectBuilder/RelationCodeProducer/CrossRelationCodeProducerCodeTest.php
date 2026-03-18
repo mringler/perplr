@@ -8,31 +8,28 @@
 
 namespace Propel\Tests\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer;
 
-use Propel\Generator\Builder\Om\ObjectBuilder;
-use Propel\Generator\Config\GeneratorConfig;
-use Propel\Generator\Util\QuickBuilder;
 use Propel\Tests\Attributes\ComparesGeneratedFile;
-use Propel\Tests\TestCase;
+use Propel\Tests\CompareGeneratedCodeTestCase;
 
 /**
  * Builds RelationCodeProducer output into a single string and compares it against file content.
  *
  * Call tests/bin/rebuild-reference-files to update content of files.
  */
-class RelationCodeProducerCodeTest extends TestCase
+class CrossRelationCodeProducerCodeTest extends CompareGeneratedCodeTestCase
 {
     /**
-     * @return string[][]
+     * @return array<array{string, string}>
      */
-    #[ComparesGeneratedFile(1, 0, 'buildCodeForSchema')]
-    public function RelationCodeDataProvider(): array
+    #[ComparesGeneratedFile(textBuilder: 'buildCodeForCrossRelation')]
+    public function CrossRelationCodeDataProvider(): array
     {
         return [ // [schema, expected code file name]
-            [static::MANY_TO_MANY_RELATION_CODE_SCHEMA ,  __DIR__ . '/expected_relation_code/many_to_many_relation_code_reference.txt'],
-            [static::MANY_TO_MANY_RELATION_WITH_PARAMETER_CODE_SCHEMA ,  __DIR__ . '/expected_relation_code/many_to_many_relation_with_parameter_code_reference.txt'],
-            [static::MANY_TO_MANY_NAMED_RELATION_CODE_SCHEMA ,  __DIR__ . '/expected_relation_code/many_to_many_named_relation_code_reference.txt'],
-            [static::TERNARY_NAMED_RELATION_CODE_SCHEMA ,  __DIR__ . '/expected_relation_code/ternary_named_relation_code_reference.txt'],
-            [static::TERNARY_RELATION_CODE_SCHEMA ,  __DIR__ . '/expected_relation_code/ternary_relation_code_reference.txt'],
+            [static::MANY_TO_MANY_RELATION_CODE_SCHEMA, __DIR__ . '/expected_relation_code/many_to_many_relation_code_reference.txt'],
+            [static::MANY_TO_MANY_RELATION_WITH_PARAMETER_CODE_SCHEMA, __DIR__ . '/expected_relation_code/many_to_many_relation_with_parameter_code_reference.txt'],
+            [static::MANY_TO_MANY_NAMED_RELATION_CODE_SCHEMA, __DIR__ . '/expected_relation_code/many_to_many_named_relation_code_reference.txt'],
+            [static::TERNARY_NAMED_RELATION_CODE_SCHEMA, __DIR__ . '/expected_relation_code/ternary_named_relation_code_reference.txt'],
+            [static::TERNARY_RELATION_CODE_SCHEMA, __DIR__ . '/expected_relation_code/ternary_relation_code_reference.txt'],
         ];
     }
 
@@ -43,83 +40,39 @@ class RelationCodeProducerCodeTest extends TestCase
      *
      * @return string
      */
-    protected function buildCodeForSchema(string $schema): string
+    public function buildCodeForCrossRelation(string $schema): string
     {
-        $objectBuilder = $this->createObjectBuilder($schema, 'user');
+        $objectBuilder = FkRelationCodeProducerCodeTest::createObjectBuilder($schema, 'user');
         /** @var \Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\AbstractManyToManyCodeProducer $codeProducer */
         $codeProducer = $this->getObjectPropertyValue($objectBuilder, 'crossRelationCodeProducers')[0];
 
-        return $this->generateCodeFileContent($codeProducer, [
+        return $this->generateCodeFileContentScript($codeProducer, [
             'addAttributes',
             'addScheduledForDeletionAttribute',
-            'addInit',
-            'addIsLoaded',
-            'addClear',
+            'addMethods',
             'addOnReloadCode',
             'addDeleteScheduledItemsCode',
-            'addCreateQuery',
-            'addGetters',
-            'addSetters',
-            'addCount',
-            'addAdders',
-            'buildDoAdd',
-            'addRemove',
             'addClearReferencesCode',
         ]);
     }
 
     /**
-     * @dataProvider RelationCodeDataProvider
+     * @dataProvider CrossRelationCodeDataProvider
      *
      * @param string $schema
      * @param string $fileName
      *
      * @return void
      */
-    public function testRelationCode(string $schema, string $fileName): void
+    public function testCrossRelationCode(string $schema, string $fileName): void
     {
-        $code = $this->buildCodeForSchema($schema);
+        $code = $this->buildCodeForCrossRelation($schema);
         $this->assertStringEqualsFile($fileName, $code);
     }
 
-    /**
-     * @param \Propel\Generator\Model\Table $table
-     *
-     * @return \Propel\Generator\Builder\Om\ObjectBuilder
-     */
-    protected function createObjectBuilder(string $schema, string $tableName): ObjectBuilder
-    {
-        $database = QuickBuilder::parseSchema($schema);
-        $table = $database->getTable($tableName);
-        $objectBuilder = new ObjectBuilder($table);
-        $config = new GeneratorConfig(null, static::generatorConfig);
-        $objectBuilder->setGeneratorConfig($config);
-
-        return $objectBuilder;
-    }
-
-    protected const generatorConfig = [
-        'propel' => [
-            'database' => [
-                'connections' => [
-                    'foo' => [
-                        'adapter' => 'mysql',
-                        'dsn' => 'mysql:foo',
-                        'user' => 'foo',
-                        'password' => 'foo'
-                    ],
-                ],
-            ],
-            'generator' => [
-                'defaultConnection' => 'foo',
-                'connections' => ['foo'],
-            ],
-        ]
-    ];
-
     /* 
      * User <---n--- member of ---m---> Team
-     */  
+     */
     protected const MANY_TO_MANY_RELATION_CODE_SCHEMA = <<<EOF
 <database>
 
@@ -147,7 +100,7 @@ EOF;
 
     /* 
      * fk relations are named (phpName)
-     */  
+     */
     protected const MANY_TO_MANY_NAMED_RELATION_CODE_SCHEMA = <<<EOF
 <database>
     <table name="user">

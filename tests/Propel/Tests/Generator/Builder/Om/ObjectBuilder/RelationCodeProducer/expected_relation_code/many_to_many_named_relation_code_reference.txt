@@ -22,7 +22,20 @@ addScheduledForDeletionAttribute():
     protected TeamCollection|null $leTeamsScheduledForDeletion = null;
 
 
-addInit():
+addMethods():
+
+    /**
+     * Clears out the collLeTeams collection
+     *
+     * This does not modify the database; however, it will remove any associated objects, causing
+     * them to be refetched by subsequent calls to accessor method.
+     *
+     * @return void
+     */
+    public function clearLeTeams(): void
+    {
+        $this->collLeTeams = null; // important to set this to NULL since that means it is uninitialized
+    }
 
     /**
      * Initializes the collLeTeams crossRef collection.
@@ -40,9 +53,6 @@ addInit():
         $this->collLeTeams->setModel('\Team');
     }
 
-
-addIsLoaded():
-
     /**
      * Checks if the collLeTeams collection is loaded.
      *
@@ -52,60 +62,6 @@ addIsLoaded():
     {
         return $this->collLeTeams !== null;
     }
-
-
-addClear():
-
-    /**
-     * Clears out the collLeTeams collection
-     *
-     * This does not modify the database; however, it will remove any associated objects, causing
-     * them to be refetched by subsequent calls to accessor method.
-     *
-     * @return void
-     */
-    public function clearLeTeams(): void
-    {
-        $this->collLeTeams = null; // important to set this to NULL since that means it is uninitialized
-    }
-
-
-addOnReloadCode():
-
-            $this->collLeTeams = null;
-
-addDeleteScheduledItemsCode():
-
-        if ($this->leTeamsScheduledForDeletion !== null && !$this->leTeamsScheduledForDeletion->isEmpty()) {
-            $pks = [];
-            foreach ($this->leTeamsScheduledForDeletion as $entry) {
-                $entryPk = [];
-
-                $entryPk[1] = $this->getId();
-                $entryPk[0] = $entry->getId();
-                $pks[] = $entryPk;
-            }
-
-            ChildTeamUserQuery::create()
-                ->filterByPrimaryKeys($pks)
-                ->delete($con);
-
-            $this->leTeamsScheduledForDeletion = null;
-        }
-
-        if ($this->collLeTeams) {
-            foreach ($this->collLeTeams as $leTeam) {
-                if (!$leTeam->isDeleted() && ($leTeam->isNew() || $leTeam->isModified())) {
-                    $leTeam->save($con);
-                }
-            }
-        }
-
-
-addCreateQuery():
-
-
-addGetters():
 
     /**
      * Gets a collection of Team objects related by a many-to-many relationship
@@ -156,9 +112,6 @@ addGetters():
         return $this->collLeTeams;
     }
 
-
-addSetters():
-
     /**
      * Sets a collection of LeTeam objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -193,9 +146,6 @@ addSetters():
 
         return $this;
     }
-
-
-addCount():
 
     /**
      * Gets the number of LeTeam objects related by a many-to-many relationship
@@ -232,9 +182,6 @@ addCount():
             ->count($con);
     }
 
-
-addAdders():
-
     /**
      * Associate a LeTeam with this object through the team_user cross reference table.
      *
@@ -256,9 +203,6 @@ addAdders():
 
         return $this;
     }
-
-
-buildDoAdd():
 
     /**
      * @param \Team $leTeam
@@ -283,9 +227,6 @@ buildDoAdd():
             $leTeam->getLeUsers()->push($this);
         }
     }
-
-
-addRemove():
 
     /**
      * Remove leTeam of this object through the team_user cross reference table.
@@ -324,6 +265,38 @@ addRemove():
 
         return $this;
     }
+
+
+addOnReloadCode():
+
+            $this->collLeTeams = null;
+
+addDeleteScheduledItemsCode():
+
+        if ($this->leTeamsScheduledForDeletion !== null && !$this->leTeamsScheduledForDeletion->isEmpty()) {
+            $pks = [];
+            foreach ($this->leTeamsScheduledForDeletion as $entry) {
+                $entryPk = [];
+
+                $entryPk[1] = $this->getId();
+                $entryPk[0] = $entry->getId();
+                $pks[] = $entryPk;
+            }
+
+            ChildTeamUserQuery::create()
+                ->filterByPrimaryKeys($pks)
+                ->delete($con);
+
+            $this->leTeamsScheduledForDeletion = null;
+        }
+
+        if ($this->collLeTeams) {
+            foreach ($this->collLeTeams as $leTeam) {
+                if (!$leTeam->isDeleted() && ($leTeam->isNew() || $leTeam->isModified())) {
+                    $leTeam->save($con);
+                }
+            }
+        }
 
 
 addClearReferencesCode():

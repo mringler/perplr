@@ -22,7 +22,20 @@ addScheduledForDeletionAttribute():
     protected ObjectCombinationCollection|null $teamEventsScheduledForDeletion = null;
 
 
-addInit():
+addMethods():
+
+    /**
+     * Clears out the combinationTeamEvents collection
+     *
+     * This does not modify the database; however, it will remove any associated objects, causing
+     * them to be refetched by subsequent calls to accessor method.
+     *
+     * @return void
+     */
+    public function clearTeamEvents(): void
+    {
+        $this->combinationTeamEvents = null; // important to set this to NULL since that means it is uninitialized
+    }
 
     /**
      * Initializes the combinationTeamEvents crossRef collection.
@@ -39,9 +52,6 @@ addInit():
         $this->combinationTeamEventsIsPartial = true;
     }
 
-
-addIsLoaded():
-
     /**
      * Checks if the combinationTeamEvents collection is loaded.
      *
@@ -51,66 +61,6 @@ addIsLoaded():
     {
         return $this->combinationTeamEvents !== null;
     }
-
-
-addClear():
-
-    /**
-     * Clears out the combinationTeamEvents collection
-     *
-     * This does not modify the database; however, it will remove any associated objects, causing
-     * them to be refetched by subsequent calls to accessor method.
-     *
-     * @return void
-     */
-    public function clearTeamEvents(): void
-    {
-        $this->combinationTeamEvents = null; // important to set this to NULL since that means it is uninitialized
-    }
-
-
-addOnReloadCode():
-
-            $this->combinationTeamEvents = null;
-
-addDeleteScheduledItemsCode():
-
-        if ($this->teamEventsScheduledForDeletion !== null && !$this->teamEventsScheduledForDeletion->isEmpty()) {
-            $pks = [];
-            foreach ($this->teamEventsScheduledForDeletion as $combination) {
-                $entryPk = [];
-
-                $entryPk[0] = $this->getId();
-                $entryPk[1] = $combination[0]->getId();
-                $entryPk[2] = $combination[1]->getId();
-
-                $pks[] = $entryPk;
-            }
-
-            ChildTeamUserQuery::create()
-                ->filterByPrimaryKeys($pks)
-                ->delete($con);
-
-            $this->teamEventsScheduledForDeletion = null;
-        }
-
-        if ($this->combinationTeamEvents !== null) {
-            foreach ($this->combinationTeamEvents as $combination) {
-                $model = $combination[0];
-                if (!$model->isDeleted() && ($model->isNew() || $model->isModified())) {
-                    $model->save($con);
-                }
-
-                $model = $combination[1];
-                if (!$model->isDeleted() && ($model->isNew() || $model->isModified())) {
-                    $model->save($con);
-                }
-
-            }
-        }
-
-
-addCreateQuery():
 
     /**
      * Returns a new query object pre configured with filters from current object and given arguments to query the database.
@@ -159,9 +109,6 @@ addCreateQuery():
 
         return $query;
     }
-
-
-addGetters():
 
     /**
      * Gets a combined collection of array{\Team, \Event} objects related by a many-to-many relationship
@@ -262,9 +209,6 @@ addGetters():
         return $this->createEventsQuery($team, $criteria)->find($con);
     }
 
-
-addSetters():
-
     /**
      * Sets a collection of TeamEvent objects related by a many-to-many relationship
      * to the current object by way of the team_user cross-reference table.
@@ -299,9 +243,6 @@ addSetters():
 
         return $this;
     }
-
-
-addCount():
 
     /**
      * Gets the number of TeamEvent objects related by a many-to-many relationship
@@ -370,9 +311,6 @@ addCount():
         return $this->createEventsQuery($team, $criteria)->count($con);
     }
 
-
-addAdders():
-
     /**
      * Associate a Team with this object through the team_user cross reference table.
      *
@@ -419,9 +357,6 @@ addAdders():
         return $this;
     }
 
-
-buildDoAdd():
-
     /**
      * @param \Team $team
      * @param \Event $event
@@ -457,9 +392,6 @@ buildDoAdd():
             $event->getUserTeams()->push($userTeamsEntry);
         }
     }
-
-
-addRemove():
 
     /**
      * Remove team, event of this object through the team_user cross reference table.
@@ -505,6 +437,47 @@ addRemove():
 
         return $this;
     }
+
+
+addOnReloadCode():
+
+            $this->combinationTeamEvents = null;
+
+addDeleteScheduledItemsCode():
+
+        if ($this->teamEventsScheduledForDeletion !== null && !$this->teamEventsScheduledForDeletion->isEmpty()) {
+            $pks = [];
+            foreach ($this->teamEventsScheduledForDeletion as $combination) {
+                $entryPk = [];
+
+                $entryPk[0] = $this->getId();
+                $entryPk[1] = $combination[0]->getId();
+                $entryPk[2] = $combination[1]->getId();
+
+                $pks[] = $entryPk;
+            }
+
+            ChildTeamUserQuery::create()
+                ->filterByPrimaryKeys($pks)
+                ->delete($con);
+
+            $this->teamEventsScheduledForDeletion = null;
+        }
+
+        if ($this->combinationTeamEvents !== null) {
+            foreach ($this->combinationTeamEvents as $combination) {
+                $model = $combination[0];
+                if (!$model->isDeleted() && ($model->isNew() || $model->isModified())) {
+                    $model->save($con);
+                }
+
+                $model = $combination[1];
+                if (!$model->isDeleted() && ($model->isNew() || $model->isModified())) {
+                    $model->save($con);
+                }
+
+            }
+        }
 
 
 addClearReferencesCode():

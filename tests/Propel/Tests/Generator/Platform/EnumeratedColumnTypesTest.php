@@ -84,7 +84,7 @@ class EnumeratedColumnTypesTest extends TestCase
     /**
      * @return string[][]
      */
-    #[ComparesGeneratedFile(1, 0, 'buildObjectClassCode')]
+    #[ComparesGeneratedFile(textBuilder: 'buildObjectClassCode')]
     public function ColumnCodeDataProvider(): array
     {
         return [ // [type, expected code file name]
@@ -100,7 +100,7 @@ class EnumeratedColumnTypesTest extends TestCase
      *
      * @return string
      */
-    protected function buildObjectClassCode(string $columnType): string
+    public function buildObjectClassCode(string $columnType): string
     {
         /** @var ObjectBuilder $builder */
         $builder = $this->buildCodeBuilder($columnType, BuilderType::ObjectBase);
@@ -132,7 +132,7 @@ class EnumeratedColumnTypesTest extends TestCase
     /**
      * @return string[][]
      */
-    #[ComparesGeneratedFile(1, 0, 'buildQueryClassCode')]
+    #[ComparesGeneratedFile(textBuilder: 'buildQueryClassCode')]
     public function QueryCodeDataProvider(): array
     {
         return [ // [type, expected code file name]
@@ -148,7 +148,7 @@ class EnumeratedColumnTypesTest extends TestCase
      *
      * @return string
      */
-    protected function buildQueryClassCode(string $columnType): string
+    public function buildQueryClassCode(string $columnType): string
     {
         /** @var QueryBuilder $builder */
         $builder = $this->buildCodeBuilder($columnType, BuilderType::QueryBase);
