@@ -197,6 +197,7 @@ class SchemaReader
         $this->currentXmlFile = $xmlFile;
 
         $parserStash = $this->parser;
+        echo "ferd";
 
         $this->parser = xml_parser_create();
         xml_parser_set_option($this->parser, XML_OPTION_CASE_FOLDING, 0);
