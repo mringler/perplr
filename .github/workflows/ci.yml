@@ -19,24 +19,41 @@ on:
         default: '8.5'
       runTests:
         description: 'Run suites'
-        required: true
-        default: true
         type: boolean
+        default: true
       runStaticAnalysis:
         description: 'Run Stan & Psalm'
-        required: true
-        default: true
         type: boolean
+        default: true
       runLinter:
         description: 'Check code style'
-        required: true
-        default: true
         type: boolean
+        default: true
       runGeneratedCodeChecks:
         description: 'Check generated code'
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      phpMinVersion:
+        type: string
+        default: '8.1'
+      phpMaxVersion:
+        type: string
+        default: '8.5'
+      runTests:
+        type: boolean
         required: true
         default: true
+      runStaticAnalysis:
         type: boolean
+        default: true
+      runLinter:
+        type: boolean
+        default: true
+      runGeneratedCodeChecks:
+        type: boolean
+        default: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
