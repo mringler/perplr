@@ -244,8 +244,8 @@ class TestCase extends PHPUnitTestCase
      */
     public function buildDatabaseFromSchema(
         string $schema,
-        array|null $additionalConfig,
-        PlatformInterface|null $platform,
+        array|null $additionalConfig = null,
+        PlatformInterface|null $platform = null,
     ): Database {
         $config = new QuickGeneratorConfig($additionalConfig);
         $platform ??= new SqlitePlatform();

@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Config;
 
+use Propel\Common\Config\ConfigurationManager;
 use Propel\Common\Pluralizer\PluralizerInterface;
 use Propel\Common\Pluralizer\StandardEnglishPluralizer;
 use Propel\Generator\Platform\PlatformInterface;
@@ -18,9 +19,7 @@ class QuickGeneratorConfig extends AbstractGeneratorConfig
      */
     public function __construct(?array $extraConf = [])
     {
-        if ($extraConf === null) {
-            $extraConf = [];
-        }
+        $extraConf = $extraConf === null ? [] : ConfigurationManager::deflateConfigurationArray($extraConf);
 
         //Creates a GeneratorConfig based on Propel default values plus the following
         $configs = [

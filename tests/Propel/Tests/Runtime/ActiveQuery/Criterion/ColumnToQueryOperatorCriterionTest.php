@@ -6,7 +6,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Propel\Tests\Runtime\ActiveQuery;
+namespace Propel\Tests\Runtime\ActiveQuery\Criterion;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Criterion\ColumnToQueryOperatorCriterion;

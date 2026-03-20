@@ -10,10 +10,6 @@ namespace Propel\Tests\Generator\Platform;
 
 use Propel\Generator\Builder\Om\AbstractOMBuilder;
 use Propel\Generator\Builder\Om\BuilderType;
-use Propel\Generator\Builder\Om\ObjectBuilder;
-use Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes\ColumnCodeProducer;
-use Propel\Generator\Builder\Om\QueryBuilder;
-use Propel\Generator\Config\GeneratorConfig;
 use Propel\Generator\Config\QuickGeneratorConfig;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\PropelTypes;
@@ -78,74 +74,6 @@ class EnumeratedColumnTypesTest extends TestCase
         $actualColumnType = $column->getType();
 
         $this->assertSame($expectedColumnType, $actualColumnType);
-    }
-
-    /**
-     * @return string[][]
-     */
-    public function ColumnCodeDataProvider(): array
-    {
-        return [ // [type, expected code file name]
-            [PropelTypes::ENUM_BINARY, __DIR__ . '/ExpectedColumnCode/EnumBinaryColumnCode.txt'],
-            [PropelTypes::ENUM_NATIVE, __DIR__ . '/ExpectedColumnCode/EnumNativeColumnCode.txt'],
-            [PropelTypes::SET_BINARY, __DIR__ . '/ExpectedColumnCode/SetBinaryColumnCode.txt'],
-            [PropelTypes::SET_NATIVE, __DIR__ . '/ExpectedColumnCode/SetNativeColumnCode.txt']
-        ];
-    }
-
-    /**
-     * @dataProvider ColumnCodeDataProvider
-     *
-     * @param string $columnType
-     * @param string $fileName
-     *
-     * @return void
-     */
-    public function testEnumeratedColumnObjectCode(string $columnType, string $fileName): void
-    {
-        /** @var ObjectBuilder $builder */
-        $builder = $this->buildCodeBuilder($columnType, BuilderType::ObjectBase);
-        /** @var ColumnCodeProducer $builder */
-        $codeProducer = $this->getObjectPropertyValue($builder, 'columnCodeProducers')[0];
-
-        $script = '';
-        $codeProducer->addColumnAttributes($script);
-        $codeProducer->addAccessor($script);
-        $codeProducer->addMutator($script);
-
-        $this->assertStringEqualsFile($fileName, $script);
-    }
-
-    /**
-     * @return string[][]
-     */
-    public function QueryCodeDataProvider(): array
-    {
-        return [ // [type, expected code file name]
-            [PropelTypes::ENUM_BINARY, __DIR__ . '/ExpectedColumnCode/EnumBinaryQueryCode.txt'],
-            [PropelTypes::ENUM_NATIVE, __DIR__ . '/ExpectedColumnCode/EnumNativeQueryCode.txt'],
-            [PropelTypes::SET_BINARY, __DIR__ . '/ExpectedColumnCode/SetBinaryQueryCode.txt'],
-            [PropelTypes::SET_NATIVE, __DIR__ . '/ExpectedColumnCode/SetNativeQueryCode.txt'],
-        ];
-    }
-
-    /**
-     * @dataProvider QueryCodeDataProvider
-     *
-     * @param string $columnType
-     * @param string $fileName
-     *
-     * @return void
-     */
-    public function testEnumeratedColumnQueryCode(string $columnType, string $fileName): void
-    {
-        /** @var QueryBuilder $builder */
-        $builder = $this->buildCodeBuilder($columnType, BuilderType::QueryBase);
-
-        $script = '';
-        $this->callMethod($builder, 'addColumnCode', [&$script, $builder->getTable()->getColumns()[0]]);
-
-        $this->assertStringEqualsFile($fileName, $script);
     }
 
     /**

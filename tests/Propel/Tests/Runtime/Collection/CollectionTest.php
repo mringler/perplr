@@ -6,7 +6,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Propel\Tests\Runtime\collection;
+namespace Propel\Tests\Runtime\Collection;
 
 use Propel\Runtime\Collection\Collection;
 use Propel\Runtime\Exception\BadMethodCallException;
