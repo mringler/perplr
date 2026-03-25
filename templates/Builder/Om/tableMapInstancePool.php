@@ -18,10 +18,7 @@
             return;
         }
 
-        if (!$key) {
-            $pk = $obj->getPrimaryKey();
-            $key = <?= $addInstancePoolKeySnippet ?>;
-        }
+        $key ??= <?= sprintf($poolKeyFromObjectStatementFormat, '$obj') ?>;
 
         self::$instances[$key] = $obj;
     }
@@ -38,8 +35,6 @@
      *
      * @param <?= $modelClassNameFq ?>|\Propel\Runtime\ActiveQuery\Criteria|array|null $value A <?= $modelClassName ?> object or a primary key value.
      *
-     * @throws \Propel\Runtime\Exception\PropelException
-     *
      * @return void
      */
     public static function removeInstanceFromPool($value): void
@@ -54,11 +49,9 @@
             return;
         }
 
-        $pk = ($value instanceof <?= $modelClassName ?>) ? $value->getPrimaryKey() : $value;
-        if (count($pk) !== <?= $countPks ?>) {
-            throw new PropelException("Invalid value passed to removeInstanceFromPool(). Expected primary key or <?= $modelClassNameFq ?> object; got " . (is_object($value) ? get_class($value) . ' object.' : var_export($value, true)));
-        }
-        $key = <?= $removeInstancePoolKeySnippet ?>;
+        $key = is_array($value)
+            ? <?= sprintf($poolKeyFromRowStatementFormat, '$value') ?> 
+            : <?= sprintf($poolKeyFromObjectStatementFormat, '$value') ?>;
 
         unset(self::$instances[$key]);
     }

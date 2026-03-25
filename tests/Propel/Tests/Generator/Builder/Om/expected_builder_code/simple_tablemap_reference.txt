@@ -16,9 +16,7 @@ use Propel\Runtime\Map\TableMapTrait;
 use Propel\Runtime\Propel;
 use function assert;
 use function is_array;
-use function is_callable;
 use function is_object;
-use function is_scalar;
 use function trigger_deprecation;
 
 /**
@@ -210,9 +208,10 @@ class IdTableTableMap extends TableMap
      */
     public static function getPrimaryKeyHashFromRow(array $row, int $offset = 0, string $indexType = TableMap::TYPE_NUM): ?string
     {
-        $pkVal = $row[$indexType === TableMap::TYPE_NUM ? 0 + $offset : static::translateFieldName('Id', TableMap::TYPE_PHPNAME, $indexType)];
+        $id = $row[$indexType === TableMap::TYPE_NUM ? 0 + $offset : static::translateFieldName('Id', TableMap::TYPE_PHPNAME, $indexType)];
+        $id = $id === null ? null : (string)$id;
 
-        return $pkVal === null ? null : (is_scalar($pkVal) || is_callable([$pkVal, '__toString']) ? (string)$pkVal : $pkVal);
+        return $id;
     }
 
     /**

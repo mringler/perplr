@@ -438,14 +438,14 @@ class TableMapBuilderTest extends BookstoreTestBase
      */
     public function testStringify($scalarData, string $message): void
     {
-        $builder = new class (new Table('any')) extends TableMapBuilder{
+        $builder = new class (new Table('any')) extends TableMapBuilder {
             public function doStringify($value): string
             {
                 return $this->stringify($value);
             }
         };
         $stringifiedData = $builder->doStringify($scalarData);
-        eval("\$restoredData = $stringifiedData;");
+        eval ("\$restoredData = $stringifiedData;");
 
         $this->assertSame($scalarData, $restoredData, $message);
     }
@@ -512,5 +512,98 @@ XML;
             false
         );
         $this->assertInstanceOf('\\ExampleNamespace\\Greens\\GreenThing', new $greenClass());
+    }
+
+    public function ColumnValueToStringExpressionDataProvider(): array
+    {
+        return [ // string $columnXml, string $varName, string $expected
+            ['', '$foo', '$foo'],
+            ['type="VARCHAR"', '$var', '$var'],
+            ['type="INTEGER"', '$var', '(string)$var'],
+            ['type="ENUM_BINARY"', '$var', '(string)SetColumnConverter::convertToBitmask($var, static::getValueSet(static::COL_FOOCOL))'],
+            ['type="SET_BINARY"', '$foo', '(string)SetColumnConverter::convertToBitmask($foo, static::getValueSet(static::COL_FOOCOL))'],
+            ['type="OBJECT"', '$var', 'is_callable([$var, \'__toString\']) ? (string)$var : $var'],
+            ['type="ARRAY"', '$var', 'Table::serializeArray($var)'],
+            ['type="DATE"', '$var', '$var->format(\'Y-m-d\')'],
+            ['type="UUID_BINARY"', '$var', 'UuidConverter::uuidToBin($var)'],
+        ];
+    }
+
+    /**
+     * @dataProvider ColumnValueToStringExpressionDataProvider
+     */
+    public function testColumnValueToStringExpression(string $columnXml, string $varName, string $expected): void
+    {
+        $this->assertBuildsSameColumnString(
+            $columnXml,
+            'buildColumnValueToStringExpression',
+            fn($col) => [$varName, $col],
+            $expected
+        );
+    }
+
+    public function RowValueToStringExpressionDataProvider(): array
+    {
+        return [ // string $columnXml, string $varName, string $expected
+            ['', '$foo', '$foo'],
+            ['type="VARCHAR"', '$var', '$var'],
+            ['type="INTEGER"', '$var', '(string)$var'],
+            ['type="ENUM_BINARY"', '$var', 'is_numeric($var) ? $var : (string)SetColumnConverter::convertToBitmask($var, static::getValueSet(static::COL_FOOCOL))'],
+            ['type="SET_BINARY"', '$foo', 'is_numeric($foo) ? $foo : (string)SetColumnConverter::convertToBitmask($foo, static::getValueSet(static::COL_FOOCOL))'],
+            ['type="ARRAY"', '$var', 'is_string($var) ? $var : Table::serializeArray($var)'],
+            ['type="DATE"', '$var', 'is_string($var) ? $var : $var->format(\'Y-m-d\')'],
+            ['type="UUID_BINARY"', '$var', 'UuidConverter::uuidToBin($var)'],
+        ];
+    }
+
+    /**
+     * @dataProvider RowValueToStringExpressionDataProvider
+     */
+    public function testRowValueToStringExpression(string $columnXml, string $varName, string $expected): void
+    {
+        $this->assertBuildsSameColumnString(
+            $columnXml,
+            'buildPossiblyUnconvertedValueToStringExpression',
+            fn($col) => [$varName, $col],
+            $expected
+        );
+    }
+
+    /**
+     * @dataProvider RowValueToStringExpressionDataProvider
+     *
+     * @param callable $argBuilder(Column): array
+     */
+    public function assertBuildsSameColumnString(string $columnXml, string $method, callable $argBuilder, string $expected): void
+    {
+        $column = $this->buildColumnFromSchema("<column name='FooCol' $columnXml />");
+        $tableMapBuilder = new TableMapBuilder($column->getTable());
+        $tableMapBuilder->setGeneratorConfig(new QuickGeneratorConfig());
+        $expression = $this->callMethod($tableMapBuilder, $method, $argBuilder($column));
+
+        $this->assertSame($expected, $expression);
+    }
+
+    public function BuildPoolKeyFromVariableDataProvider(): array
+    {
+        return [ // array $varToColumnXml, bool $possiblyUnconverted, string $expected
+            [['$foo' => 'type="DATE"'], false, '$foo->format(\'Y-m-d\')'],
+            [['$foo' => 'type="DATE"'], true, 'is_string($foo) ? $foo : $foo->format(\'Y-m-d\')'],
+            [['$foo' => 'type="INTEGER"', '$bar' => ''], true, 'serialize([(string)$foo, $bar])'],
+        ];
+    }
+
+    /**
+     * @dataProvider BuildPoolKeyFromVariableDataProvider
+     */
+    public function testBuildPoolKeyFromVariable(array $varToColumnXml, bool $possiblyUnconverted, string $expected): void
+    {
+        $varToColumn = array_map(fn ($columnXml) =>$this->buildColumnFromSchema("<column name='FooCol' $columnXml />"), $varToColumnXml);
+
+        $tableMapBuilder = new TableMapBuilder(reset($varToColumn)->getTable());
+        $tableMapBuilder->setGeneratorConfig(new QuickGeneratorConfig());
+        $expression = $this->callMethod($tableMapBuilder, 'buildPoolKeyFromVariable', [$varToColumn, $possiblyUnconverted]);
+
+        $this->assertSame($expected, $expression);
     }
 }

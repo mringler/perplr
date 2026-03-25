@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om;
 
+use Propel\Common\Util\SetColumnConverter;
 use Propel\Generator\Builder\Om\TableMapBuilder\TableMapBuilderValidation;
 use Propel\Generator\Builder\Util\EntityObjectClassNames;
 use Propel\Generator\Model\Column;
@@ -15,7 +16,10 @@ use Propel\Generator\Platform\PlatformInterface;
 use Propel\Runtime\Exception\LogicException;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\RelationMap;
+use Propel\Runtime\Util\UuidConverter;
 use function addslashes;
+use function array_column;
+use function array_combine;
 use function array_filter;
 use function array_keys;
 use function array_map;
@@ -27,8 +31,9 @@ use function end;
 use function implode;
 use function in_array;
 use function is_array;
+use function lcfirst;
 use function preg_replace;
-use function sprintf;
+use function range;
 use function strtoupper;
 use function var_export;
 use const PHP_EOL;
@@ -828,36 +833,6 @@ class $className extends TableMap
     }
 
     /**
-     * Adds the PHP code to return a instance pool key for the passed-in primary key variable names.
-     *
-     * @param array<string>|string $valueAccessStatements An array of PHP var names / method calls representing complete pk.
-     * @param bool $castNullValues
-     * @param string|null $indent
-     *
-     * @return string
-     */
-    protected function getInstancePoolKeySnippet(array|string $valueAccessStatements, bool $castNullValues, string|null $indent = null): string
-    {
-        $this->declareGlobalFunction('is_scalar', 'is_callable');
-        $format = 'is_scalar(%1$s) || is_callable([%1$s, \'__toString\']) ? (string)%1$s : %1$s';
-        if ($castNullValues) {
-            $format = "%1\$s === null || $format";
-        }
-        $statements = array_map(fn ($keyLiteral) => sprintf($format, $keyLiteral), (array)$valueAccessStatements);
-
-        if (count($statements) === 1) {
-            return $statements[0];
-        }
-        $this->declareGlobalFunction('serialize');
-        if ($indent === null) {
-            return 'serialize([' . implode(', ', $statements) . '])';
-        }
-        $itemIndent = "\n$indent    ";
-
-        return "serialize([$itemIndent" . implode(",$itemIndent", $statements) . ",\n$indent])";
-    }
-
-    /**
      * @return string
      */
     public function addInstancePool(): string
@@ -867,19 +842,106 @@ class $className extends TableMap
             return '';
         }
 
-        $this->declareGlobalFunction('is_array', 'count', 'is_object', 'get_class', 'var_export');
-        $this->declareClass(PropelException::class);
+        $this->declareGlobalFunction('is_array', 'count', 'is_object');
 
         $pks = $this->getTable()->getPrimaryKey();
-        $pkAccessStatements = array_map(fn (int $i) => "\$pk[$i]", array_keys($pks));
+
+        $pkGetters = array_map(fn (Column $col) => '%1$s->get' . $col->getPhpName() . '()', $pks);
+        $objectColumnAccess = array_combine($pkGetters, $pks);
+        $poolKeyFromObjectStatementFormat = $this->buildPoolKeyFromVariable($objectColumnAccess, false);
+
+        $rowAccess = array_map(fn (int $i) => "%1\$s[$i]", range(0, count($pks) - 1));
+        $rowAccessToColumn = array_combine($rowAccess, $pks);
+        $poolKeyFromRowStatementFormat = $this->buildPoolKeyFromVariable($rowAccessToColumn, true);
 
         return $this->renderTemplate('tableMapInstancePool', [
             'modelClassName' => $this->tableNames->useObjectStubClassName(),
             'modelClassNameFq' => $this->tableNames->useObjectStubClassName(false),
-            'addInstancePoolKeySnippet' => $this->getInstancePoolKeySnippet($pkAccessStatements, true, '            '),
-            'removeInstancePoolKeySnippet' => $this->getInstancePoolKeySnippet($pkAccessStatements, true, '        '),
+            'poolKeyFromObjectStatementFormat' => $poolKeyFromObjectStatementFormat,
+            'poolKeyFromRowStatementFormat' => $poolKeyFromRowStatementFormat,
             'countPks' => count($pks),
         ]);
+    }
+
+    /**
+     * Get statement to build pool key according to column information
+     *
+     * i.e. <code>`serialize([$obj->getFooDate()->format('...'), (string)$obj->getBarId()])`</code>
+     *
+     * @param array $variableToColumn
+     * @param bool $possiblyUnconverted
+     *
+     * @return string
+     */
+    protected function buildPoolKeyFromVariable(array $variableToColumn, bool $possiblyUnconverted): string
+    {
+        $statementBuilder = $possiblyUnconverted
+            ? [$this, 'buildPossiblyUnconvertedValueToStringExpression']
+            : [$this, 'buildColumnValueToStringExpression'];
+        $statements = array_map($statementBuilder, array_keys($variableToColumn), $variableToColumn);
+
+        if (count($statements) <= 1) {
+            return $statements[0];
+        }
+        $this->declareGlobalFunction('serialize');
+
+        $statementsCsv = implode(', ', $statements);
+
+        return "serialize([$statementsCsv])";
+    }
+
+    /**
+     * Access variable value as string according to column information
+     *
+     * i.e. <code>$obj->getFooDate()->format('...')`</code>
+     *
+     * @param string $varName
+     * @param \Propel\Generator\Model\Column $col
+     *
+     * @return string
+     */
+    protected function buildColumnValueToStringExpression(string $varName, Column $col): string
+    {
+        return match (true) {
+            $col->isBinaryEnumType(),
+            $col->isBinarySetType() => '(string)' . $this->declareClass(SetColumnConverter::class) . "::convertToBitmask($varName, static::getValueSet(static::" . $col->getConstantName() . '))',
+            $col->isLobType(),
+            $col->isPhpObjectType() => "is_callable([$varName, '__toString']) ? (string)$varName : $varName",
+            $col->isNumericType(),
+            $col->isPhpPrimitiveNumericType() => "(string)$varName",
+            $col->isPhpArrayType() => $this->getObjectClassName() . "::serializeArray($varName)",
+            $col->isTemporalType() => "{$varName}->format('" . $this->getTemporalFormatter($col) . "')",
+            $col->isUuidBinaryType() => $this->declareClass(UuidConverter::class) . "::uuidToBin($varName)",
+            default => $varName,
+        };
+    }
+
+    /**
+     * Access possibly stringified variable value as string according to column information
+     *
+     * i.e. <code>is_string($var) ? $var : $var->getFooDate()->format('...')`</code>
+     *
+     * @param string $varName
+     * @param \Propel\Generator\Model\Column $col
+     *
+     * @return string
+     */
+    protected function buildPossiblyUnconvertedValueToStringExpression(string $varName, Column $col): string
+    {
+        $columnToString = $this->buildColumnValueToStringExpression($varName, $col);
+        if ($col->isBinaryEnumType() || $col->isBinarySetType()) {
+            $this->declareGlobalFunction('is_numeric');
+
+            return "is_numeric($varName) ? $varName : $columnToString";
+        }
+
+        if ($col->isPhpArrayType() || $col->isTemporalType()) {
+            $this->declareGlobalFunction('is_string');
+
+            return "is_string($varName) ? $varName : $columnToString";
+        }
+
+        return $columnToString;
     }
 
     /**
@@ -948,16 +1010,19 @@ class $className extends TableMap
      */
     protected function addGetPrimaryKeyHash(string &$script): void
     {
-        $pkVars = [];
-        $cond = [];
+        /** @var array<array{varName:string, columnAccess:string, castToString:bool, isResource:bool}> $columnData*/
+        $columnData = [];
         foreach ($this->getTable()->getEagerColumns() as $index => $col) {
             if (!$col->isPrimaryKey()) {
                 continue;
             }
             $phpName = $col->getPhpName();
-            $columnAccess = "\$row[\$indexType === TableMap::TYPE_NUM ? $index + \$offset : static::translateFieldName('$phpName', TableMap::TYPE_PHPNAME, \$indexType)]";
-            $cond[] = "$columnAccess === null";
-            $pkVars[] = $columnAccess;
+            $columnData[] = [
+                'varName' => '$' . lcfirst($phpName),
+                'columnAccess' => "\$row[\$indexType === TableMap::TYPE_NUM ? $index + \$offset : static::translateFieldName('$phpName', TableMap::TYPE_PHPNAME, \$indexType)]",
+                'castToString' => !$col->isTextType() && $col->isPhpPrimitiveType(),
+                'isResource' => $col->getType() === PropelTypes::OBJECT,
+            ];
         }
 
         $script .= "
@@ -973,28 +1038,47 @@ class $className extends TableMap
      */
     public static function getPrimaryKeyHashFromRow(array \$row, int \$offset = 0, string \$indexType = TableMap::TYPE_NUM): ?string
     {";
-        if (count($pkVars) === 0) {
+        if (count($columnData) === 0) {
             $script .= "
         return null;
     }\n";
-        } elseif (count($pkVars) === 1) {
-            $poolKeySnippet = $this->getInstancePoolKeySnippet('$pkVal', false);
-            $script .= "
-        \$pkVal = {$pkVars[0]};
-    
-        return \$pkVal === null ? null : ($poolKeySnippet);
-    }\n";
-        } else {
-            $poolKeySnippet = $this->getInstancePoolKeySnippet($pkVars, false, '        ');
-            $script .= "
-        // If the PK cannot be derived from the row, return NULL.
-        if (" . implode(' && ', $cond) . ") {
-            return null;
+
+            return;
         }
 
-        return $poolKeySnippet;
-    }\n";
+        foreach ($columnData as ['varName' => $varName, 'isResource' => $isResource, 'columnAccess' => $columnAccess, 'castToString' => $castToString]) {
+            $script .= "
+        $varName = $columnAccess;";
+
+            if ($isResource) {
+                $this->declareGlobalFunction('is_callable');
+                $script .= "
+        if (is_resource($varName)) {
+            \$resourceValue = stream_get_contents($varName);
+            rewind($varName);
+            $varName =  is_callable([\$resourceValue, '__toString']) ? (string)\$resourceValue : \$resourceValue;
+        }";
+            } elseif ($castToString) {
+                $script .= "
+        $varName = $varName === null ? null : (string)$varName;";
+            }
+            $script .= "\n";
         }
+
+        if (count($columnData) === 1) {
+            $nullOrKeyExpression = $columnData[0]['varName'];
+        } else {
+            $this->declareGlobalFunction('serialize');
+            $varNames = array_column($columnData, 'varName');
+            $isNullConjunction = implode(' === null && ', $varNames) . ' === null';
+            $varNamesCsv = implode(', ', $varNames);
+
+            $nullOrKeyExpression = "$isNullConjunction ? null : serialize([$varNamesCsv])";
+        }
+
+        $script .= "
+        return $nullOrKeyExpression;
+    }\n";
     }
 
     /**
@@ -1049,7 +1133,7 @@ class $className extends TableMap
     {";
         if (!$isCompositePk) {
             $pkAccess = end($pkColumnAccesses) ?: 'null';
-                $script .= "
+            $script .= "
         return $pkAccess;";
         } else {
             $script .= "
@@ -1117,7 +1201,7 @@ class $className extends TableMap
     {
         \$classKey = \$row[\$offset + $columnIndex];";
         if (!$col->isEnumeratedClasses()) {
-             $script .= "
+            $script .= "
         \$omClass = preg_replace('#\.#', '\\\\', '.'.\$classKey);";
         } else {
             $script .= "

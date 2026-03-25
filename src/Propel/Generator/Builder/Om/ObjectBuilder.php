@@ -24,7 +24,6 @@ use Propel\Runtime\Exception\PropelException;
 use function addslashes;
 use function array_any;
 use function array_intersect;
-use function array_keys;
 use function array_map;
 use function array_values;
 use function count;
@@ -238,28 +237,6 @@ class ObjectBuilder extends AbstractObjectBuilder
                     throw new EngineException($message);
                 }
             }
-        }
-    }
-
-    /**
-     * Returns the appropriate formatter (from platform) for a date/time column.
-     *
-     * @param \Propel\Generator\Model\Column $column
-     *
-     * @return string|null
-     */
-    public function getTemporalFormatter(Column $column): ?string
-    {
-        switch ($column->getType()) {
-            case PropelTypes::DATE:
-                return $this->getPlatformOrFail()->getDateFormatter();
-            case PropelTypes::TIME:
-                return $this->getPlatformOrFail()->getTimeFormatter();
-            case PropelTypes::TIMESTAMP:
-            case PropelTypes::DATETIME:
-                return $this->getPlatformOrFail()->getTimestampFormatter();
-            default:
-                return null;
         }
     }
 
@@ -2020,8 +1997,8 @@ $indent};";
 
         $keyColumns = $this->getTable()->getPrimaryKey();
         $names = array_values(array_map(fn ($column) => $column->getPhpName(), $keyColumns));
-        $setters = array_map(fn ($index, $name) => "\$pks[{$index}] = \$this->get{$name}();", array_keys($names), $names);
-        $settersBlock = implode("\n        ", $setters);
+        $setters = array_map(fn ($name) => "\$this->get{$name}(),", $names);
+        $settersBlock = implode("\n            ", $setters);
         $script .= "
     /**
      * Returns the composite primary key for this object.
@@ -2031,12 +2008,10 @@ $indent};";
      */
     public function getPrimaryKey(): array
     {
-        \$pks = [];
-        {$settersBlock}
-
-        return \$pks;
-    }
-";
+        return [
+            $settersBlock
+        ];
+    }\n";
     }
 
     /**
@@ -2772,6 +2747,9 @@ $indent};";
         $table = $this->getTable();
         $reloadOnUpdate = $table->isReloadOnUpdate();
         $reloadOnInsert = $table->isReloadOnInsert();
+        $tableMapClassName = $this->getTableMapClassName();
+        $this->referencedClasses->registerFunction('assert');
+        $ownStubClassName = $this->getObjectClassName();
 
         $script .= "
         if (\$this->isDeleted()) {
@@ -2818,7 +2796,8 @@ $indent};";
                 \$this->postSave(\$con);";
             $this->applyBehaviorModifier('postSave', $script, '                ');
             $script .= "
-                " . $this->getTableMapClassName() . "::addInstanceToPool(\$this);
+                assert(\$this instanceof $ownStubClassName);
+                $tableMapClassName::addInstanceToPool(\$this);
             } else {
                 \$affectedRows = 0;
             }
@@ -2861,7 +2840,8 @@ $indent};";
             }";
             }
             $script .= "
-            " . $this->getTableMapClassName() . "::addInstanceToPool(\$this);
+            assert(\$this instanceof $ownStubClassName);
+            $tableMapClassName::addInstanceToPool(\$this);
 
             return \$affectedRows;";
         }

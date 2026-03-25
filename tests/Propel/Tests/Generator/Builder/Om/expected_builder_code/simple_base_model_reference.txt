@@ -3,6 +3,7 @@
 namespace Base;
 
 use Exception;
+use IdTable as ChildIdTable;
 use IdTableQuery as ChildIdTableQuery;
 use Map\IdTableTableMap;
 use PDO;
@@ -22,6 +23,7 @@ use RuntimeException;
 use function array_diff;
 use function array_key_exists;
 use function array_keys;
+use function assert;
 use function crc32;
 use function implode;
 use function json_encode;
@@ -546,6 +548,7 @@ abstract class IdTable implements ActiveRecordInterface
                     $this->postUpdate($con);
                 }
                 $this->postSave($con);
+                assert($this instanceof ChildIdTable);
                 IdTableTableMap::addInstanceToPool($this);
             } else {
                 $affectedRows = 0;
