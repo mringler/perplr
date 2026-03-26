@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om;
 
-use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Model\Table;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
@@ -32,18 +31,6 @@ class ObjectCollectionBuilder extends AbstractOMBuilder
      * @var array<array{relationIdentifier: string, relationIdentifierInMethod: string, collectionClassType: string, collectionClassNameFq: class-string, collectionClassName: string}>|null
      */
     protected $relationCollectionMapping;
-
-    /**
-     * @param \Propel\Generator\Model\Table $table
-     * @param \Propel\Generator\Config\AbstractGeneratorConfig|null $generatorConfig
-     *
-     * @return void
-     */
-    #[\Override]
-    protected function init(Table $table, ?AbstractGeneratorConfig $generatorConfig): void
-    {
-        parent::init($table, $generatorConfig);
-    }
 
     /**
      * @return array<array{relationIdentifier: string, relationIdentifierInMethod: string, collectionClassName: string, collectionClassNameFq: class-string, collectionClassType: string}>

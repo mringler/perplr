@@ -92,10 +92,18 @@ class ObjectBuilder extends AbstractObjectBuilder
         $this->fkRelationCodeProducers = [];
         $this->incomingRelationCodeProducers = [];
         $this->crossRelationCodeProducers = [];
+    }
 
-        if (!$generatorConfig) {
-            return;
-        }
+    /**
+     * @param \Propel\Generator\Model\Table $table
+     * @param \Propel\Generator\Config\AbstractGeneratorConfig $generatorConfig
+     *
+     * @return void
+     */
+    #[\Override()]
+    protected function onGeneratorConfigAvailable(Table $table, AbstractGeneratorConfig $generatorConfig): void
+    {
+        parent::onGeneratorConfigAvailable($table, $generatorConfig);
 
         foreach ($table->getColumns() as $column) {
             $this->columnCodeProducers[] = ColumnCodeProducerFactory::create($column, $this);
