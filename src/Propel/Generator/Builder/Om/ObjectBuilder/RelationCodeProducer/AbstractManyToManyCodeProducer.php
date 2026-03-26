@@ -593,7 +593,7 @@ abstract class AbstractManyToManyCodeProducer extends AbstractRelationCodeProduc
             $inputArgs = "[$inputArgs]";
         }
 
-        $ownStubClassName = $this->objectBuilder->getObjectClassName();
+        $ownStubClassName = $this->builder->getObjectClassName();
 
         $script .= "
     /**
