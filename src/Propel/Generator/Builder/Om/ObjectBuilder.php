@@ -86,12 +86,12 @@ class ObjectBuilder extends AbstractObjectBuilder
     #[\Override]
     protected function init(Table $table, ?AbstractGeneratorConfig $generatorConfig): void
     {
-        parent::init($table, $generatorConfig);
-
         $this->columnCodeProducers = [];
         $this->fkRelationCodeProducers = [];
         $this->incomingRelationCodeProducers = [];
         $this->crossRelationCodeProducers = [];
+
+        parent::init($table, $generatorConfig);
     }
 
     /**
