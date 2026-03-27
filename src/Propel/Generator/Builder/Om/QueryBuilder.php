@@ -660,7 +660,8 @@ class QueryBuilder extends AbstractOMBuilder
         }
 
         $script .= $this->renderTemplate('baseQueryFilterByPrimaryKey', [
-            'columnNames' => array_map(fn (Column $col) => $col->getName(), $pkColumns),
+            'pkType' => $this->getTable()->getPrimaryKeyDocType(false),
+            'columnPhpNames' => array_map(fn (Column $col) => $col->getPhpName(), $pkColumns),
         ]);
     }
 
@@ -680,7 +681,8 @@ class QueryBuilder extends AbstractOMBuilder
             return;
         }
         $script .= $this->renderTemplate('baseQueryFilterByPrimaryKeys', [
-            'pkColumnNames' => array_map(fn (Column $col) => $col->getName(), $table->getPrimaryKey()),
+            'pkType' => $this->getTable()->getPrimaryKeyDocType(false),
+            'columnPhpNames' => array_map(fn (Column $col) => $col->getPhpName(), $table->getPrimaryKey()),
         ]);
     }
 

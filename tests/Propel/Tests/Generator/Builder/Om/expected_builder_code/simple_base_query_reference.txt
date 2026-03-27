@@ -212,31 +212,25 @@ abstract class IdTableQuery extends TypedModelCriteria
     /**
      * Filter the query by primary key
      *
-     * @param mixed $key Primary key to use for the query
+     * @param int $key
      *
-     * @return $this
+     * @return static
      */
     public function filterByPrimaryKey($key)
     {
-        $resolvedColumn = $this->resolveLocalColumnByName('id');
-        $this->addUsingOperator($resolvedColumn, $key, Criteria::EQUAL);
-
-        return $this;
+        return $this->filterById($key);
     }
 
     /**
      * Filter the query by a list of primary keys
      *
-     * @param array $keys The list of primary key values to use for the query
+     * @param array<int> $keys The list of primary key values to use for the query
      *
      * @return static
      */
     public function filterByPrimaryKeys(array $keys)
     {
-        $resolvedColumn = $this->resolveLocalColumnByName('id');
-        $this->addUsingOperator($resolvedColumn, $keys, Criteria::IN);
-
-        return $this;
+        return $this->filterById($keys, Criteria::IN);
     }
 
     /**
