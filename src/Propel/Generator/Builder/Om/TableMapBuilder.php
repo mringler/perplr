@@ -13,13 +13,13 @@ use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
+use Propel\Generator\Platform\PgsqlPlatform;
 use Propel\Generator\Platform\PlatformInterface;
 use Propel\Runtime\Exception\LogicException as RuntimeLogicException;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\RelationMap;
 use Propel\Runtime\Map\TableMap;
 use function addslashes;
-use function array_column;
 use function array_filter;
 use function array_keys;
 use function array_map;
@@ -935,20 +935,7 @@ class $className extends TableMap
      */
     protected function addGetPrimaryKeyHashFromRow(string &$script): void
     {
-        /** @var array<array{varName:string, columnAccess:string, castToString:bool, isResource:bool}> $columnData*/
-        $columnData = [];
-        foreach ($this->getTable()->getEagerColumns() as $index => $col) {
-            if (!$col->isPrimaryKey()) {
-                continue;
-            }
-            $phpName = $col->getPhpName();
-            $columnData[] = [
-                'varName' => '$' . lcfirst($phpName),
-                'columnAccess' => "\$row[\$indexType === TableMap::TYPE_NUM ? $index + \$offset : static::translateFieldName('$phpName', TableMap::TYPE_PHPNAME, \$indexType)]",
-                'castToString' => !$col->isTextType() && $col->isPhpPrimitiveType() && !$col->isUuidBinaryType(),
-                'isResource' => $col->getType() === PropelTypes::OBJECT,
-            ];
-        }
+        $columns = array_filter($this->getTable()->getEagerColumns(), fn (Column $column) => $column->isPrimaryKey());
 
         $script .= "
     /**
@@ -963,7 +950,7 @@ class $className extends TableMap
      */
     public static function getPrimaryKeyHashFromRow(array \$row, int \$offset = 0, string \$indexType = TableMap::TYPE_NUM): ?string
     {";
-        if (count($columnData) === 0) {
+        if (count($columns) === 0) {
             $script .= "
         return null;
     }\n";
@@ -973,30 +960,37 @@ class $className extends TableMap
 
         $this->declareClass(TableMap::class);
 
-        foreach ($columnData as ['varName' => $varName, 'isResource' => $isResource, 'columnAccess' => $columnAccess, 'castToString' => $castToString]) {
-            $script .= "
-        $varName = $columnAccess;";
+        $varNames = [];
+        foreach ($columns as $index => $column) {
+            $phpName = $column->getPhpName();
+            $varName = '$' . lcfirst($phpName);
+            $varNames[] = $varName;
 
-            if ($isResource) {
-                $this->declareGlobalFunction('is_callable');
+            $script .= "
+        $varName = \$row[\$indexType === TableMap::TYPE_NUM ? $index + \$offset : static::translateFieldName('$phpName', TableMap::TYPE_PHPNAME, \$indexType)];";
+
+            if (
+                $column->getType() === PropelTypes::OBJECT
+                || ($this->getPlatform() instanceof PgsqlPlatform && $column->getType() === PropelTypes::UUID_BINARY )
+            ) {
+                $this->declareGlobalFunction('is_resource', 'stream_get_contents', 'is_callable');
                 $script .= "
         if (is_resource($varName)) {
             \$resourceValue = stream_get_contents($varName);
             rewind($varName);
             $varName =  is_callable([\$resourceValue, '__toString']) ? (string)\$resourceValue : \$resourceValue;
         }";
-            } elseif ($castToString) {
+            } elseif (!$column->isTextType() && $column->isPhpPrimitiveType() && !$column->isUuidBinaryType()) {
                 $script .= "
         $varName = $varName === null ? null : (string)$varName;";
             }
             $script .= "\n";
         }
 
-        if (count($columnData) === 1) {
-            $nullOrKeyExpression = $columnData[0]['varName'];
+        if (count($varNames) === 1) {
+            $nullOrKeyExpression = $varNames[0];
         } else {
             $this->declareGlobalFunction('serialize');
-            $varNames = array_column($columnData, 'varName');
             $isNullConjunction = implode(' === null && ', $varNames) . ' === null';
             $varNamesCsv = implode(', ', $varNames);
 
