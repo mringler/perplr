@@ -451,12 +451,7 @@ abstract class IdTable implements ActiveRecordInterface
             throw new PropelException('Cannot reload an unsaved object.');
         }
 
-        if ($con === null) {
-            $con = Propel::getServiceContainer()->getReadConnection(IdTableTableMap::DATABASE_NAME);
-        }
-
-        // We don't need to alter the object instance pool; we're just modifying this instance
-        // already in the pool.
+        $con ??= Propel::getServiceContainer()->getReadConnection(IdTableTableMap::DATABASE_NAME);
 
         $dataFetcher = ChildIdTableQuery::create(null, $this->buildPkeyCriteria())->fetch($con);
         $row = $dataFetcher->fetch();
@@ -548,8 +543,10 @@ abstract class IdTable implements ActiveRecordInterface
                     $this->postUpdate($con);
                 }
                 $this->postSave($con);
-                assert($this instanceof ChildIdTable);
-                IdTableTableMap::addInstanceToPool($this);
+                if ($isInsert) {
+                    assert($this instanceof ChildIdTable);
+                    IdTableTableMap::addInstanceToPool($this);
+                }
             } else {
                 $affectedRows = 0;
             }

@@ -12,7 +12,7 @@
      *
      * @return void
      */
-    public static function addInstanceToPool(<?= $modelClassName ?> $obj, string|null $key = null): void
+    public static function addInstanceToPool($obj, string|null $key = null): void
     {
         if (!Propel::isInstancePoolingEnabled()) {
             return;
@@ -33,7 +33,7 @@
      *
      * Passing in a Criteria clears the whole cache and is deprecated.
      *
-     * @param <?= $modelClassNameFq ?>|\Propel\Runtime\ActiveQuery\Criteria|array|null $value A <?= $modelClassName ?> object or a primary key value.
+     * @param <?= $modelClassNameFq ?>|\Propel\Runtime\ActiveQuery\Criteria|<?= $pkType ?>|null $value A <?= $modelClassName ?> object or a primary key value.
      *
      * @return void
      */
@@ -49,9 +49,9 @@
             return;
         }
 
-        $key = is_array($value)
-            ? <?= sprintf($poolKeyFromRowStatementFormat, '$value') ?> 
-            : <?= sprintf($poolKeyFromObjectStatementFormat, '$value') ?>;
+        $key = $value instanceof <?= $modelClassName ?> 
+            ? <?= sprintf($poolKeyFromObjectStatementFormat, '$value') ?> 
+            : <?= sprintf($poolKeyFromRowStatementFormat, '$value') ?>; 
 
         unset(self::$instances[$key]);
     }

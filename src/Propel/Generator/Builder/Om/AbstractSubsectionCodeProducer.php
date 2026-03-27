@@ -12,10 +12,11 @@ use Propel\Generator\Model\Table;
  * Unified setup for subsection code builders, which extract interconnected
  * parts out of top level builders.
  *
- * NOTE: AbstractSubsectionCodeProducer have to be created during the
- * builders {@see AbstractOMBuilder::init()} phase, when config is available.
+ * NOTE: AbstractSubsectionCodeProducer have to be created during (or after)
+ * the builders {@see AbstractOMBuilder::init()} phase, when config is
+ * available.
  *
- * @template Builder of AbstractOMBuilder
+ * @template Builder of \Propel\Generator\Builder\Om\AbstractOMBuilder
  */
 class AbstractSubsectionCodeProducer extends DataModelBuilder
 {

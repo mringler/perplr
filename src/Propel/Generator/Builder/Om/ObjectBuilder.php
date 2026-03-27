@@ -1792,12 +1792,7 @@ $indent};";
             throw new PropelException('Cannot reload an unsaved object.');
         }
 
-        if (\$con === null) {
-            \$con = Propel::getServiceContainer()->getReadConnection({$tableMapClass}::DATABASE_NAME);
-        }
-
-        // We don't need to alter the object instance pool; we're just modifying this instance
-        // already in the pool.
+        \$con ??= Propel::getServiceContainer()->getReadConnection({$tableMapClass}::DATABASE_NAME);
 
         \$dataFetcher = {$queryClassName}::create(null, \$this->buildPkeyCriteria())->fetch(\$con);
         \$row = \$dataFetcher->fetch();
@@ -1976,14 +1971,14 @@ $indent};";
     {
         $table = $this->getTable();
         $pkeys = $table->getPrimaryKey();
-        $type = $pkeys[0]->getPhpType();
+        $type = $table->getPrimaryKeyDocType(true);
         $name = $pkeys[0]->getPhpName();
 
         $script .= "
     /**
      * Returns the primary key for this object (row).
      *
-     * @return $type|null
+     * @return $type
      */
     public function getPrimaryKey()
     {
@@ -2001,8 +1996,7 @@ $indent};";
      */
     protected function addGetPrimaryKeyMultiPK(string &$script): void
     {
-        $columnTypes = array_map(fn (Column $col) => "{$col->resolveQualifiedType()}|null", $this->getTable()->getPrimaryKey());
-        $pkType = 'array{' . implode(', ', $columnTypes) . '}';
+        $pkType = $this->getTable()->getPrimaryKeyDocType(true);
 
         $keyColumns = $this->getTable()->getPrimaryKey();
         $names = array_values(array_map(fn ($column) => $column->getPhpName(), $keyColumns));
@@ -2805,8 +2799,10 @@ $indent};";
                 \$this->postSave(\$con);";
             $this->applyBehaviorModifier('postSave', $script, '                ');
             $script .= "
-                assert(\$this instanceof $ownStubClassName);
-                $tableMapClassName::addInstanceToPool(\$this);
+                if (\$isInsert) {
+                    assert(\$this instanceof $ownStubClassName);
+                    $tableMapClassName::addInstanceToPool(\$this);
+                }
             } else {
                 \$affectedRows = 0;
             }

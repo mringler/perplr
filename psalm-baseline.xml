@@ -90,10 +90,8 @@
       <code><![CDATA[$table->getColumn($columnName)]]></code>
     </NullableReturnStatement>
   </file>
-  <file src="src/Propel/Generator/Builder/Om/TableMapBuilder.php">
+  <file src="src/Propel/Generator/Builder/Om/InstancePoolCodeProducer/InstancePoolCodeProducer.php">
     <ParadoxicalCondition>
-      <code><![CDATA[$col->isBinaryEnumType(),
-            $col->isBinarySetType() => '(string)' . $this->declareClass(SetColumnConverter::class) . "::convertToBitmask($varName, static::getValueSet(static::" . $col->getConstantName() . '))']]></code>
       <code><![CDATA[$col->isLobType(),
             $col->isPhpObjectType() => "is_callable([$varName, '__toString']) ? (string)$varName : $varName"]]></code>
       <code><![CDATA[$col->isNumericType(),

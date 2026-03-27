@@ -114,9 +114,7 @@ abstract class IdTableQuery extends TypedModelCriteria
      */
     public function findPk($key, ?ConnectionInterface $con = null)
     {
-        if ($con === null) {
-            $con = Propel::getServiceContainer()->getReadConnection(IdTableTableMap::DATABASE_NAME);
-        }
+        $con ??= Propel::getServiceContainer()->getReadConnection(IdTableTableMap::DATABASE_NAME);
 
         $this->basePreSelect($con);
 
@@ -125,12 +123,9 @@ abstract class IdTableQuery extends TypedModelCriteria
         }
 
         $poolKey = (string)$key;
-        $obj = IdTableTableMap::getInstanceFromPool($poolKey);
-        if ($obj !== null) {
-            return $obj;
-        }
 
-        return $this->findPkSimple($key, $con);
+        return IdTableTableMap::getInstanceFromPool($poolKey)
+            ?? $this->findPkSimple($key, $con);
     }
 
     /**
@@ -164,8 +159,7 @@ abstract class IdTableQuery extends TypedModelCriteria
         if ($row) {
             $obj = new ChildIdTable();
             $obj->hydrate($row);
-            $poolKey = (string)$key;
-            IdTableTableMap::addInstanceToPool($obj, $poolKey);
+            IdTableTableMap::addInstanceToPool($obj);
         }
         $stmt->closeCursor();
 

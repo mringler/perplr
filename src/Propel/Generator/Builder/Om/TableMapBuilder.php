@@ -4,22 +4,22 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om;
 
-use Propel\Common\Util\SetColumnConverter;
+use Propel\Generator\Builder\Om\InstancePoolCodeProducer\InstancePoolCodeProducer;
 use Propel\Generator\Builder\Om\TableMapBuilder\TableMapBuilderValidation;
 use Propel\Generator\Builder\Util\EntityObjectClassNames;
+use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PlatformInterface;
-use Propel\Runtime\Exception\LogicException;
+use Propel\Runtime\Exception\LogicException as RuntimeLogicException;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\RelationMap;
-use Propel\Runtime\Util\UuidConverter;
+use Propel\Runtime\Map\TableMap;
 use function addslashes;
 use function array_column;
-use function array_combine;
 use function array_filter;
 use function array_keys;
 use function array_map;
@@ -33,7 +33,6 @@ use function in_array;
 use function is_array;
 use function lcfirst;
 use function preg_replace;
-use function range;
 use function strtoupper;
 use function var_export;
 use const PHP_EOL;
@@ -51,12 +50,30 @@ class TableMapBuilder extends AbstractOMBuilder
     protected EntityObjectClassNames $tableNames;
 
     /**
+     * @var \Propel\Generator\Builder\Om\InstancePoolCodeProducer\InstancePoolCodeProducer<static>
+     */
+    protected $instancePoolCodeBuilder;
+
+    /**
      * @param \Propel\Generator\Model\Table $table
      */
     public function __construct(Table $table)
     {
         parent::__construct($table);
         $this->tableNames = $this->referencedClasses->useEntityObjectClassNames($table);
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Table $table
+     * @param \Propel\Generator\Config\AbstractGeneratorConfig $generatorConfig
+     *
+     * @return void
+     */
+    #[\Override()]
+    protected function onGeneratorConfigAvailable(Table $table, AbstractGeneratorConfig $generatorConfig): void
+    {
+        parent::onGeneratorConfigAvailable($table, $generatorConfig);
+        $this->instancePoolCodeBuilder = new InstancePoolCodeProducer($table, $this);
     }
 
     /**
@@ -214,7 +231,8 @@ class $className extends TableMap
         $script .= $this->addInstancePool();
         $script .= $this->addClearRelatedInstancePool();
 
-        $this->addGetPrimaryKeyHash($script);
+        $this->addGetPrimaryKeyHashFromRow($script);
+        $this->addGetPrimaryKeyHashFromObject($script);
         $this->addGetPrimaryKeyFromRow($script);
 
         $this->addGetOMClassMethod($script);
@@ -837,111 +855,18 @@ class $className extends TableMap
      */
     public function addInstancePool(): string
     {
-        // No need to override instancePool if the PK is not composite
-        if (!$this->getTable()->hasCompositePrimaryKey()) {
+        $pks = $this->getTable()->getPrimaryKey();
+        if (!$pks) {
             return '';
         }
-
-        $this->declareGlobalFunction('is_array', 'count', 'is_object');
-
-        $pks = $this->getTable()->getPrimaryKey();
-
-        $pkGetters = array_map(fn (Column $col) => '%1$s->get' . $col->getPhpName() . '()', $pks);
-        $objectColumnAccess = array_combine($pkGetters, $pks);
-        $poolKeyFromObjectStatementFormat = $this->buildPoolKeyFromVariable($objectColumnAccess, false);
-
-        $rowAccess = array_map(fn (int $i) => "%1\$s[$i]", range(0, count($pks) - 1));
-        $rowAccessToColumn = array_combine($rowAccess, $pks);
-        $poolKeyFromRowStatementFormat = $this->buildPoolKeyFromVariable($rowAccessToColumn, true);
 
         return $this->renderTemplate('tableMapInstancePool', [
             'modelClassName' => $this->tableNames->useObjectStubClassName(),
             'modelClassNameFq' => $this->tableNames->useObjectStubClassName(false),
-            'poolKeyFromObjectStatementFormat' => $poolKeyFromObjectStatementFormat,
-            'poolKeyFromRowStatementFormat' => $poolKeyFromRowStatementFormat,
-            'countPks' => count($pks),
+            'pkType' => $this->getTable()->getPrimaryKeyDocType(false),
+            'poolKeyFromObjectStatementFormat' => $this->instancePoolCodeBuilder->buildPoolKeyFromObjectVariable('%1$s'),
+            'poolKeyFromRowStatementFormat' => $this->instancePoolCodeBuilder->buildPoolKeyFromArrayAccess('%1$s', true, null),
         ]);
-    }
-
-    /**
-     * Get statement to build pool key according to column information
-     *
-     * i.e. <code>`serialize([$obj->getFooDate()->format('...'), (string)$obj->getBarId()])`</code>
-     *
-     * @param array $variableToColumn
-     * @param bool $possiblyUnconverted
-     *
-     * @return string
-     */
-    protected function buildPoolKeyFromVariable(array $variableToColumn, bool $possiblyUnconverted): string
-    {
-        $statementBuilder = $possiblyUnconverted
-            ? [$this, 'buildPossiblyUnconvertedValueToStringExpression']
-            : [$this, 'buildColumnValueToStringExpression'];
-        $statements = array_map($statementBuilder, array_keys($variableToColumn), $variableToColumn);
-
-        if (count($statements) <= 1) {
-            return $statements[0];
-        }
-        $this->declareGlobalFunction('serialize');
-
-        $statementsCsv = implode(', ', $statements);
-
-        return "serialize([$statementsCsv])";
-    }
-
-    /**
-     * Access variable value as string according to column information
-     *
-     * i.e. <code>$obj->getFooDate()->format('...')`</code>
-     *
-     * @param string $varName
-     * @param \Propel\Generator\Model\Column $col
-     *
-     * @return string
-     */
-    protected function buildColumnValueToStringExpression(string $varName, Column $col): string
-    {
-        return match (true) {
-            $col->isBinaryEnumType(),
-            $col->isBinarySetType() => '(string)' . $this->declareClass(SetColumnConverter::class) . "::convertToBitmask($varName, static::getValueSet(static::" . $col->getConstantName() . '))',
-            $col->isLobType(),
-            $col->isPhpObjectType() => "is_callable([$varName, '__toString']) ? (string)$varName : $varName",
-            $col->isNumericType(),
-            $col->isPhpPrimitiveNumericType() => "(string)$varName",
-            $col->isPhpArrayType() => $this->getObjectClassName() . "::serializeArray($varName)",
-            $col->isTemporalType() => "{$varName}->format('" . $this->getTemporalFormatter($col) . "')",
-            $col->isUuidBinaryType() => $this->declareClass(UuidConverter::class) . "::uuidToBin($varName)",
-            default => $varName,
-        };
-    }
-
-    /**
-     * Access possibly stringified variable value as string according to column information
-     *
-     * i.e. <code>is_string($var) ? $var : $var->getFooDate()->format('...')`</code>
-     *
-     * @param string $varName
-     * @param \Propel\Generator\Model\Column $col
-     *
-     * @return string
-     */
-    protected function buildPossiblyUnconvertedValueToStringExpression(string $varName, Column $col): string
-    {
-        $columnToString = $this->buildColumnValueToStringExpression($varName, $col);
-        if ($col->isBinaryEnumType() || $col->isBinarySetType()) {
-            $this->declareGlobalFunction('is_numeric');
-
-            return "is_numeric($varName) ? $varName : $columnToString";
-        }
-
-        if ($col->isPhpArrayType() || $col->isTemporalType()) {
-            $this->declareGlobalFunction('is_string');
-
-            return "is_string($varName) ? $varName : $columnToString";
-        }
-
-        return $columnToString;
     }
 
     /**
@@ -1008,7 +933,7 @@ class $className extends TableMap
      *
      * @return void
      */
-    protected function addGetPrimaryKeyHash(string &$script): void
+    protected function addGetPrimaryKeyHashFromRow(string &$script): void
     {
         /** @var array<array{varName:string, columnAccess:string, castToString:bool, isResource:bool}> $columnData*/
         $columnData = [];
@@ -1020,7 +945,7 @@ class $className extends TableMap
             $columnData[] = [
                 'varName' => '$' . lcfirst($phpName),
                 'columnAccess' => "\$row[\$indexType === TableMap::TYPE_NUM ? $index + \$offset : static::translateFieldName('$phpName', TableMap::TYPE_PHPNAME, \$indexType)]",
-                'castToString' => !$col->isTextType() && $col->isPhpPrimitiveType(),
+                'castToString' => !$col->isTextType() && $col->isPhpPrimitiveType() && !$col->isUuidBinaryType(),
                 'isResource' => $col->getType() === PropelTypes::OBJECT,
             ];
         }
@@ -1045,6 +970,8 @@ class $className extends TableMap
 
             return;
         }
+
+        $this->declareClass(TableMap::class);
 
         foreach ($columnData as ['varName' => $varName, 'isResource' => $isResource, 'columnAccess' => $columnAccess, 'castToString' => $castToString]) {
             $script .= "
@@ -1078,6 +1005,43 @@ class $className extends TableMap
 
         $script .= "
         return $nullOrKeyExpression;
+    }\n";
+    }
+
+    /**
+     * Adds method to get a version of the primary key that can be used as a unique key for identifier map.
+     *
+     * @param string $script The script will be modified in this method.
+     *
+     * @return void
+     */
+    protected function addGetPrimaryKeyHashFromObject(string &$script): void
+    {
+        $modelClass = $this->getObjectClassName();
+        $modelClassFq = $this->getObjectClassName(true);
+        $objectVar = '$' . lcfirst($modelClass);
+        if (!$this->getTable()->hasPrimaryKey()) {
+            $exception = $this->declareClass(RuntimeLogicException::class);
+            $poolKeyBuilderExpression = "throw new {$exception}('Cannot build PK has from table without PK.')";
+            $throwsDoc = "
+     * 
+     * @throws \\" . RuntimeLogicException::class;
+        } else {
+            $poolKeyBuilderExpression = 'return ' . $this->instancePoolCodeBuilder->buildPoolKeyFromObjectVariable($objectVar);
+            $throwsDoc = '';
+        }
+
+        $script .= "
+    /**
+     * Returns a serialized version of the primary key as unique identifier of the model instance.
+     *
+     * @param $modelClassFq $objectVar{$throwsDoc}
+     *
+     * @return string|null
+     */
+    public static function getPrimaryKeyHashFromObject($modelClass $objectVar): string|null
+    {
+        $poolKeyBuilderExpression;
     }\n";
     }
 
@@ -1577,9 +1541,9 @@ class $className extends TableMap
 
         if (!$table->getPrimaryKey()) {
             $class = $this->getObjectName();
-            $this->declareClass(LogicException::class);
+            $exception = $this->declareClass(RuntimeLogicException::class);
             $script .= "
-            throw new LogicException('The $class object has no primary key');";
+            throw new {$exception}('The $class object has no primary key');";
         } else {
             $script .= "
             \$criteria = new Criteria(static::DATABASE_NAME);";
