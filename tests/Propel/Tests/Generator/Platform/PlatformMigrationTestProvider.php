@@ -13,7 +13,6 @@ use Propel\Generator\Model\Diff\ColumnComparator;
 use Propel\Generator\Model\Diff\DatabaseComparator;
 use Propel\Generator\Model\Diff\TableComparator;
 use Propel\Generator\Model\Diff\TableDiff;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 
 /**

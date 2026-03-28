@@ -41,10 +41,9 @@ class DefaultPlatformTest extends TestCase
     }
 
     /**
-     * @dataProvider provideValidBooleanValues
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('provideValidBooleanValues')]
     public function testGetBooleanString($value)
     {
         $p = $this->getPlatform();
@@ -52,7 +51,7 @@ class DefaultPlatformTest extends TestCase
         $this->assertEquals('1', $p->getBooleanString($value));
     }
 
-    public function provideValidBooleanValues()
+    public static function provideValidBooleanValues()
     {
         return [
             [true],
@@ -68,10 +67,9 @@ class DefaultPlatformTest extends TestCase
     }
 
     /**
-     * @dataProvider provideInvalidBooleanValues
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('provideInvalidBooleanValues')]
     public function testGetNonBooleanString($value)
     {
         $p = $this->getPlatform();
@@ -79,7 +77,7 @@ class DefaultPlatformTest extends TestCase
         $this->assertEquals('0', $p->getBooleanString($value));
     }
 
-    public function provideInvalidBooleanValues()
+    public static function provideInvalidBooleanValues()
     {
         return [
             [false],
@@ -157,10 +155,9 @@ class DefaultPlatformTest extends TestCase
     }
 
     /**
-     * @dataProvider getColumnDefaultValueDDLDataProvider
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getColumnDefaultValueDDLDataProvider')]
     public function testGetColumnDefaultValueDDL($column, $default)
     {
         $this->assertEquals($default, $this->getPlatform()->getColumnDefaultValueDDL($column));
@@ -179,10 +176,9 @@ class DefaultPlatformTest extends TestCase
     }
 
     /**
-     * @dataProvider getColumnBindingDataProvider
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getColumnBindingDataProvider')]
     public function testGetColumnBindingPHP($column, $default)
     {
         $this->assertStringContainsString($default, $this->getPlatform()->getColumnBindingPHP($column, 'ID', 'ACCESSOR'));
@@ -196,7 +192,7 @@ class DefaultPlatformTest extends TestCase
         $this->assertFalse($this->getPlatform()->supportsNativeDeleteTrigger());
     }
 
-    public function GetTemporalFormatterDataProvider(): array
+    public static function GetTemporalFormatterDataProvider(): array
     {
         return [
             [PropelTypes::DATE, null, 'Y-m-d'],
@@ -210,9 +206,7 @@ class DefaultPlatformTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider GetTemporalFormatterDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('GetTemporalFormatterDataProvider')]
     public function testGetTemporalFormatter(string $columnType, int|null $size, string $expectedFormat): void
     {
         $column = $this->createColumn($columnType, null, $size);

@@ -65,10 +65,9 @@ class PgsqlPlatformTest extends PlatformTestProvider
     }
 
     /**
-     * @dataProvider providerForTestGetAddTablesDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetAddTablesDDL')]
     public function testGetAddTablesDDL($schema)
     {
         $database = $this->getDatabaseFromSchema($schema);
@@ -117,10 +116,9 @@ EOF;
     }
 
     /**
-     * @dataProvider providerForTestGetAddTablesSkipSQLDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetAddTablesSkipSQLDDL')]
     public function testGetAddTablesDDLSkipSQL($schema)
     {
         $database = $this->getDatabaseFromSchema($schema);
@@ -220,10 +218,9 @@ EOF;
     }
 
     /**
-     * @dataProvider providerForTestGetAddTablesDDLSchema
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetAddTablesDDLSchema')]
     public function testGetAddTablesDDLSchemas($schema)
     {
         $database = $this->getDatabaseFromSchema($schema);
@@ -291,10 +288,9 @@ EOF;
     }
 
     /**
-     * @dataProvider providerForTestGetAddTableDDLSimplePK
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetAddTableDDLSimplePK')]
     public function testGetAddTableDDLSimplePK($schema)
     {
         $table = $this->getTableFromSchema($schema);
@@ -314,10 +310,9 @@ EOF;
     }
 
     /**
-     * @dataProvider providerForTestGetAddTableDDLCompositePK
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetAddTableDDLCompositePK')]
     public function testGetAddTableDDLCompositePK($schema)
     {
         $table = $this->getTableFromSchema($schema);
@@ -336,10 +331,9 @@ EOF;
     }
 
     /**
-     * @dataProvider providerForTestGetAddTableDDLUniqueIndex
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetAddTableDDLUniqueIndex')]
     public function testGetAddTableDDLUniqueIndex($schema)
     {
         $table = $this->getTableFromSchema($schema);
@@ -390,10 +384,9 @@ EOF;
     }
 
     /**
-     * @dataProvider providerForTestGetAddTableDDLSchema
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetAddTableDDLSchema')]
     public function testGetAddTableDDLSchema($schema)
     {
         $table = $this->getTableFromSchema($schema, 'Woopah.foo');
@@ -510,10 +503,9 @@ EOF;
     }
 
     /**
-     * @dataProvider providerForTestGetAddTableDDLSchema
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetAddTableDDLSchema')]
     public function testGetDropTableDDLSchema($schema)
     {
         $table = $this->getTableFromSchema($schema, 'Woopah.foo');
@@ -622,10 +614,9 @@ DROP SEQUENCE "foo_sequence";
     }
 
     /**
-     * @dataProvider providerForTestPrimaryKeyDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestPrimaryKeyDDL')]
     public function testGetDropPrimaryKeyDDL($table)
     {
         $expected = '
@@ -635,10 +626,9 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_pkey";
     }
 
     /**
-     * @dataProvider providerForTestPrimaryKeyDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestPrimaryKeyDDL')]
     public function testGetAddPrimaryKeyDDL($table)
     {
         $expected = '
@@ -648,10 +638,9 @@ ALTER TABLE "foo" ADD PRIMARY KEY ("bar");
     }
 
     /**
-     * @dataProvider providerForTestGetIndexDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetIndexDDL')]
     public function testAddIndexDDL($index)
     {
         $expected = '
@@ -661,12 +650,11 @@ CREATE INDEX "babar" ON "foo" ("bar1","bar2");
     }
 
     /**
-     * @dataProvider providerForTestGetUniqueIndexDDL
      *
      * @param \Propel\Generator\Model\Unique $index
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetUniqueIndexDDL')]
     public function testAddUniqueIndexDDL(Unique $index): void
     {
         $expected = '
@@ -676,10 +664,9 @@ ALTER TABLE "foo" ADD CONSTRAINT "babar" UNIQUE ("bar1");
     }
 
     /**
-     * @dataProvider providerForTestGetIndicesDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetIndicesDDL')]
     public function testAddIndicesDDL($table)
     {
         $expected = '
@@ -691,10 +678,9 @@ CREATE INDEX "foo_index" ON "foo" ("bar1");
     }
 
     /**
-     * @dataProvider providerForTestGetIndexDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetIndexDDL')]
     public function testDropIndexDDL($index)
     {
         $expected = '
@@ -704,10 +690,9 @@ DROP INDEX "babar";
     }
 
     /**
-     * @dataProvider providerForTestGetIndexDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetIndexDDL')]
     public function testGetIndexDDL($index)
     {
         $expected = 'INDEX "babar" ("bar1","bar2")';
@@ -715,10 +700,9 @@ DROP INDEX "babar";
     }
 
     /**
-     * @dataProvider providerForTestGetUniqueDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetUniqueDDL')]
     public function testGetUniqueDDL($index)
     {
         $expected = 'CONSTRAINT "babar" UNIQUE ("bar1","bar2")';
@@ -726,10 +710,9 @@ DROP INDEX "babar";
     }
 
     /**
-     * @dataProvider providerForTestGetForeignKeysDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetForeignKeysDDL')]
     public function testGetAddForeignKeysDDL($table)
     {
         $expected = '
@@ -747,10 +730,9 @@ ALTER TABLE "foo" ADD CONSTRAINT "foo_baz_fk"
     }
 
     /**
-     * @dataProvider providerForTestGetForeignKeyDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetForeignKeyDDL')]
     public function testGetAddForeignKeyDDL($fk)
     {
         $expected = '
@@ -763,10 +745,9 @@ ALTER TABLE "foo" ADD CONSTRAINT "foo_bar_fk"
     }
 
     /**
-     * @dataProvider providerForTestGetForeignKeySkipSqlDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetForeignKeySkipSqlDDL')]
     public function testGetAddForeignKeySkipSqlDDL($fk)
     {
         $expected = '';
@@ -774,10 +755,9 @@ ALTER TABLE "foo" ADD CONSTRAINT "foo_bar_fk"
     }
 
     /**
-     * @dataProvider providerForTestGetForeignKeyDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetForeignKeyDDL')]
     public function testGetDropForeignKeyDDL($fk)
     {
         $expected = '
@@ -787,10 +767,9 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
     }
 
     /**
-     * @dataProvider providerForTestGetForeignKeySkipSqlDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetForeignKeySkipSqlDDL')]
     public function testGetDropForeignKeySkipSqlDDL($fk)
     {
         $expected = '';
@@ -798,10 +777,9 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
     }
 
     /**
-     * @dataProvider providerForTestGetForeignKeyDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetForeignKeyDDL')]
     public function testGetForeignKeyDDL($fk)
     {
         $expected = 'CONSTRAINT "foo_bar_fk"
@@ -812,10 +790,9 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
     }
 
     /**
-     * @dataProvider providerForTestGetForeignKeySkipSqlDDL
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetForeignKeySkipSqlDDL')]
     public function testGetForeignKeySkipSqlDDL($fk)
     {
         $expected = '';
@@ -845,10 +822,9 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
     }
 
     /**
-     * @dataProvider providerForTestCreateSchemaWithUuidColumns
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestCreateSchemaWithUuidColumns')]
     public function testCreateSchemaWithUuidColumns($schema)
     {
         $expected = <<< 'EOT'
@@ -865,10 +841,9 @@ EOT;
     }
 
     /**
-     * @dataProvider providerForTestCreateSchemaWithUuidBinaryColumns
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestCreateSchemaWithUuidBinaryColumns')]
     public function testCreateSchemaWithUuidBinaryColumns($schema)
     {
         $expected = <<< 'EOT'

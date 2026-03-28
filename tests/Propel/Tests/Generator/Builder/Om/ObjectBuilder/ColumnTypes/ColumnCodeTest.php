@@ -19,7 +19,7 @@ class ColumnCodeTest extends CompareGeneratedCodeTestCase
      * @return array<array>
      */
     #[ComparesGeneratedFile(textBuilder: 'buildObjectClassCode')]
-    public function ColumnCodeDataProvider(): array
+    public static function ColumnCodeDataProvider(): array
     {
         $mysqlPlatform = new MysqlPlatform();
 
@@ -68,13 +68,12 @@ class ColumnCodeTest extends CompareGeneratedCodeTestCase
     }
 
     /**
-     * @dataProvider ColumnCodeDataProvider
      *
      * @param array{string, (array | null), (\Propel\Generator\Platform\PlatformInterface | null)}|array $builderArgs
      * @param string $fileName
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('ColumnCodeDataProvider')]
     public function testEnumeratedColumnObjectCode(array $builderArgs, string $fileName): void
     {
         $objectClassCode = $this->buildObjectClassCode(...$builderArgs);
@@ -85,7 +84,7 @@ class ColumnCodeTest extends CompareGeneratedCodeTestCase
      * @return array<array<string>>
      */
     #[ComparesGeneratedFile(textBuilder: 'buildQueryClassCode')]
-    public function QueryCodeDataProvider(): array
+    public static function QueryCodeDataProvider(): array
     {
         $mysqlPlatform = new MysqlPlatform();
 
@@ -128,13 +127,12 @@ class ColumnCodeTest extends CompareGeneratedCodeTestCase
     }
 
     /**
-     * @dataProvider QueryCodeDataProvider
      *
      * @param array{string, (array | null), (\Propel\Generator\Platform\PlatformInterface | null)}|array $builderArgs
      * @param string $fileName
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('QueryCodeDataProvider')]
     public function testEnumeratedColumnQueryCode(array $builderArgs, string $fileName): void
     {
         $queryClassCode = $this->buildQueryClassCode(...$builderArgs);

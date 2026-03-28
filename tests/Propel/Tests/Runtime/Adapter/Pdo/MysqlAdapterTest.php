@@ -47,12 +47,11 @@ class MysqlAdapterTest extends TestCaseFixtures
     }
 
     /**
-     * @dataProvider getConParams
      *
      * @param array $conparams
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getConParams')]
     public function testPrepareParamsThrowsException($conparams)
     {
         $db = new TestableMysqlAdapter();
@@ -62,10 +61,9 @@ class MysqlAdapterTest extends TestCaseFixtures
     }
 
     /**
-     * @dataProvider getConParams
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getConParams')]
     public function testPrepareParams($conparams)
     {
         $db = new TestableMysqlAdapter();
@@ -77,10 +75,9 @@ class MysqlAdapterTest extends TestCaseFixtures
     }
 
     /**
-     * @dataProvider getConParams
-     *
      * @return void
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getConParams')]
     public function testNoSetNameQueryExecuted($conparams)
     {
         $db = new TestableMysqlAdapter();
