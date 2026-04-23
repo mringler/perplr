@@ -1,3 +1,12 @@
+<?php
+    /**
+     * phpcs:ignoreFile
+     *
+     * Expected variables:
+     * 
+     * @var Propel\Generator\Model\Column $column
+     */
+?>
 
 /**
  * Updates the aggregate column <?=$column->getName()?>

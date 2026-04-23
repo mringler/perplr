@@ -6,7 +6,7 @@ namespace Propel\Generator\Manager;
 
 use Propel\Generator\Builder\Om\AbstractOMBuilder;
 use Propel\Generator\Builder\Om\BuilderType;
-use Propel\Generator\Builder\Om\TableMapLoaderScriptBuilder;
+use Propel\Generator\Builder\Om\TableLoaderScriptBuilder;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 use function file_get_contents;
@@ -203,7 +203,7 @@ class ModelManager extends AbstractManager
     protected function createTableMapLoaderScript(): int
     {
         $schemas = $this->getDataModels();
-        $builder = new TableMapLoaderScriptBuilder($this->getGeneratorConfig());
+        $builder = new TableLoaderScriptBuilder($this->getGeneratorConfig());
         $fileContent = $builder->build($schemas);
 
         $file = $builder->getFile();

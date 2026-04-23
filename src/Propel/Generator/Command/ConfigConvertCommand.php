@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Propel\Generator\Command;
 
 use Propel\Common\Config\ConfigurationManager;
-use Propel\Generator\Builder\Om\TableMapLoaderScriptBuilder;
+use Propel\Generator\Builder\Om\TableLoaderScriptBuilder;
 use Propel\Generator\Config\ArrayToPhpConverter;
 use Propel\Runtime\ServiceContainer\StandardServiceContainer;
 use RuntimeException;
@@ -129,7 +129,7 @@ require_once __DIR__ . '$loaderScriptLocation';
      */
     protected function createLoadDatabaseDummyScript(string $loaderDir, OutputInterface $output): string
     {
-        $fileName = TableMapLoaderScriptBuilder::FILENAME;
+        $fileName = TableLoaderScriptBuilder::FILENAME;
         $scriptLocation = $loaderDir . DIRECTORY_SEPARATOR . $fileName;
 
         if (file_exists($scriptLocation)) {

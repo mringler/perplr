@@ -412,6 +412,24 @@ class Behavior extends MappingModel
     }
 
     /**
+     * Render template located in the 'templates' directory inside the behavior
+     * directory.
+     *
+     * @see static::getDirname()
+     *
+     * @param string $filename
+     * @param array $vars
+     *
+     * @return string
+     */
+    public function renderLocalTemplate(string $filename, array $vars = []): string
+    {
+        $templatePath = $this->getDirname() . '/templates/';
+
+        return $this->renderTemplate($filename, $vars, $templatePath);
+    }
+
+    /**
      * Returns the current absolute directory name of this behavior. It also
      * works for descendants.
      *

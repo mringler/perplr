@@ -119,7 +119,7 @@ class ArchivableBehaviorObjectBuilderModifier
     public function preDelete(AbstractOMBuilder $builder): ?string
     {
         if ($this->behavior->isArchiveOnDelete()) {
-            return $this->behavior->renderTemplate('objectPreDelete', [
+            return $this->behavior->renderLocalTemplate('objectPreDelete', [
                 'queryClassName' => $builder->getQueryClassName(),
                 'isAddHooks' => (bool)$builder->getGeneratorConfig()->getConfigProperty('generator.objectModel.addHooks'),
             ]);
@@ -157,7 +157,7 @@ class ArchivableBehaviorObjectBuilderModifier
      */
     public function addGetArchive(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('objectGetArchive', [
+        return $this->behavior->renderLocalTemplate('objectGetArchive', [
             'archiveTablePhpName' => $this->behavior->getArchiveTablePhpName($builder),
             'archiveTableQueryName' => $this->behavior->getArchiveTableQueryName($builder),
         ]);
@@ -170,7 +170,7 @@ class ArchivableBehaviorObjectBuilderModifier
      */
     public function addArchive(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('objectArchive', [
+        return $this->behavior->renderLocalTemplate('objectArchive', [
             'archiveTablePhpName' => $this->behavior->getArchiveTablePhpName($builder),
             'archiveTableQueryName' => $this->behavior->getArchiveTableQueryName($builder),
             'archivedAtColumn' => $this->behavior->getArchivedAtColumn(),
@@ -185,7 +185,7 @@ class ArchivableBehaviorObjectBuilderModifier
      */
     public function addRestoreFromArchive(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('objectRestoreFromArchive', [
+        return $this->behavior->renderLocalTemplate('objectRestoreFromArchive', [
             'objectClassName' => $this->builder->getObjectClassName(),
         ]);
     }
@@ -201,7 +201,7 @@ class ArchivableBehaviorObjectBuilderModifier
      */
     public function addPopulateFromArchive(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('objectPopulateFromArchive', [
+        return $this->behavior->renderLocalTemplate('objectPopulateFromArchive', [
             'archiveTablePhpName' => $this->behavior->getArchiveTablePhpName($builder),
             'usesAutoIncrement' => $this->table->hasAutoIncrementPrimaryKey(),
             'objectClassName' => $this->builder->getObjectClassName(),
@@ -216,7 +216,7 @@ class ArchivableBehaviorObjectBuilderModifier
      */
     public function addSaveWithoutArchive(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('objectSaveWithoutArchive', [
+        return $this->behavior->renderLocalTemplate('objectSaveWithoutArchive', [
             'objectClassName' => $this->builder->getObjectClassName(),
             'isArchiveOnInsert' => $this->behavior->isArchiveOnInsert(),
             'isArchiveOnUpdate' => $this->behavior->isArchiveOnUpdate(),
@@ -230,7 +230,7 @@ class ArchivableBehaviorObjectBuilderModifier
      */
     public function addDeleteWithoutArchive(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('objectDeleteWithoutArchive', [
+        return $this->behavior->renderLocalTemplate('objectDeleteWithoutArchive', [
             'objectClassName' => $this->builder->getObjectClassName(),
         ]);
     }

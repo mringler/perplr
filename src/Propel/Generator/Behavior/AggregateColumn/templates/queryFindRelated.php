@@ -1,3 +1,17 @@
+<?php
+    /**
+     * phpcs:ignoreFile
+     *
+     * Expected variables:
+     * 
+     * @var Propel\Generator\Model\Table $foreignTable
+     * @var string $relationName
+     * @var string $aggregateName
+     * @var string $foreignQueryName
+     * @var string $refRelationName
+     * @var string $variableName
+     */
+?>
 
 /**
  * Finds the related <?=$foreignTable->getPhpName()?> objects and keep them for later

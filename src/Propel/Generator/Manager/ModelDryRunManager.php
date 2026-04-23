@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Propel\Generator\Manager;
 
 use Propel\Generator\Builder\Om\AbstractOMBuilder;
-use Propel\Generator\Builder\Om\TableMapLoaderScriptBuilder;
+use Propel\Generator\Builder\Om\TableLoaderScriptBuilder;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Path;
 use function getcwd;
@@ -75,7 +75,7 @@ class ModelDryRunManager extends ModelManager
     #[\Override]
     protected function createTableMapLoaderScript(): int
     {
-        $builder = new TableMapLoaderScriptBuilder($this->getGeneratorConfig());
+        $builder = new TableLoaderScriptBuilder($this->getGeneratorConfig());
         $file = $builder->getFile();
         $filePath = $file->getPathname();
         if ($this->isFromRelativeConfig('paths.phpConfDir')) {

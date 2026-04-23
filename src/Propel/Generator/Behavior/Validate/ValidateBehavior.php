@@ -76,7 +76,7 @@ class ValidateBehavior extends Behavior
      */
     public function objectAttributes(): string
     {
-        return $this->renderTemplate('objectAttributes');
+        return $this->renderLocalTemplate('objectAttributes');
     }
 
     /**
@@ -233,7 +233,7 @@ class ValidateBehavior extends Behavior
             $this->builder->declareClass($classConstraint);
         }
 
-        return $this->renderTemplate('objectLoadValidatorMetadata', ['constraints' => $constraints]);
+        return $this->renderLocalTemplate('objectLoadValidatorMetadata', ['constraints' => $constraints]);
     }
 
     /**
@@ -289,7 +289,7 @@ class ValidateBehavior extends Behavior
             }
         }
 
-        return $this->renderTemplate('objectValidate', [
+        return $this->renderLocalTemplate('objectValidate', [
             'hasForeignKeys' => $hasForeignKeys,
             'aVarNames' => $aVarNames,
             'refFkVarNames' => $refFkVarNames,
@@ -304,6 +304,6 @@ class ValidateBehavior extends Behavior
      */
     protected function addGetValidationFailuresMethod(): string
     {
-        return $this->renderTemplate('objectGetValidationFailures');
+        return $this->renderLocalTemplate('objectGetValidationFailures');
     }
 }

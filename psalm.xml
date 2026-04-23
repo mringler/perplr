@@ -13,6 +13,9 @@
 >
     <projectFiles>
         <directory name="src/Propel/"/>
+        <ignoreFiles>
+            <directory name="src/**/templates" />
+        </ignoreFiles>
     </projectFiles>
 
     <issueHandlers>

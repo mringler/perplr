@@ -120,7 +120,7 @@ class ObjectCollectionBuilder extends AbstractOMBuilder
 
         $parentClassFq = $this->resolveParentCollectionClassNameFq();
 
-        $script .= $this->renderTemplate('objectCollectionClassOpen', [
+        $script .= $this->renderLocalTemplate('objectCollectionClassOpen', [
             'modelClassName' => $this->getObjectName(),
             'unqualifiedClassName' => $this->getUnprefixedClassName(),
             'parentClass' => substr($parentClassFq, 1 + strrpos($parentClassFq, '\\')),
@@ -139,7 +139,7 @@ class ObjectCollectionBuilder extends AbstractOMBuilder
     #[\Override]
     protected function addClassBody(string &$script): void
     {
-        $script .= $this->renderTemplate('objectCollectionClassBody', [
+        $script .= $this->renderLocalTemplate('objectCollectionClassBody', [
             'relationMapping' => $this->getMapping(),
         ]);
     }

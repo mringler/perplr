@@ -91,7 +91,7 @@ protected \$old{$relationName}{$aggregateName};
     {
         $relationName = $this->getRelationName($builder);
 
-        return $this->renderTemplate('objectUpdateRelated', [
+        return $this->renderLocalTemplate('objectUpdateRelated', [
             'relationName' => $relationName,
             'aggregateName' => $this->getParameter('aggregate_name'),
             'variableName' => lcfirst($relationName),
@@ -248,7 +248,7 @@ protected ?$aggregatedObjectCollectionClassName {$variableName}s = null;\n";
             $foreignKey->getForeignTable()->getNamespace(),
         );
 
-        return $this->renderTemplate('queryFindRelated', [
+        return $this->renderLocalTemplate('queryFindRelated', [
             'foreignTable' => $this->getForeignTable(),
             'relationName' => $relationName,
             'aggregateName' => $this->getParameter('aggregate_name'),
@@ -267,7 +267,7 @@ protected ?$aggregatedObjectCollectionClassName {$variableName}s = null;\n";
     {
         $relationName = $this->getRelationName($builder);
 
-        return $this->renderTemplate('queryUpdateRelated', [
+        return $this->renderLocalTemplate('queryUpdateRelated', [
             'relationName' => $relationName,
             'aggregateName' => $this->getParameter('aggregate_name'),
             'variableName' => lcfirst($relationName . $this->getParameter('aggregate_name')),

@@ -502,12 +502,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
      */
     protected function addAttributes(string &$script): void
     {
-        $table = $this->getTable();
-
-        $script .= "
-";
-
-        $script .= $this->renderTemplate('baseObjectAttributes');
+        $script .= "\n" . $this->renderLocalTemplate('attributesTemplate');
 
         foreach ($this->columnCodeProducers as $producer) {
             $producer->addColumnAttributes($script);
@@ -633,7 +628,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
             $this->declareGlobalFunction('array_all');
         }
 
-        $script .= $this->renderTemplate('baseObjectMethods', [
+        $script .= $this->renderLocalTemplate('methodsTemplate', [
             'className' => $this->getUnqualifiedClassName(),
             'hasArrayKey' => $hasArrayKey,
             'hasFks' => $this->getTable()->hasRelations(),
@@ -660,7 +655,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
         $className = ClassTools::classname($this->getBaseClass());
         $hooks['hasBaseClass'] = $this->getBehaviorContent('parentClass') !== null || $className !== null;
 
-        $script .= $this->renderTemplate('baseObjectMethodHook', $hooks);
+        $script .= $this->renderLocalTemplate('methodHookTemplate', $hooks);
     }
 
     /**
@@ -2910,7 +2905,7 @@ $indent};";
             }
         }
 
-        $script .= $this->renderTemplate('baseObjectEnsureConsistency', [
+        $script .= $this->renderLocalTemplate('ensureConsistencyTemplate', [
             'fkProperties' => $fkProperties,
         ]);
     }
@@ -2926,7 +2921,7 @@ $indent};";
     {
         $this->addCopyInto($script);
 
-        $script .= $this->renderTemplate('baseObjectCopy', [
+        $script .= $this->renderLocalTemplate('copyTemplate', [
             'objectInstanceCreationCode' => '$copyObj = new $clazz();',
         ]);
     }
@@ -3244,7 +3239,7 @@ $indent};";
 
         $this->declareGlobalFunction('strpos', 'substr', 'lcfirst');
 
-        $script .= $this->renderTemplate('baseObjectMethodMagicCall', [
+        $script .= $this->renderLocalTemplate('methodMagicCallTemplate', [
             'behaviorCallScript' => $behaviorCallScript,
             'hasGenericMutators' => $this->isAddGenericMutators(),
         ]);
@@ -3260,7 +3255,7 @@ $indent};";
         $this->declareClass('\RuntimeException');
         $this->declareGlobalFunction('fopen', 'fwrite', 'is_bool', 'is_string', 'rewind');
 
-        $script .= $this->renderTemplate('baseObjectWriteResource');
+        $script .= $this->renderLocalTemplate('writeResourceTemplate');
     }
 
     /**
@@ -3314,6 +3309,6 @@ $indent};";
     protected function addArraySerializationMethods(string &$script): void
     {
         $this->declareGlobalFunction('implode', 'explode', 'substr', 'trim');
-        $script .= $this->renderTemplate('baseObjectArraySerializationMethods');
+        $script .= $this->renderLocalTemplate('arraySerializationMethodsTemplate');
     }
 }

@@ -379,7 +379,7 @@ public function getScopeValue(): int
      */
     protected function addSetLeft(): string
     {
-        return $this->behavior->renderTemplate('objectSetLeft', [
+        return $this->behavior->renderLocalTemplate('objectSetLeft', [
             'objectClassName' => $this->builder->getObjectClassName(),
             'leftColumn' => $this->getColumnPhpName('left_column'),
         ]);
@@ -1312,7 +1312,7 @@ public function insertAsFirstChildOf($objectClassName \$parent)
      */
     protected function addInsertAsLastChildOf(): string
     {
-        return $this->behavior->renderTemplate('objectInsertAsLastChildOf', [
+        return $this->behavior->renderLocalTemplate('objectInsertAsLastChildOf', [
             'objectClassName' => $this->builder->getObjectClassName(),
             'queryClassName' => $this->builder->getQueryClassName(true),
             'useScope' => $this->behavior->useScope(),
@@ -1788,6 +1788,6 @@ const SCOPE_COL = '" . $tableName . '.' . $this->behavior->getColumnConstant('sc
      */
     protected function addGetIterator(): string
     {
-        return $this->behavior->renderTemplate('objectGetIterator');
+        return $this->behavior->renderLocalTemplate('objectGetIterator');
     }
 }

@@ -51,7 +51,7 @@ class I18nBehaviorObjectBuilderModifier
         if (!$builder->getPlatform()->supportsNativeDeleteTrigger() && !$builder->getBuildProperty('generator.objectModel.emulateForeignKeyConstraints')) {
             $i18nTable = $this->behavior->getI18nTable();
 
-            return $this->behavior->renderTemplate('objectPostDelete', [
+            return $this->behavior->renderLocalTemplate('objectPostDelete', [
                 'i18nQueryName' => $builder->getClassNameFromBuilder($builder->getStubQueryBuilder($i18nTable)),
                 'objectClassName' => $builder->getStubObjectBuilder($this->behavior->getTable())->getUnqualifiedClassName(),
             ]);
@@ -67,7 +67,7 @@ class I18nBehaviorObjectBuilderModifier
      */
     public function objectAttributes(ObjectBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('objectAttributes', [
+        return $this->behavior->renderLocalTemplate('objectAttributes', [
             'defaultLocale' => $this->behavior->getDefaultLocale(),
             'objectClassName' => $builder->getClassNameFromBuilder($builder->getStubObjectBuilder($this->behavior->getI18nTable())),
         ]);
@@ -80,7 +80,7 @@ class I18nBehaviorObjectBuilderModifier
      */
     public function objectClearReferences(ObjectBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('objectClearReferences', [
+        return $this->behavior->renderLocalTemplate('objectClearReferences', [
             'defaultLocale' => $this->behavior->getDefaultLocale(),
         ]);
     }
@@ -120,7 +120,7 @@ class I18nBehaviorObjectBuilderModifier
      */
     protected function addSetLocale(): string
     {
-        return $this->behavior->renderTemplate('objectSetLocale', [
+        return $this->behavior->renderLocalTemplate('objectSetLocale', [
             'objectClassName' => $this->builder->getClassNameFromBuilder($this->builder->getStubObjectBuilder()),
             'defaultLocale' => $this->behavior->getDefaultLocale(),
             'localeColumnName' => $this->behavior->getLocaleColumn()->getPhpName(),
@@ -132,7 +132,7 @@ class I18nBehaviorObjectBuilderModifier
      */
     protected function addGetLocale(): string
     {
-        return $this->behavior->renderTemplate('objectGetLocale', [
+        return $this->behavior->renderLocalTemplate('objectGetLocale', [
             'localeColumnName' => $this->behavior->getLocaleColumn()->getPhpName(),
         ]);
     }
@@ -144,7 +144,7 @@ class I18nBehaviorObjectBuilderModifier
      */
     protected function addSetLocaleAlias(string $alias): string
     {
-        return $this->behavior->renderTemplate('objectSetLocaleAlias', [
+        return $this->behavior->renderLocalTemplate('objectSetLocaleAlias', [
             'objectClassName' => $this->builder->getClassNameFromBuilder($this->builder->getStubObjectBuilder()),
             'defaultLocale' => $this->behavior->getDefaultLocale(),
             'alias' => ucfirst($alias),
@@ -159,7 +159,7 @@ class I18nBehaviorObjectBuilderModifier
      */
     protected function addGetLocaleAlias(string $alias): string
     {
-        return $this->behavior->renderTemplate('objectGetLocaleAlias', [
+        return $this->behavior->renderLocalTemplate('objectGetLocaleAlias', [
             'alias' => ucfirst($alias),
             'localeColumnName' => $this->behavior->getLocaleColumn()->getPhpName(),
         ]);
@@ -173,7 +173,7 @@ class I18nBehaviorObjectBuilderModifier
         $i18nTable = $this->behavior->getI18nTable();
         $fk = $this->behavior->getI18nForeignKey();
 
-        return $this->behavior->renderTemplate('objectGetTranslation', [
+        return $this->behavior->renderLocalTemplate('objectGetTranslation', [
             'i18nTablePhpName' => $this->builder->getClassNameFromBuilder($this->builder->getStubObjectBuilder($i18nTable)),
             'defaultLocale' => $this->behavior->getDefaultLocale(),
             'i18nListVariable' => $this->builder->getRefFKCollVarName($fk),
@@ -191,7 +191,7 @@ class I18nBehaviorObjectBuilderModifier
         $i18nTable = $this->behavior->getI18nTable();
         $fk = $this->behavior->getI18nForeignKey();
 
-        return $this->behavior->renderTemplate('objectRemoveTranslation', [
+        return $this->behavior->renderLocalTemplate('objectRemoveTranslation', [
             'objectClassName' => $this->builder->getClassNameFromBuilder($this->builder->getStubObjectBuilder()),
             'defaultLocale' => $this->behavior->getDefaultLocale(),
             'i18nQueryName' => $this->builder->getClassNameFromBuilder($this->builder->getStubQueryBuilder($i18nTable)),
@@ -205,7 +205,7 @@ class I18nBehaviorObjectBuilderModifier
      */
     protected function addGetCurrentTranslation(): string
     {
-        return $this->behavior->renderTemplate('objectGetCurrentTranslation', [
+        return $this->behavior->renderLocalTemplate('objectGetCurrentTranslation', [
             'i18nTablePhpName' => $this->builder->getClassNameFromBuilder($this->builder->getStubObjectBuilder($this->behavior->getI18nTable())),
             'localeColumnName' => $this->behavior->getLocaleColumn()->getPhpName(),
         ]);
@@ -225,7 +225,7 @@ class I18nBehaviorObjectBuilderModifier
         $comment = $codeProducer->getAccessorComment();
         [$functionStatement, $params] = $codeProducer->getAccessorFunctionStatement();
 
-        return $this->behavior->renderTemplate('objectTranslatedColumnGetter', [
+        return $this->behavior->renderLocalTemplate('objectTranslatedColumnGetter', [
             'comment' => $comment,
             'functionStatement' => $functionStatement,
             'columnPhpName' => $column->getPhpName(),
@@ -250,7 +250,7 @@ class I18nBehaviorObjectBuilderModifier
         $comment = $codeProducer->getMutatorComment($i18nTablePhpName, $tablePhpName);
         [$functionStatement, $params] = $codeProducer->getMutatorFunctionStatement();
 
-        return $this->behavior->renderTemplate('objectTranslatedColumnSetter', [
+        return $this->behavior->renderLocalTemplate('objectTranslatedColumnSetter', [
             'comment' => $comment,
             'functionStatement' => $functionStatement,
             'columnPhpName' => $column->getPhpName(),
