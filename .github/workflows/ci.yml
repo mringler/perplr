@@ -108,6 +108,7 @@ jobs:
               with:
                   flags: ${{ matrix.php-version }}, ${{ matrix.db-type }}, ${{ matrix.symfony-version }}
                   files: tests/coverage.xml
+                  gcov_ignore: src/**/templates/**
 
     static-analysis:
         name: 'Stan & Psalm'
