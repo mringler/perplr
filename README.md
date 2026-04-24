@@ -2,8 +2,8 @@
 
 Perpl is a fork of the unmaintained [Propel2](https://github.com/propelorm/Propel2), an open-source Object-Relational Mapping (ORM) for PHP. It adds several improvements and fixes, including proper versioning.
 
-[![Github actions Status](https://github.com/mringler/perpl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/propelorm/Propel2/actions/workflows/ci.yml?query=branch%3Amaster)
-[![codecov](https://codecov.io/gh/propelorm/Propel2/branch/master/graph/badge.svg?token=L1thFB9nOG)](https://codecov.io/gh/propelorm/Propel2)
+[![Github actions Status](https://github.com/perplorm/perpl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/perplorm/perpl/actions/workflows/ci.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/gh/perplorm/perpl/branch/main/graph/badge.svg)](https://codecov.io/gh/perplorm/perpl)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%207-brightgreen.svg?style=flat)](https://phpstan.org/)
 [![Psalm](https://img.shields.io/badge/Psalm-level%205-darkgreen.svg?style=flat)](https://psalm.dev/docs/running_psalm/error_levels/)
 [![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%208.1-8892BF.svg)](https://php.net/)
