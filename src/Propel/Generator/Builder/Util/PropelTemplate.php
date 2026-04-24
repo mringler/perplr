@@ -17,15 +17,23 @@ use function ob_start;
  */
 class PropelTemplate
 {
-    /**
-     * @var string|null
-     */
-    protected $template;
+    protected string|null $template = null;
+
+    protected string|null $templateFile = null;
 
     /**
-     * @var string|null
+     * @param string $templateFile
+     * @param array $vars
+     *
+     * @return string
      */
-    protected $templateFile;
+    public static function renderFile(string $templateFile, array $vars = []): string
+    {
+        $template = new self();
+        $template->setTemplateFile($templateFile);
+
+        return $template->render($vars);
+    }
 
     /**
      * Sets a string as a template.

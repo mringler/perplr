@@ -1,3 +1,15 @@
+<?php
+    /**
+     * phpcs:ignoreFile
+     *
+     * Expected variables:
+     * 
+     * @var string $relationName
+     * @var string $aggregateName
+     * @var string $updateMethodName
+     * @var string $variableName
+     */
+?>
 
 /**
  * Update the aggregate column in the related <?=$relationName?> object

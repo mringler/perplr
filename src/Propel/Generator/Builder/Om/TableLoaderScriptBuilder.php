@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Builder\Om;
 
-use Propel\Common\Util\PathTrait;
 use Propel\Generator\Builder\Util\PropelTemplate;
 use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Exception\BuildException;
@@ -16,25 +15,21 @@ use function array_merge_recursive;
 use function array_walk;
 use function is_array;
 use function ksort;
+use function substr;
 use const DIRECTORY_SEPARATOR;
 use const SORT_STRING;
 
 /**
  * Generates a database loader file, which is used to register all table maps with the DatabaseMap.
  */
-class TableMapLoaderScriptBuilder
+class TableLoaderScriptBuilder
 {
-    use PathTrait;
-
     /**
      * @var string
      */
     public const FILENAME = 'loadDatabase.php';
 
-    /**
-     * @var \Propel\Generator\Config\AbstractGeneratorConfig
-     */
-    protected $generatorConfig;
+    protected AbstractGeneratorConfig $generatorConfig;
 
     /**
      * @param \Propel\Generator\Config\AbstractGeneratorConfig $generatorConfig
@@ -51,17 +46,12 @@ class TableMapLoaderScriptBuilder
      */
     public function build(array $schemas): string
     {
-        $templatePath = $this->getTemplatePath(__DIR__);
+        $builderFolder = substr(__FILE__, 0, -4);
+        $filePath = "{$builderFolder}/templates/tableLoaderScript.php";
 
-        $filePath = $templatePath . 'tableMapLoaderScript.php';
-        $template = new PropelTemplate();
-        $template->setTemplateFile($filePath);
-
-        $vars = [
+        return PropelTemplate::renderFile($filePath, [
             'databaseNameToTableMapDumps' => $this->buildDatabaseNameToTableMapDumps($schemas),
-        ];
-
-        return $template->render($vars);
+        ]);
     }
 
     /**

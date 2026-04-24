@@ -151,21 +151,6 @@ class OutputGroupBehavior extends Behavior
     }
 
     /**
-     * @see Propel\Generator\Model\Behavior\Behavior::renderTemplate()
-     *
-     * @param string $filename
-     * @param array $vars
-     *
-     * @return string
-     */
-    public function renderLocalTemplate(string $filename, array $vars = []): string
-    {
-        $templatePath = $this->getDirname() . '/templates/';
-
-        return $this->renderTemplate($filename, $vars, $templatePath);
-    }
-
-    /**
      * @param \Propel\Generator\Model\Table $table
      * @param \Propel\Generator\Model\MappingModel $model
      * @param string $groupAttributeName

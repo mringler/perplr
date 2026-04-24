@@ -6,6 +6,8 @@ parameters:
     checkFunctionNameCase: true
     paths:
         - '%rootDir%/../../../src/'
+    excludePaths:
+        - '%rootDir%/../../../src/*/templates/*'
     ignoreErrors:
         - '#Call to an undefined method .+Collection::.+Array\(\)#'
         - '#Call to an undefined method object::.+\(\)#'

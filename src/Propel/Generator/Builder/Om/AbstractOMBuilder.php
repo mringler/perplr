@@ -13,9 +13,11 @@ use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\VendorInfo;
+use RuntimeException;
 use function array_merge;
 use function array_pop;
 use function count;
+use function debug_backtrace;
 use function explode;
 use function file_exists;
 use function gmdate;
@@ -489,6 +491,31 @@ abstract class AbstractOMBuilder extends DataModelBuilder
         $vars = array_merge($vars, ['behavior' => $this]);
 
         return $template->render($vars);
+    }
+
+    /**
+     * Render template located in the 'templates' subdirectory inside the builder
+     * directory.
+     *
+     * For ObjectBuilder, the template directory is './ObjectBuilder/templates/'
+     *
+     * @param string $filename
+     * @param array $vars
+     *
+     * @throws \RuntimeException
+     *
+     * @return string
+     */
+    public function renderLocalTemplate(string $filename, array $vars = []): string
+    {
+        $fileName = debug_backtrace()[0]['file'] ?? null;
+        if (!$filename) {
+            throw new RuntimeException('Failed to resolve builder file name from debug_backtrace()');
+        }
+        $builderFolder = substr($fileName, 0, -4);
+        $templatePath = "$builderFolder/templates/";
+
+        return $this->renderTemplate($filename, $vars, $templatePath);
     }
 
     /**

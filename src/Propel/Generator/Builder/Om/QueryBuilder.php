@@ -156,7 +156,7 @@ class QueryBuilder extends AbstractOMBuilder
         $table = $this->getTable();
         $collectionBuilder = $this->getObjectCollectionBuilder();
 
-        $script .= $this->renderTemplate('baseQueryClassHeader.php', [
+        $script .= $this->renderLocalTemplate('classHeaderTemplate', [
             'tableName' => $table->getName(),
             'tableDesc' => $table->getDescription(),
             'queryClass' => $this->tableNames->useQueryStubClassName(false),
@@ -343,7 +343,7 @@ class QueryBuilder extends AbstractOMBuilder
     protected function addDoDeleteMethods(string &$script): void
     {
         $this->declareClass('\Propel\Runtime\ActiveQuery\ModelCriteria');
-        $script .= $this->renderTemplate('baseQueryDoDelete', [
+        $script .= $this->renderLocalTemplate('doDeleteTemplate', [
             'tableName' => $this->getTable()->getName(),
             'tableMapClassName' => $this->getTableMapClass(),
             'emulateDeleteCascade' => $this->isEmulateBehaviorOnDelete(ForeignKey::CASCADE),
@@ -394,7 +394,7 @@ class QueryBuilder extends AbstractOMBuilder
      */
     protected function addConstructor(string &$script): void
     {
-        $script .= $this->renderTemplate('baseQueryConstructor', [
+        $script .= $this->renderLocalTemplate('constructorTemplate', [
             'className' => $this->getUnqualifiedClassName(),
             'dbName' => $this->getTable()->getDatabase()->getName(),
             'modelName' => addslashes($this->tableNames->useObjectStubClassName(false)),
@@ -410,7 +410,7 @@ class QueryBuilder extends AbstractOMBuilder
      */
     protected function addFactory(string &$script): void
     {
-        $script .= $this->renderTemplate('baseQueryCreate', [
+        $script .= $this->renderLocalTemplate('createTemplate', [
             'stubQueryClassName' => $this->tableNames->useQueryStubClassName(),
             'stubQueryClassNameFq' => $this->tableNames->useQueryStubClassName(false),
         ]);
@@ -452,7 +452,7 @@ class QueryBuilder extends AbstractOMBuilder
             return;
         }
 
-        $script .= $this->renderTemplate('baseQueryFindPk', [
+        $script .= $this->renderLocalTemplate('findPkTemplate', [
             'codeExample' => $codeExample,
             'pkType' => $pkType,
             'objectClassNameFq' => $objectClassNameFq,
@@ -491,7 +491,7 @@ class QueryBuilder extends AbstractOMBuilder
         $objectClassName = $this->tableNames->useObjectStubClassName();
         $isBulkLoad = $table->isBulkLoadTable();
 
-        $script .= $this->renderTemplate('baseQueryFindPkSimple', [
+        $script .= $this->renderLocalTemplate('findPkSimpleTemplate', [
             'query' => $this->buildSimpleSqlSelectStatement($table, !$isBulkLoad),
             'tableMapClassName' => $this->tableNames->useTablemapClassName(),
             'objectClassName' => $objectClassName,
@@ -578,7 +578,7 @@ class QueryBuilder extends AbstractOMBuilder
         }
         $this->declareClasses('\Propel\Runtime\Connection\ConnectionInterface');
 
-        $script .= $this->renderTemplate('baseQueryFindPkComplex', [
+        $script .= $this->renderLocalTemplate('findPkComplexTemplate', [
             'modelClassNameFq' => $this->tableNames->useObjectBaseClassName(false),
         ]);
     }
@@ -598,7 +598,7 @@ class QueryBuilder extends AbstractOMBuilder
         string $functionDeclaration,
     ): void {
         $this->declareClass('Propel\\Runtime\\Exception\\LogicException');
-        $script .= $this->renderTemplate('baseQueryNoPkDummyMethod', [
+        $script .= $this->renderLocalTemplate('noPkDummyMethodTemplate', [
             'paramDocs' => $paramDocs,
             'returnTypeDoc' => $returnTypeDoc,
             'functionDeclaration' => $functionDeclaration,
@@ -637,7 +637,7 @@ class QueryBuilder extends AbstractOMBuilder
             ? '$c->findPks(array(12, 56, 832), $con);'
             : '$c->findPks(array(array(12, 56), array(832, 123), array(123, 456)), $con);';
 
-        $script .= $this->renderTemplate('baseQueryFindPks', [
+        $script .= $this->renderLocalTemplate('findPksTemplate', [
             'exampleCode' => $exampleCode,
             'modelClassNameFq' => $modelClassNameFq,
         ]);
@@ -659,7 +659,7 @@ class QueryBuilder extends AbstractOMBuilder
             return;
         }
 
-        $script .= $this->renderTemplate('baseQueryFilterByPrimaryKey', [
+        $script .= $this->renderLocalTemplate('filterByPrimaryKeyTemplate', [
             'pkType' => $this->getTable()->getPrimaryKeyDocType(false),
             'columnPhpNames' => array_map(fn (Column $col) => $col->getPhpName(), $pkColumns),
         ]);
@@ -680,7 +680,7 @@ class QueryBuilder extends AbstractOMBuilder
 
             return;
         }
-        $script .= $this->renderTemplate('baseQueryFilterByPrimaryKeys', [
+        $script .= $this->renderLocalTemplate('filterByPrimaryKeysTemplate', [
             'pkType' => $this->getTable()->getPrimaryKeyDocType(false),
             'columnPhpNames' => array_map(fn (Column $col) => $col->getPhpName(), $table->getPrimaryKey()),
         ]);
@@ -973,7 +973,7 @@ class QueryBuilder extends AbstractOMBuilder
      */
     protected function addFilterByArrayCol(string &$script, Column $col): void
     {
-        $script .= $this->renderTemplate('baseQueryFilterByArrayColumn', [
+        $script .= $this->renderLocalTemplate('filterByArrayColumnTemplate', [
             'colName' => $col->getName(),
             'variableName' => '$' . $col->getCamelCaseName(),
             'singularPhpName' => $col->getPhpSingularName(),
@@ -990,7 +990,7 @@ class QueryBuilder extends AbstractOMBuilder
      */
     protected function addFilterBySetCol(string &$script, Column $col): void
     {
-        $script .= $this->renderTemplate('baseQueryFilterBySetColumn', [
+        $script .= $this->renderLocalTemplate('filterBySetColumnTemplate', [
             'colName' => $col->getName(),
             'colPhpName' => $col->getPhpName(),
             'variableName' => '$' . $col->getCamelCaseName(),
@@ -1027,7 +1027,7 @@ class QueryBuilder extends AbstractOMBuilder
 
         $foreignColumnName = $fk->getForeignColumn()?->getPhpName();
 
-        $script .= $this->renderTemplate('baseQueryFilterByRelation', [
+        $script .= $this->renderLocalTemplate('filterByRelationTemplate', [
             'targetClassName' => $this->declareClassFromBuilder($targetObjectBuilder),
             'targetClassNameFq' => $this->getClassNameFromBuilder($targetObjectBuilder, true),
             'varName' => $varName,
@@ -1072,7 +1072,7 @@ class QueryBuilder extends AbstractOMBuilder
                 ];
         }
 
-        $script .= $this->renderTemplate('baseQueryFilterByRefFk', [
+        $script .= $this->renderLocalTemplate('filterByRefFkTemplate', [
             'varName' => '$' . $fkTable->getCamelCaseName(),
             'relationName' => $fk->getIdentifierReversed(),
             'targetClassName' => $this->declareClassFromBuilder($targetObjectBuilder),
@@ -1134,7 +1134,7 @@ class QueryBuilder extends AbstractOMBuilder
         string $relationName,
         string $joinType
     ): void {
-        $script .= $this->renderTemplate('baseQueryJoinRelated', [
+        $script .= $this->renderLocalTemplate('joinRelatedTemplate', [
             'relationName' => $relationName,
             'joinType' => $joinType,
         ]);
@@ -1197,7 +1197,7 @@ class QueryBuilder extends AbstractOMBuilder
      */
     protected function addUseRelatedQuery(string &$script, Table $fkTable, string $queryClass, string $relationName, string $joinType): void
     {
-        $script .= $this->renderTemplate('baseQueryUseRelatedQuery', [
+        $script .= $this->renderLocalTemplate('useRelatedQueryTemplate', [
             'relationName' => $relationName,
             'foreignTablePhpName' => $fkTable->getPhpName(),
             'queryClass' => $queryClass,
@@ -1218,7 +1218,7 @@ class QueryBuilder extends AbstractOMBuilder
      */
     protected function addUseRelatedExistsQuery(string &$script, Table $fkTable, string $queryClass, string $relationName): void
     {
-        $script .= $this->renderTemplate('baseQueryExistsMethods.php', [
+        $script .= $this->renderLocalTemplate('existsMethodsTemplate', [
             'queryClass' => $queryClass,
             'relationDescription' => $this->getRelationDescription($relationName, $fkTable),
             'relationName' => $relationName,
@@ -1244,7 +1244,7 @@ class QueryBuilder extends AbstractOMBuilder
             'relationDescription' => $this->getRelationDescription($relationName, $fkTable),
             'relationName' => $relationName,
         ];
-        $script .= $this->renderTemplate('baseQueryInMethods.php', $vars);
+        $script .= $this->renderLocalTemplate('inMethodsTemplate', $vars);
     }
 
     /**
@@ -1273,7 +1273,7 @@ class QueryBuilder extends AbstractOMBuilder
      */
     protected function addWithRelatedQuery(string &$script, Table $fkTable, string $queryClass, string $relationName, string $joinType): void
     {
-        $script .= $this->renderTemplate('baseQueryWithRelationQuery', [
+        $script .= $this->renderLocalTemplate('withRelationQueryTemplate', [
             'relationName' => $relationName,
             'queryClass' => $queryClass,
             'foreignTablePhpName' => $fkTable->getPhpName(),
@@ -1296,7 +1296,7 @@ class QueryBuilder extends AbstractOMBuilder
             $targetTable = $crossFK->getForeignTable();
             $targetObjectBuilder = $this->getObjectBuilder($targetTable);
 
-            $script .= $this->renderTemplate('baseQueryFilterByCrossFk', [
+            $script .= $this->renderLocalTemplate('filterByCrossFkTemplate', [
                 'targetTableClassName' => $this->declareClassFromBuilder($targetObjectBuilder),
                 'targetTableClassNameFq' => $this->getClassNameFromBuilder($targetObjectBuilder, true),
                 'crossTableName' => $middleTable->getName(),
@@ -1328,7 +1328,7 @@ class QueryBuilder extends AbstractOMBuilder
             return;
         }
 
-        $script .= $this->renderTemplate('baseQueryPrune', [
+        $script .= $this->renderLocalTemplate('pruneTemplate', [
             'modelClassNameFq' => $modelClassNameFq,
             'modelClassName' => $modelClassName,
             'varName' => $varName,
@@ -1536,7 +1536,7 @@ class QueryBuilder extends AbstractOMBuilder
      */
     protected function addDoOnDeleteCascade(string &$script): void
     {
-        $script .= $this->renderTemplate('baseQueryDoOnDeleteCascade', [
+        $script .= $this->renderLocalTemplate('doOnDeleteCascadeTemplate', [
             'queryClassName' => $this->getQueryClassName(),
             'relationIdentifiers' => $this->collectRelationIdentifiers(ForeignKey::CASCADE),
         ]);
@@ -1551,7 +1551,7 @@ class QueryBuilder extends AbstractOMBuilder
      */
     protected function addDoOnDeleteSetNull(string &$script): void
     {
-        $script .= $this->renderTemplate('baseQueryDoOnDeleteSetNull', [
+        $script .= $this->renderLocalTemplate('doOnDeleteSetNullTemplate', [
             'queryClassName' => $this->getQueryClassName(),
             'relationIdentifiers' => $this->collectRelationIdentifiers(ForeignKey::SETNULL),
         ]);

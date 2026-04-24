@@ -324,7 +324,7 @@ protected \$delegatedFields = [
                     $tablePhpName = $delegateTable->getPhpName();
                     $childClassName = 'Child' . $builder->getUnprefixedClassName();
 
-                    $script .= $this->renderTemplate('queryMethodsTemplate', compact('tablePhpName', 'phpName', 'childClassName', 'fieldName'));
+                    $script .= $this->renderLocalTemplate('queryMethodsTemplate', compact('tablePhpName', 'phpName', 'childClassName', 'fieldName'));
                 }
             }
         }

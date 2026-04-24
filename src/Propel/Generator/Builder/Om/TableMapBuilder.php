@@ -274,7 +274,7 @@ class $className extends TableMap
         $stubObjectBuilder = $this->getStubObjectBuilder();
         $collectionBuilder = $this->getObjectCollectionBuilder();
 
-        return $this->renderTemplate('tableMapConstants', [
+        return $this->renderLocalTemplate('constantsTemplate', [
             'className' => $this->getClasspath(),
             'dbName' => $this->getDatabase()->getName(),
             'tableName' => $table->getName(),
@@ -538,7 +538,7 @@ class $className extends TableMap
 
         $toIndexMap = fn (array $keys) => array_map(fn (string $key, int $index) => "$key => $index", $keys, $fieldIndexes);
 
-        return $this->renderTemplate('tableMapFields', [
+        return $this->renderLocalTemplate('fieldsTemplate', [
             'fieldNamesPhpName' => implode(', ', $phpNames),
             'fieldNamesCamelCaseName' => implode(', ', $camelCaseNames),
             'fieldNamesColname' => implode(', ', $colnames),
@@ -860,7 +860,7 @@ class $className extends TableMap
             return '';
         }
 
-        return $this->renderTemplate('tableMapInstancePool', [
+        return $this->renderLocalTemplate('instancePoolTemplate', [
             'modelClassName' => $this->tableNames->useObjectStubClassName(),
             'modelClassNameFq' => $this->tableNames->useObjectStubClassName(false),
             'pkType' => $this->getTable()->getPrimaryKeyDocType(false),
@@ -892,7 +892,7 @@ class $className extends TableMap
             }
         }
 
-        return $this->renderTemplate('tableMapClearRelatedInstancePool', [
+        return $this->renderLocalTemplate('clearRelatedInstancePoolTemplate', [
             'tableName' => $this->getObjectClassName(),
             'relatedTableMapClassNames' => $relatedTableMapClassNames,
         ]);

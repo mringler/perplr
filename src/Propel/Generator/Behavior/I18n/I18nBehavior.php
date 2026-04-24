@@ -204,7 +204,7 @@ class I18nBehavior extends Behavior
      */
     public function staticAttributes(AbstractOMBuilder $builder): string
     {
-        return $this->renderTemplate('staticAttributes', [
+        return $this->renderLocalTemplate('staticAttributes', [
             'defaultLocale' => $this->getDefaultLocale(),
         ]);
     }

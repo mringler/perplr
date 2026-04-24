@@ -127,7 +127,7 @@ if (\$this->archiveOnUpdate) {
      */
     protected function addArchive(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('queryArchive', [
+        return $this->behavior->renderLocalTemplate('queryArchive', [
             'archiveTablePhpName' => $this->behavior->getArchiveTablePhpName($builder),
             'modelTableMap' => $builder->getTableMapClass(),
         ]);
@@ -140,7 +140,7 @@ if (\$this->archiveOnUpdate) {
      */
     public function addSetArchiveOnUpdate(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('querySetArchiveOnUpdate');
+        return $this->behavior->renderLocalTemplate('querySetArchiveOnUpdate');
     }
 
     /**
@@ -150,7 +150,7 @@ if (\$this->archiveOnUpdate) {
      */
     public function addUpdateWithoutArchive(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('queryUpdateWithoutArchive');
+        return $this->behavior->renderLocalTemplate('queryUpdateWithoutArchive');
     }
 
     /**
@@ -160,7 +160,7 @@ if (\$this->archiveOnUpdate) {
      */
     public function addSetArchiveOnDelete(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('querySetArchiveOnDelete');
+        return $this->behavior->renderLocalTemplate('querySetArchiveOnDelete');
     }
 
     /**
@@ -170,6 +170,6 @@ if (\$this->archiveOnUpdate) {
      */
     public function addDeleteWithoutArchive(AbstractOMBuilder $builder): string
     {
-        return $this->behavior->renderTemplate('queryDeleteWithoutArchive');
+        return $this->behavior->renderLocalTemplate('queryDeleteWithoutArchive');
     }
 }

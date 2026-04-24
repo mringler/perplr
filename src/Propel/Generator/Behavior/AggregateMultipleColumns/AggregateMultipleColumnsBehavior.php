@@ -267,7 +267,7 @@ class AggregateMultipleColumnsBehavior extends Behavior
             implode(' AND ', $conditions),
         );
 
-        return $this->renderTemplate('objectCompute', [
+        return $this->renderLocalTemplate('objectCompute', [
             'aggregationName' => $this->getAggregationName(),
             'sql' => $sql,
             'bindings' => $bindings,
@@ -305,7 +305,7 @@ class AggregateMultipleColumnsBehavior extends Behavior
         },
         $this->getParameter(static::PARAMETER_KEY_COLUMNS));
 
-        return $this->renderTemplate('objectUpdate', [
+        return $this->renderLocalTemplate('objectUpdate', [
             'aggregationName' => $this->getAggregationName(),
             'columnPhpNames' => $columnPhpNames,
         ]);

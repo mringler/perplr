@@ -142,7 +142,7 @@ class AggregateColumnBehavior extends Behavior
             implode(' AND ', $conditions),
         );
 
-        return $this->renderTemplate('objectCompute', [
+        return $this->renderLocalTemplate('objectCompute', [
             'column' => $this->getColumn(),
             'sql' => $sql,
             'bindings' => $bindings,
@@ -154,7 +154,7 @@ class AggregateColumnBehavior extends Behavior
      */
     protected function addObjectUpdate(): string
     {
-        return $this->renderTemplate('objectUpdate', [
+        return $this->renderLocalTemplate('objectUpdate', [
             'column' => $this->getColumn(),
         ]);
     }

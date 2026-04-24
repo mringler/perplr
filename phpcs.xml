@@ -11,6 +11,7 @@
     <arg value="nps"/>
 
     <file>src/</file>
+    <exclude-pattern>src/*/templates/</exclude-pattern>
 
     <rule ref="SprykerStrict">
         <exclude name="SprykerStrict.TypeHints.ParameterTypeHint"/>

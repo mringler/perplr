@@ -56,7 +56,7 @@ class SortableBehaviorTableMapBuilderModifier
             }
         }
 
-        return $this->behavior->renderTemplate('tableMapSortable', [
+        return $this->behavior->renderLocalTemplate('tableMapSortable', [
             'rankColumn' => $this->getColumnConstant('rank_column'),
             'multiScope' => $this->behavior->hasMultipleScopes(),
             'scope' => $col,
