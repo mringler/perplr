@@ -1023,4 +1023,33 @@ $actualDb
 
 EOT;
     }
+
+    /**
+     * @return void
+     */
+    public function testReusesExistingArchiveTableInSchema()
+    {
+        $schema = <<<EOF
+<database schema="foo_schema">
+    <table name="source_table">
+        <column name="id" type="INTEGER"/>
+        <behavior name="synced_table">
+            <parameter name="table_name" value="target_table"/>
+        </behavior>
+    </table>
+
+    <table name="target_table">
+        <column name="id" type="INTEGER"/>
+        <column name="custom_column" type="VARCHAR"/>
+    </table>
+</database>
+EOF;
+        $database = $this->buildDatabaseFromSchema($schema, null, new MysqlPlatform());
+
+        $targetTable = $database->getTable('foo_schema.target_table');
+
+        $this->assertCount(2, $database->getTables());
+        $this->assertNotNull($targetTable);
+        $this->assertTrue($targetTable->hasColumn('custom_column'));
+    }
 }

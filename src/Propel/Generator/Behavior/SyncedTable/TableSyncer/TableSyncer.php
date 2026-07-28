@@ -25,6 +25,7 @@ use function array_unique;
 use function count;
 use function in_array;
 use function reset;
+use function str_contains;
 
 /**
  * Creates the the synced table according to the given behavior.
@@ -72,11 +73,18 @@ class TableSyncer
         $database = $sourceTable->getDatabase();
         $syncedTableName = $this->config->resolveSyncedTableName();
 
-        $tableExistsInSchema = $database->hasTable($syncedTableName);
-
-        $syncedTable = $tableExistsInSchema ?
-            $database->getTable($syncedTableName) :
-            $this->createSyncedTable($sourceTable);
+        $syncedTable = $database->getTable($syncedTableName);
+        $schemaDelimiter = $database->getSchemaDelimiter();
+        if (
+            $syncedTable === null
+            && $sourceTable->getSchema()
+            && !str_contains($syncedTableName, $schemaDelimiter)
+        ) {
+            $syncedTableName = $sourceTable->getSchema() . $schemaDelimiter . $syncedTableName;
+            $syncedTable = $database->getTable($syncedTableName);
+        }
+        $tableExistsInSchema = $syncedTable !== null;
+        $syncedTable ??= $this->createSyncedTable($sourceTable);
 
         $this->resolveInheritance($syncedTable);
 
