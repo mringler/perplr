@@ -209,7 +209,7 @@ class VersionableBehavior extends SyncedTableBehavior
         }
 
         foreach ($this->getVersionableReferrers() as $fk) {
-            $fkTableName = $fk->getTable()->getName();
+            $fkTableName = $fk->getTable()->getCommonName();
             $fkIdsColumnName = $fkTableName . '_ids';
             TableSyncer::addColumnIfNotExists($versionTable, $fkIdsColumnName, [
                 'type' => 'ARRAY',
@@ -267,7 +267,7 @@ class VersionableBehavior extends SyncedTableBehavior
      */
     public function getReferrerIdsColumn(ForeignKey $fk): ?Column
     {
-        $fkTableName = $fk->getTable()->getName();
+        $fkTableName = $fk->getTable()->getCommonName();
         $fkIdsColumnName = $fkTableName . '_ids';
 
         return $this->syncedTable->getColumn($fkIdsColumnName);
@@ -280,7 +280,7 @@ class VersionableBehavior extends SyncedTableBehavior
      */
     public function getReferrerVersionsColumn(ForeignKey $fk): ?Column
     {
-        $fkTableName = $fk->getTable()->getName();
+        $fkTableName = $fk->getTable()->getCommonName();
         $fkIdsColumnName = $fkTableName . '_versions';
 
         return $this->syncedTable->getColumn($fkIdsColumnName);
