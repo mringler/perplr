@@ -85,7 +85,7 @@ class Column extends MappingModel
      */
     private $phpType;
 
-    private Domain|null $domain = null;
+    private TypeMapping|null $typeMapping = null;
 
     private Table|null $parentTable = null;
 
@@ -180,28 +180,29 @@ class Column extends MappingModel
      *
      * @throws \LogicException
      *
-     * @return \Propel\Generator\Model\Domain
+     * @return \Propel\Generator\Model\TypeMapping
      */
-    protected function getDomainFromAttributes(?PlatformInterface $platform): Domain
+    protected function buildTypeMappingFromAttributes(?PlatformInterface $platform): TypeMapping
     {
         $domainName = $this->getAttribute('domain');
         if ($domainName) {
-            $domain = $this->getDatabase()->getDomain($domainName);
-            if (!$domain) {
+            $mapping = $this->getDatabase()->getTypeMapping($domainName);
+            if (!$mapping) {
                 throw new LogicException("Unknown domain '$domainName'");
             }
 
-            return $domain;
+            return $mapping;
         }
+
         $typeInput = $this->getAttribute('type', static::DEFAULT_TYPE);
         $type = $typeInput instanceof ColumnType ? $typeInput : ColumnType::fromLiteral($typeInput);
 
         if ($platform) {
-            return $platform->getDomainForType($type);
+            return $platform->getColumnTypeMapping($type);
         }
 
         // no platform - probably during tests
-        return new Domain($type);
+        return new TypeMapping($type);
     }
 
     /**
@@ -217,9 +218,9 @@ class Column extends MappingModel
             $database = $this->getDatabase();
             $platform = ($this->hasPlatform()) ? $this->getPlatform() : null;
 
-            $domain = $this->getDomain();
-            $domainInAttributes = $this->getDomainFromAttributes($platform);
-            $domain->copy($domainInAttributes);
+            $typeMapping = $this->getTypeMapping();
+            $typeMappingInAttributes = $this->buildTypeMappingFromAttributes($platform);
+            $typeMapping->copy($typeMappingInAttributes);
 
             $this->name = $this->getAttribute('name');
             $this->phpName = $this->getAttribute('phpName');
@@ -275,16 +276,16 @@ class Column extends MappingModel
                 $this->setValueSet($valueSet);
             }
 
-            // Add type, size information to associated Domain object
+            // Add type, size information to associated type mapping
             if ($this->getAttribute('sqlType')) {
-                $domain->replaceSqlType($this->getAttribute('sqlType'));
+                $typeMapping->replaceSqlType($this->getAttribute('sqlType'));
             } elseif ($this->getPlatform() && in_array($this->getMappingType(), [ColumnType::SET_NATIVE, ColumnType::ENUM_NATIVE], true)) {
-                $domain->replaceSqlType($this->getPlatform()->buildNativeEnumeratedColumnSqlType($this));
+                $typeMapping->replaceSqlType($this->getPlatform()->buildNativeEnumeratedColumnSqlType($this));
             }
 
             if (
                 !$this->getAttribute('size')
-                && $domain->getMappingType() === ColumnType::VARCHAR
+                && $typeMapping->getMappingType() === ColumnType::VARCHAR
                 && !$this->getAttribute('sqlType')
                 && $platform
                 && !$platform->supportsVarcharWithoutSize()
@@ -293,17 +294,17 @@ class Column extends MappingModel
             } else {
                 $size = $this->getAttribute('size') ? (int)$this->getAttribute('size') : null;
             }
-            $domain->replaceSize($size);
+            $typeMapping->replaceSize($size);
 
             $scale = $this->getAttribute('scale') ? (int)$this->getAttribute('scale') : null;
-            $domain->replaceScale($scale);
+            $typeMapping->replaceScale($scale);
 
             foreach (['defaultValue', 'default', 'defaultExpr'] as $key) {
                 $defaultValue = $this->getAttribute($key);
                 if ($defaultValue === null || strtolower((string)$defaultValue) === 'null') {
                     continue;
                 }
-                $domain->createDefaultValue($defaultValue, $key === 'defaultExpr');
+                $typeMapping->createDefaultValue($defaultValue, $key === 'defaultExpr');
 
                 break;
             }
@@ -367,29 +368,49 @@ class Column extends MappingModel
     }
 
     /**
-     * Gets domain for this column, creating a new empty domain object if none is set.
+     * Gets type mapping for this column, creating a new empty object if none is set.
      *
-     * @return \Propel\Generator\Model\Domain
+     * @return \Propel\Generator\Model\TypeMapping
      */
-    public function getDomain(): Domain
+    public function getTypeMapping(): TypeMapping
     {
-        if ($this->domain === null) {
-            $this->domain = new Domain();
+        if ($this->typeMapping === null) {
+            $this->typeMapping = new TypeMapping();
         }
 
-        return $this->domain;
+        return $this->typeMapping;
     }
 
     /**
-     * Sets the domain for this column.
+     * @deprecated Use aptly named {@see static::getTypeMapping()}
      *
-     * @param \Propel\Generator\Model\Domain $domain
+     * @return \Propel\Generator\Model\TypeMapping
+     */
+    public function getDomain(): TypeMapping
+    {
+        return $this->getTypeMapping();
+    }
+
+    /**
+     * @param \Propel\Generator\Model\TypeMapping $mapping
      *
      * @return void
      */
-    public function setDomain(Domain $domain): void
+    public function setTypeMapping(TypeMapping $mapping): void
     {
-        $this->domain = $domain;
+        $this->typeMapping = $mapping;
+    }
+
+    /**
+     * @deprecated Use {@see static::setTypeMapping()}
+     *
+     * @param \Propel\Generator\Model\TypeMapping $mapping
+     *
+     * @return void
+     */
+    public function setDomain(TypeMapping $mapping): void
+    {
+        $this->setTypeMapping($mapping);
     }
 
     /**
@@ -1156,10 +1177,22 @@ class Column extends MappingModel
     }
 
     /**
-     * Sets the domain up for specified mapping type.
+     * Sets up type mapping for specified column type.
      *
      * Calling this method will implicitly overwrite any previously set type,
-     * size, scale (or other domain attributes).
+     * size, scale, etc.
+     *
+     * @param \Propel\Generator\Model\Datatype\ColumnType $columnType
+     *
+     * @return void
+     */
+    public function setUpTypeMapping(ColumnType $columnType): void
+    {
+        $this->getTypeMapping()->copy($this->getPlatform()->getColumnTypeMapping($columnType));
+    }
+
+    /**
+     * @deprecated Use {@see static::setUpTypeMapping()}
      *
      * @param \Propel\Generator\Model\Datatype\ColumnType $mappingType
      *
@@ -1167,7 +1200,7 @@ class Column extends MappingModel
      */
     public function setDomainForType(ColumnType $mappingType): void
     {
-        $this->getDomain()->copy($this->getPlatform()->getDomainForType($mappingType));
+        $this->setUpTypeMapping($mappingType);
     }
 
     /**
@@ -1179,32 +1212,32 @@ class Column extends MappingModel
      */
     public function setType(ColumnType $mappingType): void
     {
-        $this->getDomain()->setMappingType($mappingType);
+        $this->getTypeMapping()->setMappingType($mappingType);
 
         $pgRequiresTransactionTypes = [ColumnType::VARBINARY, ColumnType::LONGVARBINARY, ColumnType::BLOB];
         $this->needsTransactionInPostgres = in_array($mappingType, $pgRequiresTransactionTypes, true);
     }
 
     /**
-     * @see Domain::getMappingType()
+     * @see TypeMapping::getMappingType()
      *
      * @return \Propel\Generator\Model\Datatype\ColumnType
      */
     public function getMappingType(): ColumnType
     {
-        return $this->getDomain()->getMappingType();
+        return $this->getTypeMapping()->getMappingType();
     }
 
     /**
      * Returns the SQL type as a string.
      *
-     * @see Domain::getSqlType()
+     * @see TypeMapping::getSqlType()
      *
      * @return string|null
      */
     public function getSqlType(): string|null
     {
-        return $this->getDomain()->getSqlType();
+        return $this->getTypeMapping()->getSqlType();
     }
 
     /**
@@ -1225,16 +1258,16 @@ class Column extends MappingModel
     public function isDefaultSqlType(?PlatformInterface $platform = null): bool
     {
         if (
-            $this->domain === null
-            || $this->domain->getSqlType() === null
+            $this->typeMapping === null
+            || $this->typeMapping->getSqlType() === null
             || $platform === null
         ) {
             return true;
         }
 
-        $defaultSqlType = $platform->getDomainForType($this->getMappingType())->getSqlType();
+        $defaultSqlType = $platform->getColumnTypeMapping($this->getMappingType())->getSqlType();
 
-        return $defaultSqlType === $this->getDomain()->getSqlType();
+        return $defaultSqlType === $this->getTypeMapping()->getSqlType();
     }
 
     /**
@@ -1395,7 +1428,7 @@ class Column extends MappingModel
      */
     public function getSize(): ?int
     {
-        return $this->domain ? $this->domain->getSize() : null;
+        return $this->typeMapping ? $this->typeMapping->getSize() : null;
     }
 
     /**
@@ -1407,7 +1440,7 @@ class Column extends MappingModel
      */
     public function setSize(?int $size): void
     {
-        $this->domain->setSize($size);
+        $this->typeMapping->setSize($size);
     }
 
     /**
@@ -1417,7 +1450,7 @@ class Column extends MappingModel
      */
     public function getScale(): ?int
     {
-        return $this->domain->getScale();
+        return $this->typeMapping->getScale();
     }
 
     /**
@@ -1429,7 +1462,7 @@ class Column extends MappingModel
      */
     public function setScale(int $scale): void
     {
-        $this->domain->setScale($scale);
+        $this->typeMapping->setScale($scale);
     }
 
     /**
@@ -1441,7 +1474,7 @@ class Column extends MappingModel
      */
     public function getSizeDefinition(): string
     {
-        return $this->domain->getSizeDefinition();
+        return $this->typeMapping->getSizeDefinition();
     }
 
     /**
@@ -1517,31 +1550,31 @@ class Column extends MappingModel
             $defaultValue = new ColumnDefaultValue($defaultValue, ColumnDefaultValue::TYPE_VALUE);
         }
 
-        $this->domain->setDefaultValue($defaultValue);
+        $this->typeMapping->setDefaultValue($defaultValue);
     }
 
     /**
      * Returns the default value object for this column.
      *
-     * @see Domain::getDefaultValue()
+     * @see TypeMapping::getDefaultValue()
      *
      * @return \Propel\Generator\Model\ColumnDefaultValue|null
      */
     public function getDefaultValue(): ?ColumnDefaultValue
     {
-        return $this->domain->getDefaultValue();
+        return $this->typeMapping->getDefaultValue();
     }
 
     /**
      * Returns the default value suitable for use in PHP.
      *
-     * @see Domain::getPhpDefaultValue()
+     * @see TypeMapping::getPhpDefaultValue()
      *
      * @return mixed|null
      */
     public function getPhpDefaultValue()
     {
-        return $this->domain->getPhpDefaultValue();
+        return $this->typeMapping->getPhpDefaultValue();
     }
 
     /**
@@ -1709,8 +1742,8 @@ class Column extends MappingModel
     public function __clone()
     {
         $this->referrers = [];
-        if ($this->domain) {
-            $this->domain = clone $this->domain;
+        if ($this->typeMapping) {
+            $this->typeMapping = clone $this->typeMapping;
         }
     }
 

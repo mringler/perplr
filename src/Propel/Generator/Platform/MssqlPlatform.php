@@ -24,8 +24,6 @@ class MssqlPlatform extends DefaultPlatform
     protected static $dropCount = 0;
 
     /**
-     * Initializes db specific domain mapping.
-     *
      * @return void
      */
     #[\Override]
@@ -56,7 +54,7 @@ class MssqlPlatform extends DefaultPlatform
         ];
 
         foreach ($sqlTypes as $mapping => $sqlType) {
-            $this->schemaDomainMap[$mapping]->setSqlType($sqlType);
+            $this->typeMap[$mapping]->setSqlType($sqlType);
         }
 
         $this->setSetTypesMapping(false);

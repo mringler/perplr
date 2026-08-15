@@ -38,8 +38,6 @@ class PgsqlPlatform extends DefaultPlatform
     protected $createOrDropSequences = '';
 
     /**
-     * Initializes db specific domain mapping.
-     *
      * @return void
      */
     #[\Override]
@@ -70,7 +68,7 @@ class PgsqlPlatform extends DefaultPlatform
         ];
 
         foreach ($sqlTypes as $mapping => $sqlType) {
-            $this->schemaDomainMap[$mapping]->setSqlType($sqlType);
+            $this->typeMap[$mapping]->setSqlType($sqlType);
         }
 
         $this->setSetTypesMapping(false);
@@ -519,10 +517,10 @@ DROP TABLE IF EXISTS %s CASCADE;
     #[\Override]
     public function getColumnDDL(Column $col): string
     {
-        $domain = $col->getDomain();
+        $typeMapping = $col->getTypeMapping();
 
         $ddl = [$this->quoteIdentifier($col->getName())];
-        $sqlType = $domain->getSqlType();
+        $sqlType = $typeMapping->getSqlType();
         $table = $col->getTable();
         if ($col->isAutoIncrement() && $table && $table->getIdMethodParameters() == null) {
             $sqlType = $col->getMappingType() === ColumnType::BIGINT ? 'bigserial' : 'serial';
@@ -732,7 +730,7 @@ DROP SEQUENCE %s CASCADE;
         }
 
         if (isset($changedProperties['size']) || isset($changedProperties['type']) || isset($changedProperties['sqlType']) || isset($changedProperties['scale'])) {
-            $sqlType = $toColumn->getDomain()->getSqlType();
+            $sqlType = $toColumn->getTypeMapping()->getSqlType();
 
             if ($this->hasSize($sqlType) && $toColumn->isDefaultSqlType($this)) {
                 if ($this->isNumber($sqlType)) {
@@ -821,8 +819,8 @@ DROP SEQUENCE %s CASCADE;
      */
     public function getUsingCast(Column $fromColumn, Column $toColumn): string
     {
-        $fromSqlType = strtoupper($fromColumn->getDomain()->getSqlType());
-        $toSqlType = strtoupper($toColumn->getDomain()->getSqlType());
+        $fromSqlType = strtoupper($fromColumn->getTypeMapping()->getSqlType());
+        $toSqlType = strtoupper($toColumn->getTypeMapping()->getSqlType());
         $name = $fromColumn->getName();
 
         if ($this->isString($fromSqlType) && $this->isNumber($toSqlType)) {

@@ -452,11 +452,11 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDL()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('DOUBLE'));
-        $column->getDomain()->replaceScale(2);
-        $column->getDomain()->replaceSize(3);
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('DOUBLE'));
+        $column->getTypeMapping()->replaceScale(2);
+        $column->getTypeMapping()->replaceSize(3);
         $column->setNotNull(true);
-        $column->getDomain()->createDefaultValue(123);
+        $column->getTypeMapping()->createDefaultValue(123);
         $expected = '`foo` DOUBLE(3,2) DEFAULT 123 NOT NULL';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
     }
@@ -467,7 +467,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetVendor()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('LONGVARCHAR'));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Charset', 'greek');
         $column->addVendorInfo($vendor);
@@ -481,7 +481,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetCollation()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('LONGVARCHAR'));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Collate', 'latin1_german2_ci');
         $column->addVendorInfo($vendor);
@@ -489,7 +489,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
 
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('LONGVARCHAR'));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Collation', 'latin1_german2_ci');
         $column->addVendorInfo($vendor);
@@ -503,7 +503,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLComment()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('INTEGER'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('INTEGER'));
         $column->setDescription('This is column Foo');
         $expected = '`foo` INTEGER COMMENT \'This is column Foo\'';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
@@ -515,7 +515,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetNotNull()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('LONGVARCHAR'));
         $column->setNotNull(true);
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Charset', 'greek');
@@ -530,12 +530,12 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('DOUBLE'));
-        $column->getDomain()->replaceScale(2);
-        $column->getDomain()->replaceSize(3);
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('DOUBLE'));
+        $column->getTypeMapping()->replaceScale(2);
+        $column->getTypeMapping()->replaceSize(3);
         $column->setNotNull(true);
-        $column->getDomain()->createDefaultValue(123);
-        $column->getDomain()->replaceSqlType('DECIMAL(5,6)');
+        $column->getTypeMapping()->createDefaultValue(123);
+        $column->getTypeMapping()->replaceSqlType('DECIMAL(5,6)');
         $expected = '`foo` DECIMAL(5,6) DEFAULT 123 NOT NULL';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
     }
@@ -651,7 +651,7 @@ DROP INDEX `babar` ON `foo`;
         $table = new Table('foo');
         $table->setIdentifierQuoting(true);
         $column1 = new Column('bar1');
-        $column1->getDomain()->copy(static::getPlatform()->getDomainForType('VARCHAR'));
+        $column1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('VARCHAR'));
         $column1->setSize(5);
         $table->addColumn($column1);
         $index = new Index('bar_index');
@@ -669,7 +669,7 @@ DROP INDEX `babar` ON `foo`;
         $table = new Table('foo');
         $table->setIdentifierQuoting(true);
         $column1 = new Column('bar1');
-        $column1->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('LONGVARCHAR'));
         $table->addColumn($column1);
         $index = new Index('bar_index');
         $index->addColumn($column1);

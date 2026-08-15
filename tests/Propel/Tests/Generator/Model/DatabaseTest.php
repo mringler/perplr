@@ -41,7 +41,7 @@ class DatabaseTest extends ModelTestCase
         $this->assertSame('underscore', $database->getDefaultPhpNamingMethod());
         $this->assertEmpty($database->getTablePrefix());
         $this->assertNull($database->getParentSchema());
-        $this->assertNull($database->getDomain('BOOLEAN'));
+        $this->assertNull($database->getTypeMapping('BOOLEAN'));
         $this->assertNull($database->getGeneratorConfig());
         $this->assertCount(0, $database->getTables());
         $this->assertSame(0, $database->countTables());
@@ -100,7 +100,7 @@ class DatabaseTest extends ModelTestCase
             ->will($this->returnValue(64));
         $platform
             ->expects($this->any())
-            ->method('getDomainForType')
+            ->method('getColumnTypeMapping')
             ->with($this->equalTo('TIMESTAMP'))
             ->will($this->returnValue($this->getDomainMock('TIMESTAMP')));
 
@@ -372,41 +372,18 @@ class DatabaseTest extends ModelTestCase
     /**
      * @return void
      */
-    public function testAddArrayDomain()
-    {
-        $copiedDomain = $this->getDomainMock('original');
-
-        $platform = $this->getPlatformMock();
-        $platform
-            ->expects($this->once())
-            ->method('getDomainForType')
-            ->will($this->returnValue($copiedDomain));
-
-        $database = new Database();
-        $database->setPlatform($platform);
-
-        $domain1 = $database->addDomain(['name' => 'foo']);
-
-        $this->assertInstanceOf('Propel\Generator\Model\Domain', $domain1);
-        $this->assertSame($domain1, $database->getDomain('foo'));
-        $this->assertNull($database->getDomain('baz'));
-    }
-
-    /**
-     * @return void
-     */
     public function testAddDomain()
     {
         $domain1 = $this->getDomainMock('foo');
         $domain2 = $this->getDomainMock('bar');
 
         $database = new Database();
-        $database->addDomain($domain1);
-        $database->addDomain($domain2);
+        $database->addTypeMapping($domain1);
+        $database->addTypeMapping($domain2);
 
-        $this->assertSame($domain1, $database->getDomain('foo'));
-        $this->assertSame($domain2, $database->getDomain('bar'));
-        $this->assertNull($database->getDomain('baz'));
+        $this->assertSame($domain1, $database->getTypeMapping('foo'));
+        $this->assertSame($domain2, $database->getTypeMapping('bar'));
+        $this->assertNull($database->getTypeMapping('baz'));
     }
 
     /**

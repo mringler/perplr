@@ -357,7 +357,7 @@ class BaseTest extends MigrationTestCase
      */
     public function testNativeEnum()
     {
-        if ($this->getPlatform()->getDomainForType(ColumnType::ENUM_NATIVE)->getMappingType() === ColumnType::ENUM_BINARY) {
+        if ($this->getPlatform()->getColumnTypeMapping(ColumnType::ENUM_NATIVE)->getMappingType() === ColumnType::ENUM_BINARY) {
             return $this->markTestSkipped('Test requires native SET/ENUM type.');
         }
 

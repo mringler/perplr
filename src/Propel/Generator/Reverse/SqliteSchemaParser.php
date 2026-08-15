@@ -226,11 +226,9 @@ class SqliteSchemaParser extends AbstractSchemaParser
 
             $column = new Column($name);
             $column->setTable($table);
-            $column->setDomainForType($propelType);
-            // We may want to provide an option to include this:
-            // $column->getDomain()->replaceSqlType($type);
-            $column->getDomain()->replaceSize($size);
-            $column->getDomain()->replaceScale($scale);
+            $column->setUpTypeMapping($propelType);
+            $column->getTypeMapping()->replaceSize($size);
+            $column->getTypeMapping()->replaceScale($scale);
 
             if ($default !== null) {
                 $isExpression = !str_starts_with($default, "'") && str_contains($default, '(');
@@ -239,7 +237,7 @@ class SqliteSchemaParser extends AbstractSchemaParser
                 } elseif ($default === 'datetime(CURRENT_TIMESTAMP, \'localtime\')') {
                     $default = 'CURRENT_TIMESTAMP';
                 }
-                $column->getDomain()->createDefaultValue($default, $isExpression);
+                $column->getTypeMapping()->createDefaultValue($default, $isExpression);
             }
 
             $column->setNotNull($notNull);

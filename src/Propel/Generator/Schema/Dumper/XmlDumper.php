@@ -392,20 +392,20 @@ class XmlDumper implements DumperInterface
 
         $columnNode->setAttribute('type', $column->getMappingType()->name);
 
-        $domain = $column->getDomain();
-        $size = $domain->getSize();
+        $typeMapping = $column->getTypeMapping();
+        $size = $typeMapping->getSize();
         if ($size) {
             $columnNode->setAttribute('size', (string)$size);
         }
 
-        $scale = $domain->getScale();
+        $scale = $typeMapping->getScale();
         if ($scale !== null) {
             $columnNode->setAttribute('scale', (string)$scale);
         }
 
         $platform = $column->getPlatform();
         if ($platform && !$column->isDefaultSqlType($platform)) {
-            $columnNode->setAttribute('sqlType', $domain->getSqlType());
+            $columnNode->setAttribute('sqlType', $typeMapping->getSqlType());
         }
 
         $description = $column->getDescription();
@@ -425,7 +425,7 @@ class XmlDumper implements DumperInterface
             $columnNode->setAttribute('required', 'true');
         }
 
-        $defaultValue = $domain->getDefaultValue();
+        $defaultValue = $typeMapping->getDefaultValue();
         if ($defaultValue) {
             $type = $defaultValue->isExpression() ? 'defaultExpr' : 'defaultValue';
             $columnNode->setAttribute($type, (string)$defaultValue->getValue());

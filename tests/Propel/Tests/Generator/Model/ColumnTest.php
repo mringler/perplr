@@ -69,7 +69,7 @@ class ColumnTest extends ModelTestCase
         $column->loadMapping(['name' => 'title']);
 
         $this->assertSame('title', $column->getName());
-        $this->assertSame(ColumnType::VARCHAR, $column->getDomain()->getMappingType());
+        $this->assertSame(ColumnType::VARCHAR, $column->getTypeMapping()->getMappingType());
     }
 
     /**
@@ -102,7 +102,7 @@ class ColumnTest extends ModelTestCase
 
         $column = new Column('');
         $column->setTable($table);
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->loadMapping(['name' => 'title']);
 
         $this->assertSame('title', $column->getName());
@@ -128,7 +128,7 @@ class ColumnTest extends ModelTestCase
 
         $column = new Column('');
         $column->setTable($table);
-        $column->setDomain($this->getDomainMock('VARCHAR'));
+        $column->setTypeMapping($this->getDomainMock('VARCHAR'));
         $column->loadMapping([
             'type' => 'date',
             'name' => 'created_at',
@@ -154,7 +154,7 @@ class ColumnTest extends ModelTestCase
 
         $column = new Column('');
         $column->setTable($table);
-        $column->setDomain($this->getDomainMock('BOOLEAN'));
+        $column->setTypeMapping($this->getDomainMock('BOOLEAN'));
         $column->loadMapping([
             'domain' => 'BOOLEAN',
             'name' => 'is_published',
@@ -218,7 +218,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue(null));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
 
         $this->assertSame('null', $column->getDefaultValueString());
     }
@@ -253,7 +253,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setDefaultValue('foo');          // Test with a scalar
         $column->setDefaultValue($defaultValue);  // Test with an object
 
@@ -393,8 +393,8 @@ class ColumnTest extends ModelTestCase
         $column->setTable($this->getTableMock('books', [
             'platform' => $platform,
         ]));
-        $column->setDomain($domain);
-        $column->setDomainForType('BOOLEAN');
+        $column->setTypeMapping($domain);
+        $column->setUpTypeMapping('BOOLEAN');
 
         $this->assertTrue($column->isDefaultSqlType($platform));
     }
@@ -442,7 +442,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType($mappingType);
 
         $this->assertSame($pdoType, $column->getPdoType());
@@ -499,7 +499,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue(ColumnType::ENUM_BINARY));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType(ColumnType::ENUM_BINARY);
         $column->setValueSet(['FOO', 'BAR']);
 
@@ -522,7 +522,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue(ColumnType::SET_BINARY));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType(ColumnType::SET_BINARY);
         $column->setValueSet(['FOO', 'BAR']);
 
@@ -558,7 +558,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue('OBJECT'));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType('OBJECT');
 
         $this->assertFalse($column->isPhpPrimitiveType());
@@ -583,7 +583,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType($mappingType);
 
         $this->assertSame('string', $column->getPhpType());
@@ -620,7 +620,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType($mappingType);
 
         $this->assertSame($phpType, $column->getPhpType());
@@ -655,7 +655,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType($mappingType);
 
         $this->assertSame('bool', $column->getPhpType());
@@ -689,7 +689,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType($mappingType);
 
         $this->assertSame($phpType, $column->getPhpType());
@@ -731,7 +731,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue($columnType));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType($columnType);
 
         $this->assertSame($phpType, $column->getPhpType());
@@ -767,7 +767,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setType($mappingType);
 
         $this->assertSame('string', $column->getPhpType());
@@ -802,7 +802,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue('(10,2)'));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
 
         $this->assertSame('(10,2)', $column->getSizeDefinition());
     }
@@ -888,7 +888,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue(true));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
 
         $this->assertTrue($column->getPhpDefaultValue());
     }
@@ -991,7 +991,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue(50));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setSize(50);
 
         $this->assertSame(50, $column->getSize());
@@ -1013,7 +1013,7 @@ class ColumnTest extends ModelTestCase
             ->will($this->returnValue(2));
 
         $column = new Column('');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
         $column->setScale(2);
 
         $this->assertSame(2, $column->getScale());
@@ -1026,7 +1026,7 @@ class ColumnTest extends ModelTestCase
     {
         $column = new Column('');
 
-        $this->assertInstanceOf('Propel\Generator\Model\Domain', $column->getDomain());
+        $this->assertInstanceOf('Propel\Generator\Model\Domain', $column->getTypeMapping());
     }
 
     /**
@@ -1058,9 +1058,9 @@ class ColumnTest extends ModelTestCase
     public function testSetDomain()
     {
         $column = new Column('');
-        $column->setDomain($this->getDomainMock());
+        $column->setTypeMapping($this->getDomainMock());
 
-        $this->assertInstanceOf('Propel\Generator\Model\Domain', $column->getDomain());
+        $this->assertInstanceOf('Propel\Generator\Model\Domain', $column->getTypeMapping());
     }
 
     /**

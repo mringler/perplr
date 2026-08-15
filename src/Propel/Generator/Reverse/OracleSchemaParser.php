@@ -164,11 +164,11 @@ class OracleSchemaParser extends AbstractSchemaParser
             $column = new Column($row['COLUMN_NAME']);
             $column->setPhpName(); // Prevent problems with strange col names
             $column->setTable($table);
-            $column->setDomainForType($propelType);
-            $column->getDomain()->replaceSize($size);
-            $column->getDomain()->replaceScale($scale);
+            $column->setUpTypeMapping($propelType);
+            $column->getTypeMapping()->replaceSize($size);
+            $column->getTypeMapping()->replaceScale($scale);
             if ($default !== null) {
-                $column->getDomain()->createDefaultValue($default);
+                $column->getTypeMapping()->createDefaultValue($default);
             }
             $column->setAutoIncrement(false); // This flag sets in self::parse()
             $column->setNotNull(!$isNullable);

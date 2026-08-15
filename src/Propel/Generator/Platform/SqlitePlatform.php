@@ -59,8 +59,6 @@ class SqlitePlatform extends DefaultPlatform
     }
 
     /**
-     * Initializes db specific domain mapping.
-     *
      * @return void
      */
     #[\Override]
@@ -84,11 +82,11 @@ class SqlitePlatform extends DefaultPlatform
         ];
 
         foreach ($sqlTypes as $mapping => $sqlType) {
-            $this->schemaDomainMap[$mapping]->setSqlType($sqlType);
+            $this->typeMap[$mapping]->setSqlType($sqlType);
         }
 
         // no native UUID type, use UUID_BINARY
-        $this->schemaDomainMap[ColumnType::UUID->name] = $this->schemaDomainMap[ColumnType::UUID_BINARY->name];
+        $this->typeMap[ColumnType::UUID->name] = $this->typeMap[ColumnType::UUID_BINARY->name];
 
         $this->setSetTypesMapping(false);
     }
@@ -514,7 +512,7 @@ PRAGMA foreign_keys = ON;
     {
         if ($col->isAutoIncrement()) {
             $col->setType(ColumnType::INTEGER);
-            $col->setDomainForType(ColumnType::INTEGER);
+            $col->setUpTypeMapping(ColumnType::INTEGER);
         }
 
         if (

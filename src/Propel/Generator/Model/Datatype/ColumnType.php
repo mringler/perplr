@@ -7,7 +7,7 @@ namespace Propel\Generator\Model\Datatype;
 use Error;
 use InvalidArgumentException;
 use PDO;
-use Propel\Generator\Model\Domain;
+use Propel\Generator\Model\TypeMapping;
 use RuntimeException;
 use function array_map;
 use function constant;
@@ -104,11 +104,11 @@ enum ColumnType
     }
 
     /**
-     * @return array<\Propel\Generator\Model\Domain>
+     * @return array<\Propel\Generator\Model\TypeMapping>
      */
-    public static function buildDefaultDomainMap(): array
+    public static function buildDefaultTypeMapping(): array
     {
-        /** @var array<\Propel\Generator\Model\Domain> $map */
+        /** @var array<\Propel\Generator\Model\TypeMapping> $map */
         $map = [];
         $specialTypes = [self::CLOB_EMU, self::GEOMETRY, self::ENUM, self::SET, self::BU_DATE, self::BU_TIMESTAMP];
         foreach (self::cases() as $type) {
@@ -116,7 +116,7 @@ enum ColumnType
                 continue;
             }
 
-            $map[$type->name] = new Domain($type);
+            $map[$type->name] = new TypeMapping($type);
         }
 
         $map[self::ENUM->name] = $map[self::ENUM_BINARY->name];

@@ -52,7 +52,7 @@ class ForeignKeyComparatorTest extends TestCase
     {
         $col = new Column($columnName);
         $col->setName($columnName);
-        $col->getDomain()->setSqlType($columnType);
+        $col->getTypeMapping()->setSqlType($columnType);
 
         return $col;
     }
@@ -160,7 +160,7 @@ class ForeignKeyComparatorTest extends TestCase
         $fk1 = static::createForeignKey(['FkCol1' => 'RefCol1', 'FkCol2' => 'RefCol2']);
         $fk2 = static::createForeignKey(['FkCol1' => 'RefCol1', 'FkCol2' => 'RefCol2']);
 
-        $fk2->getForeignColumnObjects()[1]->getDomain()->setSqlType('Le updated type');
+        $fk2->getForeignColumnObjects()[1]->getTypeMapping()->setSqlType('Le updated type');
 
         $this->assertTrue(ForeignKeyComparator::computeDiff($fk1, $fk2));
     }

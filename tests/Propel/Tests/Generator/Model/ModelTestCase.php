@@ -10,7 +10,7 @@ namespace Propel\Tests\Generator\Model;
 
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
-use Propel\Generator\Model\Domain;
+use Propel\Generator\Model\TypeMapping;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\DefaultPlatform;
 use Propel\Tests\TestCase;
@@ -262,7 +262,7 @@ abstract class ModelTestCase extends TestCase
      * @param string|null $name
      * @param array $options An array of options
      *
-     * @return \Propel\Generator\Model\Domain
+     * @return \Propel\Generator\Model\TypeMapping
      */
     protected function getDomainMock($name = null, array $options = [])
     {
@@ -271,7 +271,7 @@ abstract class ModelTestCase extends TestCase
         $options = array_merge($defaults, $options);
 
         $domain = $this
-            ->getMockBuilder(Domain::class)
+            ->getMockBuilder(TypeMapping::class)
             ->disableOriginalConstructor()
             ->getMock();
 

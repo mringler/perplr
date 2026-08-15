@@ -13,10 +13,10 @@ use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\DatabaseDiff;
-use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
+use Propel\Generator\Model\TypeMapping;
 use Propel\Generator\Model\Unique;
 use Propel\Generator\Platform\Util\MysqlUuidMigrationBuilder;
 use function addslashes;
@@ -55,8 +55,6 @@ class MysqlPlatform extends DefaultPlatform
     protected bool $ignoreSizeOnIntegerTypes = true;
 
     /**
-     * Initializes db specific domain mapping.
-     *
      * @return void
      */
     #[\Override]
@@ -78,11 +76,11 @@ class MysqlPlatform extends DefaultPlatform
         ];
 
         foreach ($sqlTypes as $mapping => $sqlType) {
-            $this->schemaDomainMap[$mapping]->setSqlType($sqlType);
+            $this->typeMap[$mapping]->setSqlType($sqlType);
         }
 
-        $this->schemaDomainMap[ColumnType::BOOLEAN->name]->setSize(1);
-        $this->schemaDomainMap[ColumnType::UUID_BINARY->name]->setSize(16);
+        $this->typeMap[ColumnType::BOOLEAN->name]->setSize(1);
+        $this->typeMap[ColumnType::UUID_BINARY->name]->setSize(16);
 
         $this->setUuidTypeMapping();
 
@@ -146,11 +144,11 @@ class MysqlPlatform extends DefaultPlatform
      */
     protected function setUuidTypeMapping(): void
     {
-        $domain = ($this->useUuidNativeType)
-            ? new Domain(ColumnType::UUID, 'UUID')
-            : $this->schemaDomainMap[ColumnType::UUID_BINARY->name];
+        $typeMapping = ($this->useUuidNativeType)
+            ? new TypeMapping(ColumnType::UUID, 'UUID')
+            : $this->typeMap[ColumnType::UUID_BINARY->name];
 
-        $this->schemaDomainMap[ColumnType::UUID->name] = $domain;
+        $this->typeMap[ColumnType::UUID->name] = $typeMapping;
     }
 
     /**
@@ -479,26 +477,26 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     #[\Override]
     public function getColumnDDL(Column $col): string
     {
-        $domain = $col->getDomain();
-        $sqlType = $domain->getSqlType();
+        $typeMapping = $col->getTypeMapping();
+        $sqlType = $typeMapping->getSqlType();
         $notNullString = $this->getNullString($col->isNotNull());
         $defaultSetting = $this->getColumnDefaultValueDDL($col);
 
         // Special handling of TIMESTAMP/DATETIME types ...
         // See: http://propel.phpdb.org/trac/ticket/538
         if ($sqlType === 'DATETIME') {
-            $def = $domain->getDefaultValue();
+            $def = $typeMapping->getDefaultValue();
             if ($def && $def->isExpression()) {
                 // DATETIME values can only have constant expressions
                 $sqlType = 'TIMESTAMP';
             }
         } elseif ($sqlType === 'DATE') {
-            $def = $domain->getDefaultValue();
+            $def = $typeMapping->getDefaultValue();
             if ($def && $def->isExpression()) {
                 throw new EngineException('DATE columns cannot have default *expressions* in MySQL.');
             }
         } elseif ($sqlType === 'BLOB') {
-            if ($domain->getDefaultValue()) {
+            if ($typeMapping->getDefaultValue()) {
                 throw new EngineException('BLOB columns cannot have DEFAULT values in MySQL.');
             }
         }
@@ -565,7 +563,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     /**
      * Returns the SQL type as a string.
      *
-     * @see Domain::getSqlType()
+     * @see TypeMapping::getSqlType()
      *
      * @param \Propel\Generator\Model\Column $column
      *

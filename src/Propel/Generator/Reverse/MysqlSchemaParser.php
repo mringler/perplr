@@ -10,10 +10,10 @@ use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Datatype\ColumnType;
-use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
+use Propel\Generator\Model\TypeMapping;
 use Propel\Generator\Model\Unique;
 use Propel\Generator\Model\VendorInfo;
 use Propel\Generator\Platform\MysqlPlatform;
@@ -250,8 +250,8 @@ class MysqlSchemaParser extends AbstractSchemaParser
         $column = new Column($columnName);
         $column->setTable($table);
 
-        $domain = $this->extractTypeDomain($type, $default, $column->getFullyQualifiedName(), $extra);
-        $column->setDomain($domain);
+        $typeMapping = $this->extractTypeMapping($type, $default, $column->getFullyQualifiedName(), $extra);
+        $column->setTypeMapping($typeMapping);
 
         $autoincrement = (strpos($extra, 'auto_increment') !== false);
         $column->setAutoIncrement($autoincrement);
@@ -272,9 +272,9 @@ class MysqlSchemaParser extends AbstractSchemaParser
      * @param string $columnName Used when printing warninga
      * @param string $extra Additional type specification (i.e. UNSIGNED)
      *
-     * @return \Propel\Generator\Model\Domain
+     * @return \Propel\Generator\Model\TypeMapping
      */
-    protected function extractTypeDomain(string $typeDeclaration, ?string $defaultValueLiteral, string $columnName, string $extra): Domain
+    protected function extractTypeMapping(string $typeDeclaration, ?string $defaultValueLiteral, string $columnName, string $extra): TypeMapping
     {
         [$nativeType, $sqlType, $size, $scale] = $this->parseType($typeDeclaration);
 
@@ -290,21 +290,21 @@ class MysqlSchemaParser extends AbstractSchemaParser
             $propelType = ColumnType::BOOLEAN;
         }
 
-        $domain = clone $this->getPlatform()->getDomainForType($propelType);
+        $typeMapping = clone $this->getPlatform()->getColumnTypeMapping($propelType);
         if ($sqlType) {
-            $domain->replaceSqlType($sqlType);
+            $typeMapping->replaceSqlType($sqlType);
         } elseif (in_array(strtoupper($nativeType), ['TINYTEXT', 'MEDIUMTEXT', 'TINYBLOB'], true)) {
-            $domain->replaceSqlType(strtoupper($nativeType));
+            $typeMapping->replaceSqlType(strtoupper($nativeType));
         }
-        $domain->replaceSize($size);
-        $domain->replaceScale($scale);
+        $typeMapping->replaceSize($size);
+        $typeMapping->replaceScale($scale);
 
         $defaultValue = $this->extractDefaultValue($defaultValueLiteral, $propelType, $nativeType, $extra);
         if ($defaultValue) {
-            $domain->setDefaultValue($defaultValue);
+            $typeMapping->setDefaultValue($defaultValue);
         }
 
-        return $domain;
+        return $typeMapping;
     }
 
     /**

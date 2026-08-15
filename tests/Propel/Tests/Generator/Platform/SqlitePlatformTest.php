@@ -217,11 +217,11 @@ DROP TABLE IF EXISTS [foo];
     public function testGetColumnDDL()
     {
         $c = new Column('foo');
-        $c->getDomain()->copy(static::getPlatform()->getDomainForType('DOUBLE'));
-        $c->getDomain()->replaceScale(2);
-        $c->getDomain()->replaceSize(3);
+        $c->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('DOUBLE'));
+        $c->getTypeMapping()->replaceScale(2);
+        $c->getTypeMapping()->replaceSize(3);
         $c->setNotNull(true);
-        $c->getDomain()->createDefaultValue(123);
+        $c->getTypeMapping()->createDefaultValue(123);
         $expected = '[foo] DOUBLE(3,2) DEFAULT 123 NOT NULL';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($c));
     }
@@ -232,12 +232,12 @@ DROP TABLE IF EXISTS [foo];
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('DOUBLE'));
-        $column->getDomain()->replaceScale(2);
-        $column->getDomain()->replaceSize(3);
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('DOUBLE'));
+        $column->getTypeMapping()->replaceScale(2);
+        $column->getTypeMapping()->replaceSize(3);
         $column->setNotNull(true);
-        $column->getDomain()->createDefaultValue(123);
-        $column->getDomain()->replaceSqlType('DECIMAL(5,6)');
+        $column->getTypeMapping()->createDefaultValue(123);
+        $column->getTypeMapping()->replaceSqlType('DECIMAL(5,6)');
         $expected = '[foo] DECIMAL(5,6) DEFAULT 123 NOT NULL';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
     }

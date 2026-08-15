@@ -84,7 +84,7 @@ class Database extends ScopedMappingModel
     /**
      * @var array
      */
-    private $domainMap = [];
+    private $typeMapping = [];
 
     /**
      * @var bool
@@ -763,39 +763,61 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Adds a domain object to this database.
+     * Adds a type mapping to this database.
      *
-     * @param \Propel\Generator\Model\Domain|array $data
+     * @param \Propel\Generator\Model\TypeMapping|array $data
      *
-     * @return \Propel\Generator\Model\Domain
+     * @return \Propel\Generator\Model\TypeMapping
      */
-    public function addDomain($data): Domain
+    public function addTypeMapping($data): TypeMapping
     {
-        if ($data instanceof Domain) {
-            $domain = $data; // alias
-            $domain->setDatabase($this);
-            $this->domainMap[$domain->getName()] = $domain;
+        if ($data instanceof TypeMapping) {
+            $typeMapping = $data; // alias
+            $typeMapping->setDatabase($this);
+            $this->typeMapping[$typeMapping->getName()] = $typeMapping;
 
-            return $domain;
+            return $typeMapping;
         }
 
-        $domain = new Domain();
-        $domain->setDatabase($this);
-        $domain->loadMapping($data);
+        $typeMapping = new TypeMapping();
+        $typeMapping->setDatabase($this);
+        $typeMapping->loadMapping($data);
 
-        return $this->addDomain($domain); // call self w/ different param
+        return $this->addTypeMapping($typeMapping); // call self w/ different param
     }
 
     /**
-     * Returns the already configured domain object by its name.
+     * @deprecated Use aptly named {@see static::addTypeMapping()}
+     *
+     * @param \Propel\Generator\Model\TypeMapping|array $data
+     *
+     * @return \Propel\Generator\Model\TypeMapping
+     */
+    public function addDomain($data): TypeMapping
+    {
+        return $this->addTypeMapping($data);
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return \Propel\Generator\Model\TypeMapping|null
+     */
+    public function getTypeMapping(string $name): ?TypeMapping
+    {
+        return $this->typeMapping[$name] ?? null;
+    }
+
+    /**
+     * @deprecated Use aptly named {@see static::getTypeMapping()}
      *
      * @param string $name
      *
-     * @return \Propel\Generator\Model\Domain|null
+     * @return \Propel\Generator\Model\TypeMapping|null
      */
-    public function getDomain(string $name): ?Domain
+    public function getDomain(string $name): ?TypeMapping
     {
-        return $this->domainMap[$name] ?? null;
+        return $this->getTypeMapping($name);
     }
 
     /**

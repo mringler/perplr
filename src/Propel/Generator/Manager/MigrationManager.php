@@ -688,7 +688,7 @@ class MigrationManager extends AbstractManager
     protected function createVersionColumn(PlatformInterface $platform): Column
     {
         $column = new Column(static::COL_VERSION);
-        $column->getDomain()->copy($platform->getDomainForType(ColumnType::INTEGER));
+        $column->getTypeMapping()->copy($platform->getColumnTypeMapping(ColumnType::INTEGER));
         $column->setDefaultValue('0');
 
         return $column;
@@ -702,7 +702,7 @@ class MigrationManager extends AbstractManager
     protected function createExecutionDatetimeColumn(PlatformInterface $platform): Column
     {
         $column = new Column(static::COL_EXECUTION_DATETIME);
-        $column->getDomain()->copy($platform->getDomainForType(ColumnType::DATETIME));
+        $column->getTypeMapping()->copy($platform->getColumnTypeMapping(ColumnType::DATETIME));
 
         return $column;
     }

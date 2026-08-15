@@ -8,11 +8,11 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Datatype\ColumnType;
-use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
+use Propel\Generator\Model\TypeMapping;
 use Propel\Generator\Model\Unique;
 use function count;
 use function implode;
@@ -29,38 +29,36 @@ use function substr;
 class OraclePlatform extends DefaultPlatform
 {
     /**
-     * Initializes db specific domain mapping.
-     *
      * @return void
      */
     #[\Override]
     protected function initializeTypeMap(): void
     {
         parent::initializeTypeMap();
-        $this->schemaDomainMap[ColumnType::BOOLEAN->name] = new Domain(ColumnType::BOOLEAN_EMU, 'NUMBER', 1, 0);
-        $this->schemaDomainMap[ColumnType::CLOB->name] = new Domain(ColumnType::CLOB_EMU, 'CLOB');
-        $this->schemaDomainMap[ColumnType::CLOB_EMU->name] = $this->schemaDomainMap[ColumnType::CLOB->name];
-        $this->setSchemaDomainMapping(new Domain(ColumnType::TINYINT, 'NUMBER', 3, 0));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::SMALLINT, 'NUMBER', 5, 0));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::INTEGER, 'NUMBER'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::BIGINT, 'NUMBER', 20, 0));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::REAL, 'NUMBER'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::DOUBLE, 'FLOAT'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::DECIMAL, 'NUMBER'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::NUMERIC, 'NUMBER'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::VARCHAR, 'NVARCHAR2'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::LONGVARCHAR, 'NVARCHAR2', 2000));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::TIME, 'DATE'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::DATE, 'DATE'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::DATETIME, 'TIMESTAMP'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::TIMESTAMP, 'TIMESTAMP'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::BINARY, 'LONG RAW'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::VARBINARY, 'BLOB'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::LONGVARBINARY, 'LONG RAW'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::OBJECT, 'LONG RAW'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::ARRAY, 'NVARCHAR2', 2000));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::UUID, 'UUID'));
-        $this->setSchemaDomainMapping(new Domain(ColumnType::UUID_BINARY, 'RAW(16)'));
+        $this->typeMap[ColumnType::BOOLEAN->name] = new TypeMapping(ColumnType::BOOLEAN_EMU, 'NUMBER', 1, 0);
+        $this->typeMap[ColumnType::CLOB->name] = new TypeMapping(ColumnType::CLOB_EMU, 'CLOB');
+        $this->typeMap[ColumnType::CLOB_EMU->name] = $this->typeMap[ColumnType::CLOB->name];
+        $this->setTypeMapping(new TypeMapping(ColumnType::TINYINT, 'NUMBER', 3, 0));
+        $this->setTypeMapping(new TypeMapping(ColumnType::SMALLINT, 'NUMBER', 5, 0));
+        $this->setTypeMapping(new TypeMapping(ColumnType::INTEGER, 'NUMBER'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::BIGINT, 'NUMBER', 20, 0));
+        $this->setTypeMapping(new TypeMapping(ColumnType::REAL, 'NUMBER'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::DOUBLE, 'FLOAT'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::DECIMAL, 'NUMBER'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::NUMERIC, 'NUMBER'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::VARCHAR, 'NVARCHAR2'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::LONGVARCHAR, 'NVARCHAR2', 2000));
+        $this->setTypeMapping(new TypeMapping(ColumnType::TIME, 'DATE'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::DATE, 'DATE'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::DATETIME, 'TIMESTAMP'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::TIMESTAMP, 'TIMESTAMP'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::BINARY, 'LONG RAW'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::VARBINARY, 'BLOB'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::LONGVARBINARY, 'LONG RAW'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::OBJECT, 'LONG RAW'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::ARRAY, 'NVARCHAR2', 2000));
+        $this->setTypeMapping(new TypeMapping(ColumnType::UUID, 'UUID'));
+        $this->setTypeMapping(new TypeMapping(ColumnType::UUID_BINARY, 'RAW(16)'));
 
         $this->setSetTypesMapping(false);
     }

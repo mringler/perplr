@@ -41,12 +41,12 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getDomain()->copy($this->platform->getDomainForType('DOUBLE'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
         $c1->setPrimaryKey(true);
         $t1->addColumn($c1);
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getDomain()->copy($this->platform->getDomainForType('DOUBLE'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
         $c2->setPrimaryKey(true);
         $t2->addColumn($c2);
 
@@ -78,11 +78,11 @@ class PropelTablePkColumnComparatorTest extends TestCase
         $t1 = new Table('');
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c2->setPrimaryKey(true);
         $t2->addColumn($c2);
         $c3 = new Column('Bar');
-        $c3->getDomain()->copy($this->platform->getDomainForType('LONGVARCHAR'));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping('LONGVARCHAR'));
         $t2->addColumn($c3);
 
         $tc = new TableComparator();
@@ -102,11 +102,11 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c1->setPrimaryKey(true);
         $t1->addColumn($c1);
         $c2 = new Column('Bar');
-        $c2->getDomain()->copy($this->platform->getDomainForType('LONGVARCHAR'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('LONGVARCHAR'));
         $t1->addColumn($c2);
         $t2 = new Table('');
 
@@ -127,20 +127,20 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getDomain()->copy($this->platform->getDomainForType('DOUBLE'));
-        $c1->getDomain()->replaceScale(2);
-        $c1->getDomain()->replaceSize(3);
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c1->getTypeMapping()->replaceScale(2);
+        $c1->getTypeMapping()->replaceSize(3);
         $c1->setNotNull(true);
-        $c1->getDomain()->createDefaultValue(123);
+        $c1->getTypeMapping()->createDefaultValue(123);
         $c1->setPrimaryKey(true);
         $t1->addColumn($c1);
         $t2 = new Table('');
         $c2 = new Column('Bar');
-        $c2->getDomain()->copy($this->platform->getDomainForType('DOUBLE'));
-        $c2->getDomain()->replaceScale(2);
-        $c2->getDomain()->replaceSize(3);
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c2->getTypeMapping()->replaceScale(2);
+        $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
-        $c2->getDomain()->createDefaultValue(123);
+        $c2->getTypeMapping()->createDefaultValue(123);
         $c2->setPrimaryKey(true);
         $t2->addColumn($c2);
 
@@ -163,37 +163,37 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('col1');
-        $c1->getDomain()->copy($this->platform->getDomainForType('VARCHAR'));
-        $c1->getDomain()->replaceSize(255);
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c1->getTypeMapping()->replaceSize(255);
         $c1->setNotNull(false);
         $t1->addColumn($c1);
         $c2 = new Column('col2');
-        $c2->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c2->setNotNull(true);
         $c2->setPrimaryKey(true);
         $t1->addColumn($c2);
         $c3 = new Column('col3');
-        $c3->getDomain()->copy($this->platform->getDomainForType('VARCHAR'));
-        $c3->getDomain()->replaceSize(255);
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c3->getTypeMapping()->replaceSize(255);
         $c3->setPrimaryKey(true);
         $t1->addColumn($c3);
 
         $t2 = new Table('');
         $c4 = new Column('col1');
-        $c4->getDomain()->copy($this->platform->getDomainForType('DOUBLE'));
-        $c4->getDomain()->replaceScale(2);
-        $c4->getDomain()->replaceSize(3);
+        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c4->getTypeMapping()->replaceScale(2);
+        $c4->getTypeMapping()->replaceSize(3);
         $c4->setNotNull(true);
-        $c4->getDomain()->createDefaultValue(123);
+        $c4->getTypeMapping()->createDefaultValue(123);
         $t2->addColumn($c4);
         $c5 = new Column('col22');
-        $c5->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c5->setNotNull(true);
         $c5->setPrimaryKey(true);
         $t2->addColumn($c5);
         $c6 = new Column('col4');
-        $c6->getDomain()->copy($this->platform->getDomainForType('LONGVARCHAR'));
-        $c6->getDomain()->setDefaultValue(new ColumnDefaultValue('123', ColumnDefaultValue::TYPE_VALUE));
+        $c6->getTypeMapping()->copy($this->platform->getColumnTypeMapping('LONGVARCHAR'));
+        $c6->getTypeMapping()->setDefaultValue(new ColumnDefaultValue('123', ColumnDefaultValue::TYPE_VALUE));
         $c6->setPrimaryKey(true);
         $t2->addColumn($c6);
 
@@ -216,34 +216,34 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('col1');
-        $c1->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c1->setNotNull(true);
         $c1->setPrimaryKey(true);
         $t1->addColumn($c1);
         $c2 = new Column('col2');
-        $c2->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c2->setNotNull(true);
         $c2->setPrimaryKey(true);
         $t1->addColumn($c2);
         $c3 = new Column('col3');
-        $c3->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c3->setNotNull(true);
         $c3->setPrimaryKey(true);
         $t1->addColumn($c3);
 
         $t2 = new Table('');
         $c4 = new Column('col4');
-        $c4->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c4->setNotNull(true);
         $c4->setPrimaryKey(true);
         $t2->addColumn($c4);
         $c5 = new Column('col5');
-        $c5->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c5->setNotNull(true);
         $c5->setPrimaryKey(true);
         $t2->addColumn($c5);
         $c6 = new Column('col3');
-        $c6->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c6->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
         $c6->setNotNull(true);
         $c6->setPrimaryKey(true);
         $t2->addColumn($c6);

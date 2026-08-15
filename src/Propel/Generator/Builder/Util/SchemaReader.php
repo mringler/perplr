@@ -267,7 +267,7 @@ class SchemaReader
 
                     break;
                 case 'domain':
-                    $this->currDB->addDomain($attributes);
+                    $this->currDB->addTypeMapping($attributes);
 
                     break;
                 case 'table':

@@ -328,10 +328,10 @@ class PgsqlSchemaParser extends AbstractSchemaParser
 
             $column = new Column($name);
             $column->setTable($table);
-            $column->setDomainForType($propelType);
-            $column->getDomain()->replaceSize($size);
+            $column->setUpTypeMapping($propelType);
+            $column->getTypeMapping()->replaceSize($size);
             if ($scale) {
-                $column->getDomain()->replaceScale($scale);
+                $column->getTypeMapping()->replaceScale($scale);
             }
 
             if ($default !== null) {
@@ -339,7 +339,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
                 if (!$isExpression) {
                     $default = str_replace("'", '', $strDefault);
                 }
-                $column->getDomain()->createDefaultValue($default, $isExpression);
+                $column->getTypeMapping()->createDefaultValue($default, $isExpression);
             }
 
             $column->setAutoIncrement((bool)$autoincrement);

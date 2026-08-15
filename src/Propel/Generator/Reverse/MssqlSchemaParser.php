@@ -151,13 +151,11 @@ class MssqlSchemaParser extends AbstractSchemaParser
 
             $column = new Column($name);
             $column->setTable($table);
-            $column->setDomainForType($propelType);
-            // We may want to provide an option to include this:
-            // $column->getDomain()->replaceSqlType($type);
-            $column->getDomain()->replaceSize($size);
-            $column->getDomain()->replaceScale($scale);
+            $column->setUpTypeMapping($propelType);
+            $column->getTypeMapping()->replaceSize($size);
+            $column->getTypeMapping()->replaceScale($scale);
             if ($default !== null) {
-                $column->getDomain()->createDefaultValue($default);
+                $column->getTypeMapping()->createDefaultValue($default);
             }
             $column->setAutoIncrement($autoincrement);
             $column->setNotNull(!$isNullable);

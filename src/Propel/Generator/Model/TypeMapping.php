@@ -4,8 +4,6 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Model;
 
-use DOMDocument;
-use DOMNode;
 use LogicException;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Datatype\ColumnType;
@@ -13,9 +11,9 @@ use function sprintf;
 use function strtoupper;
 
 /**
- * A class for holding data about a domain used in the schema.
+ * Type mapping for a column
  */
-class Domain extends MappingModel
+class TypeMapping extends MappingModel
 {
     private string|null $name = null;
 
@@ -34,8 +32,6 @@ class Domain extends MappingModel
     private Database|null $database = null;
 
     /**
-     * If this domain needs a name, it must be specified manually.
-     *
      * @param \Propel\Generator\Model\Datatype\ColumnType|null $type Propel type.
      * @param string|null $sqlType SQL type.
      * @param int|null $size
@@ -59,21 +55,21 @@ class Domain extends MappingModel
     }
 
     /**
-     * Copies the values from current object into passed-in Domain.
+     * Copies the values from current object into passed-in mapping.
      *
-     * @param \Propel\Generator\Model\Domain $domain Domain to copy values into.
+     * @param \Propel\Generator\Model\TypeMapping $mapping Mapping to copy values into.
      *
      * @return void
      */
-    public function copy(Domain $domain): void
+    public function copy(TypeMapping $mapping): void
     {
-        $this->defaultValue = $domain->getDefaultValue();
-        $this->description = $domain->getDescription();
-        $this->name = $domain->getName();
-        $this->scale = $domain->getScale();
-        $this->size = $domain->getSize();
-        $this->sqlType = $domain->getSqlType();
-        $this->mappingType = $domain->getMappingType();
+        $this->defaultValue = $mapping->getDefaultValue();
+        $this->description = $mapping->getDescription();
+        $this->name = $mapping->getName();
+        $this->scale = $mapping->getScale();
+        $this->size = $mapping->getSize();
+        $this->sqlType = $mapping->getSqlType();
+        $this->mappingType = $mapping->getMappingType();
     }
 
     /**
@@ -87,7 +83,7 @@ class Domain extends MappingModel
             $type = strtoupper($type);
             $mappingType = ColumnType::fromLiteral($type);
 
-            $this->copy($this->database->getPlatform()->getDomainForType($mappingType));
+            $this->copy($this->database->getPlatform()->getColumnTypeMapping($mappingType));
         }
 
         $this->name = $this->getAttribute('name');
@@ -106,7 +102,7 @@ class Domain extends MappingModel
     }
 
     /**
-     * Sets the owning database object (if this domain is being setup via XML).
+     * Sets the owning database object (if setup via XML).
      *
      * @param \Propel\Generator\Model\Database $database
      *
@@ -118,7 +114,7 @@ class Domain extends MappingModel
     }
 
     /**
-     * Returns the owning database object (if this domain was setup via XML).
+     * Returns the owning database object (if setup via XML).
      *
      * @return \Propel\Generator\Model\Database|null
      */
@@ -128,8 +124,6 @@ class Domain extends MappingModel
     }
 
     /**
-     * Returns the domain description.
-     *
      * @return string|null
      */
     public function getDescription(): ?string
@@ -138,8 +132,6 @@ class Domain extends MappingModel
     }
 
     /**
-     * Sets the domain description.
-     *
      * @param string|null $description
      *
      * @return void
@@ -150,8 +142,6 @@ class Domain extends MappingModel
     }
 
     /**
-     * Returns the domain description.
-     *
      * @return string|null
      */
     public function getName(): ?string
@@ -160,8 +150,6 @@ class Domain extends MappingModel
     }
 
     /**
-     * Sets the domain name.
-     *
      * @param string|null $name
      *
      * @return void
@@ -172,8 +160,6 @@ class Domain extends MappingModel
     }
 
     /**
-     * Returns the scale value.
-     *
      * @return int|null
      */
     public function getScale(): ?int
@@ -182,8 +168,6 @@ class Domain extends MappingModel
     }
 
     /**
-     * Sets the scale value.
-     *
      * @param int|null $scale
      *
      * @return void
@@ -208,8 +192,6 @@ class Domain extends MappingModel
     }
 
     /**
-     * Returns the size.
-     *
      * @return int|null
      */
     public function getSize(): ?int
@@ -218,8 +200,6 @@ class Domain extends MappingModel
     }
 
     /**
-     * Sets the size.
-     *
      * @param int|null $size
      *
      * @return void
@@ -428,50 +408,9 @@ class Domain extends MappingModel
      */
     public function cloneAs(ColumnType $type): static
     {
-        $clonedDomain = clone $this;
-        $clonedDomain->setMappingType($type);
+        $clonedMapping = clone $this;
+        $clonedMapping->setMappingType($type);
 
-        return $clonedDomain;
-    }
-
-    /**
-     * @todo Remove? This method is never called.
-     *
-     * @param \DOMNode $node
-     *
-     * @return void
-     */
-    public function appendXml(DOMNode $node): void
-    {
-        $doc = ($node instanceof DOMDocument) ? $node : $node->ownerDocument;
-
-        /** @var \DOMElement $domainNode */
-        $domainNode = $node->appendChild($doc->createElement('domain'));
-        $domainNode->setAttribute('type', $this->getMappingType()->name);
-        $domainNode->setAttribute('name', $this->getName());
-
-        if ($this->getMappingType()->name !== $this->sqlType) {
-            $domainNode->setAttribute('sqlType', $this->sqlType);
-        }
-
-        $def = $this->getDefaultValue();
-        if ($def) {
-            $domainNode->setAttribute(
-                $def->isExpression() ? 'defaultExpr' : 'defaultValue',
-                (string)$def->getValue(),
-            );
-        }
-
-        if ($this->size) {
-            $domainNode->setAttribute('size', (string)$this->size);
-        }
-
-        if ($this->scale) {
-            $domainNode->setAttribute('scale', (string)$this->scale);
-        }
-
-        if ($this->description) {
-            $domainNode->setAttribute('description', $this->description);
-        }
+        return $clonedMapping;
     }
 }

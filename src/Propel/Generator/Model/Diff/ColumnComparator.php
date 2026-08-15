@@ -50,24 +50,24 @@ class ColumnComparator
         $changedProperties = [];
 
         // compare column types
-        $fromDomain = $fromColumn->getDomain();
-        $toDomain = $toColumn->getDomain();
+        $fromType = $fromColumn->getTypeMapping();
+        $toType = $toColumn->getTypeMapping();
 
-        if ($fromDomain->getScale() !== $toDomain->getScale()) {
-            $changedProperties['scale'] = [$fromDomain->getScale(), $toDomain->getScale()];
+        if ($fromType->getScale() !== $toType->getScale()) {
+            $changedProperties['scale'] = [$fromType->getScale(), $toType->getScale()];
         }
-        if ($fromDomain->getSize() !== $toDomain->getSize()) {
-            $changedProperties['size'] = [$fromDomain->getSize(), $toDomain->getSize()];
+        if ($fromType->getSize() !== $toType->getSize()) {
+            $changedProperties['size'] = [$fromType->getSize(), $toType->getSize()];
         }
 
-        $fromSqlType = $fromDomain->getSqlType() === null ?: strtoupper($fromDomain->getSqlType());
-        $toSqlType = $toDomain->getSqlType() === null ?: strtoupper($toDomain->getSqlType());
+        $fromSqlType = $fromType->getSqlType() === null ?: strtoupper($fromType->getSqlType());
+        $toSqlType = $toType->getSqlType() === null ?: strtoupper($toType->getSqlType());
 
         if ($fromSqlType !== $toSqlType) {
-            $changedProperties['sqlType'] = [$fromDomain->getSqlType(), $toDomain->getSqlType()];
+            $changedProperties['sqlType'] = [$fromType->getSqlType(), $toType->getSqlType()];
 
-            if ($fromDomain->getMappingType() !== $toDomain->getMappingType()) {
-                $changedProperties['type'] = [$fromDomain->getMappingType(), $toDomain->getMappingType()];
+            if ($fromType->getMappingType() !== $toType->getMappingType()) {
+                $changedProperties['type'] = [$fromType->getMappingType(), $toType->getMappingType()];
             }
         }
 

@@ -113,7 +113,7 @@ class DefaultPlatformTest extends TestCase
         $column = new Column('');
         $column->setType($type);
         $defaultValue !== null && $column->setDefaultValue($defaultValue);
-        $column->getDomain()->setSize($size);
+        $column->getTypeMapping()->setSize($size);
 
         return $column;
     }

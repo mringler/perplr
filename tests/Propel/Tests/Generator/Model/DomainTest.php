@@ -10,7 +10,7 @@ namespace Propel\Tests\Generator\Model;
 
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\ColumnDefaultValue;
-use Propel\Generator\Model\Domain;
+use Propel\Generator\Model\TypeMapping;
 
 /**
  * Unit test suite for the Domain model class.
@@ -24,7 +24,7 @@ class DomainTest extends ModelTestCase
      */
     public function testCreateNewDomain()
     {
-        $domain = new Domain('FLOAT', 'DOUBLE', 10, 2);
+        $domain = new TypeMapping('FLOAT', 'DOUBLE', 10, 2);
 
         $this->assertSame('FLOAT', $domain->getMappingType());
         $this->assertSame('DOUBLE', $domain->getSqlType());
@@ -42,9 +42,9 @@ class DomainTest extends ModelTestCase
         $platform
             ->expects($this->any())
             ->method('getDomainForType')
-            ->will($this->returnValue(new Domain('BOOLEAN')));
+            ->will($this->returnValue(new TypeMapping('BOOLEAN')));
 
-        $domain = new Domain();
+        $domain = new TypeMapping();
         $domain->setDatabase($this->getDatabaseMock('bookstore', [
             'platform' => $platform,
         ]));
@@ -79,7 +79,7 @@ class DomainTest extends ModelTestCase
      */
     public function testSetDatabase()
     {
-        $domain = new Domain();
+        $domain = new TypeMapping();
         $domain->setDatabase($this->getDatabaseMock('bookstore'));
 
         $this->assertInstanceOf('Propel\Generator\Model\Database', $domain->getDatabase());
@@ -92,7 +92,7 @@ class DomainTest extends ModelTestCase
     {
         $value = $this->getColumnDefaultValueMock();
 
-        $domain = new Domain('FLOAT', 'DOUBLE');
+        $domain = new TypeMapping('FLOAT', 'DOUBLE');
         $domain->replaceType('BOOLEAN');
         $domain->replaceSqlType('INT');
         $domain->replaceDefaultValue($value);
@@ -107,7 +107,7 @@ class DomainTest extends ModelTestCase
      */
     public function testGetNoPhpDefaultValue()
     {
-        $domain = new Domain();
+        $domain = new TypeMapping();
 
         $this->assertNull($domain->getPhpDefaultValue());
     }
@@ -123,7 +123,7 @@ class DomainTest extends ModelTestCase
             ->method('getValue')
             ->will($this->returnValue('foo'));
 
-        $domain = new Domain('VARCHAR');
+        $domain = new TypeMapping('VARCHAR');
         $domain->setDefaultValue($value);
 
         $this->assertSame('foo', $domain->getPhpDefaultValue());
@@ -141,7 +141,7 @@ class DomainTest extends ModelTestCase
             ->method('getValue')
             ->will($this->returnValue($booleanAsString));
 
-        $domain = new Domain($mappingType);
+        $domain = new TypeMapping($mappingType);
         $domain->setDefaultValue($value);
 
         $this->assertSame($expected, $domain->getPhpDefaultValue());
@@ -176,7 +176,7 @@ class DomainTest extends ModelTestCase
             ->method('isExpression')
             ->will($this->returnValue(true));
 
-        $domain = new Domain();
+        $domain = new TypeMapping();
         $domain->setDefaultValue($value);
 
         $this->expectException(EngineException::class);
@@ -189,7 +189,7 @@ class DomainTest extends ModelTestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('provideSizeDefinitions')]
     public function testGetSizeDefinition($size, $scale, $definition)
     {
-        $domain = new Domain('FLOAT', 'DOUBLE', $size, $scale);
+        $domain = new TypeMapping('FLOAT', 'DOUBLE', $size, $scale);
 
         $this->assertSame($definition, $domain->getSizeDefinition());
     }
@@ -210,7 +210,7 @@ class DomainTest extends ModelTestCase
     {
         $value = $this->getColumnDefaultValueMock();
 
-        $domain = new Domain();
+        $domain = new TypeMapping();
         $domain->setMappingType('FLOAT');
         $domain->setSqlType('DOUBLE');
         $domain->setSize(10);
@@ -219,7 +219,7 @@ class DomainTest extends ModelTestCase
         $domain->setDescription('Some description');
         $domain->setDefaultValue($value);
 
-        $newDomain = new Domain();
+        $newDomain = new TypeMapping();
         $newDomain->copy($domain);
 
         $this->assertSame('FLOAT', $newDomain->getMappingType());
