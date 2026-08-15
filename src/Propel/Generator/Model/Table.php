@@ -10,6 +10,7 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Exception\InvalidArgumentException;
 use Propel\Generator\Exception\LogicException;
 use Propel\Generator\Exception\SchemaException;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Platform\MysqlPlatform;
 use Propel\Generator\Platform\PlatformInterface;
 use Propel\Runtime\Collection\ObjectCollection;
@@ -2276,16 +2277,14 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Check if this table contains columns of the given type.
-     *
-     * @param string $type The type to check for, i.e. PropelTypes::BOOLEAN
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
      * @return bool
      */
-    public function containsColumnsOfType(string $type): bool
+    public function containsColumnsOfType(ColumnType $type): bool
     {
         foreach ($this->columns as $column) {
-            if ($column->getType() === $type) {
+            if ($column->getMappingType() === $type) {
                 return true;
             }
         }
@@ -2305,7 +2304,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function getAdditionalModelClassImports(): ?array
     {
-        if ($this->containsColumnsOfType(PropelTypes::UUID_BINARY)) {
+        if ($this->containsColumnsOfType(ColumnType::UUID_BINARY)) {
             return [
                 UuidConverter::class,
             ];

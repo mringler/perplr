@@ -13,7 +13,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Exception\SchemaException;
 use Propel\Generator\Model\Column;
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Tests\Helpers\ColorsBackedEnum;
 use Propel\Tests\Helpers\ColorsUnitEnum;
 use Propel\Tests\TestCase;
@@ -69,7 +69,7 @@ class ColumnTest extends ModelTestCase
         $column->loadMapping(['name' => 'title']);
 
         $this->assertSame('title', $column->getName());
-        $this->assertSame('VARCHAR', $column->getDomain()->getType());
+        $this->assertSame(ColumnType::VARCHAR, $column->getDomain()->getMappingType());
     }
 
     /**
@@ -97,8 +97,8 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock('VARCHAR');
         $domain
             ->expects($this->any())
-            ->method('getType')
-            ->will($this->returnValue('VARCHAR'));
+            ->method('getMappingType')
+            ->will($this->returnValue(ColumnType::VARCHAR));
 
         $column = new Column('');
         $column->setTable($table);
@@ -476,14 +476,14 @@ class ColumnTest extends ModelTestCase
             ['BOOLEAN_EMU', PDO::PARAM_INT],
             ['OBJECT', PDO::PARAM_LOB],
             ['ARRAY', PDO::PARAM_STR],
-            [PropelTypes::ENUM_BINARY, PDO::PARAM_INT],
-            [PropelTypes::SET_BINARY, PDO::PARAM_INT],
-            [PropelTypes::ENUM_NATIVE, PDO::PARAM_STR],
-            [PropelTypes::SET_NATIVE, PDO::PARAM_STR],
+            [ColumnType::ENUM_BINARY, PDO::PARAM_INT],
+            [ColumnType::SET_BINARY, PDO::PARAM_INT],
+            [ColumnType::ENUM_NATIVE, PDO::PARAM_STR],
+            [ColumnType::SET_NATIVE, PDO::PARAM_STR],
             ['BU_DATE', PDO::PARAM_STR],
             ['BU_TIMESTAMP', PDO::PARAM_STR],
-            [PropelTypes::UUID, PDO::PARAM_STR],
-            [PropelTypes::UUID_BINARY, PDO::PARAM_LOB],
+            [ColumnType::UUID, PDO::PARAM_STR],
+            [ColumnType::UUID_BINARY, PDO::PARAM_LOB],
         ];
     }
 
@@ -496,11 +496,11 @@ class ColumnTest extends ModelTestCase
         $domain
             ->expects($this->any())
             ->method('getType')
-            ->will($this->returnValue(PropelTypes::ENUM_BINARY));
+            ->will($this->returnValue(ColumnType::ENUM_BINARY));
 
         $column = new Column('');
         $column->setDomain($domain);
-        $column->setType(PropelTypes::ENUM_BINARY);
+        $column->setType(ColumnType::ENUM_BINARY);
         $column->setValueSet(['FOO', 'BAR']);
 
         $this->assertSame('int', $column->getPhpType());
@@ -519,11 +519,11 @@ class ColumnTest extends ModelTestCase
         $domain
             ->expects($this->any())
             ->method('getType')
-            ->will($this->returnValue(PropelTypes::SET_BINARY));
+            ->will($this->returnValue(ColumnType::SET_BINARY));
 
         $column = new Column('');
         $column->setDomain($domain);
-        $column->setType(PropelTypes::SET_BINARY);
+        $column->setType(ColumnType::SET_BINARY);
         $column->setValueSet(['FOO', 'BAR']);
 
         $this->assertSame('int', $column->getPhpType());
@@ -743,8 +743,8 @@ class ColumnTest extends ModelTestCase
     {
         return [
             // column type, php type, 
-            [PropelTypes::UUID, 'string'],
-            [PropelTypes::UUID_BINARY, 'string'],
+            [ColumnType::UUID, 'string'],
+            [ColumnType::UUID_BINARY, 'string'],
         ];
     }
 
@@ -971,7 +971,7 @@ class ColumnTest extends ModelTestCase
         $column = new Column('');
         $this->assertFalse($column->isPhpArrayType());
 
-        $column->setType(PropelTypes::PHP_ARRAY);
+        $column->setType(ColumnType::ARRAY);
         $this->assertTrue($column->isPhpArrayType());
     }
 

@@ -9,7 +9,7 @@
 namespace Propel\Tests\Generator\Platform;
 
 use Propel\Generator\Model\Column;
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Platform\DefaultPlatform;
 use Propel\Tests\TestCase;
 
@@ -118,7 +118,7 @@ class DefaultPlatformTest extends TestCase
         return $column;
     }
 
-    public static function createEnumeratedColumn(string $propelType, $defaultValues, $defaultValue)
+    public static function createEnumeratedColumn(ColumnType $propelType, $defaultValues, $defaultValue)
     {
         $column = static::createColumn($propelType, $defaultValue);
         $column->setValueSet($defaultValues);
@@ -129,24 +129,24 @@ class DefaultPlatformTest extends TestCase
     public static function getColumnDefaultValueDDLDataProvider(): array
     {
         return [
-            [static::createColumn(PropelTypes::INTEGER, 0), 'DEFAULT 0'],
-            [static::createColumn(PropelTypes::INTEGER, '0'), 'DEFAULT 0'],
-            [static::createColumn(PropelTypes::VARCHAR, 'foo'), "DEFAULT 'foo'"],
-            [static::createColumn(PropelTypes::VARCHAR, 0), "DEFAULT '0'"],
-            [static::createColumn(PropelTypes::BOOLEAN, true), 'DEFAULT 1'],
-            [static::createColumn(PropelTypes::BOOLEAN, false), 'DEFAULT 0'],
-            [static::createColumn(PropelTypes::BOOLEAN, 'true'), 'DEFAULT 1'],
-            [static::createColumn(PropelTypes::BOOLEAN, 'false'), 'DEFAULT 0'],
-            [static::createColumn(PropelTypes::BOOLEAN, 'TRUE'), 'DEFAULT 1'],
-            [static::createColumn(PropelTypes::BOOLEAN, 'FALSE'), 'DEFAULT 0'],
-            [static::createEnumeratedColumn(PropelTypes::ENUM_BINARY, ['foo', 'bar', 'baz'], 'foo'), 'DEFAULT 0'],
-            [static::createEnumeratedColumn(PropelTypes::ENUM_BINARY, ['foo', 'bar', 'baz'], 'bar'), 'DEFAULT 1'],
-            [static::createEnumeratedColumn(PropelTypes::ENUM_BINARY, ['foo', 'bar', 'baz'], 'baz'), 'DEFAULT 2'],
-            [static::createEnumeratedColumn(PropelTypes::SET_BINARY, ['foo', 'bar', 'baz'], 'foo'), 'DEFAULT 1'],
-            [static::createEnumeratedColumn(PropelTypes::SET_BINARY, ['foo', 'bar', 'baz'], 'bar'), 'DEFAULT 2'],
-            [static::createEnumeratedColumn(PropelTypes::SET_BINARY, ['foo', 'bar', 'baz'], 'baz'), 'DEFAULT 4'],
-            [static::createEnumeratedColumn(PropelTypes::ENUM_NATIVE, ['foo', 'bar', 'baz'], 'bar'), 'DEFAULT \'bar\''],
-            [static::createEnumeratedColumn(PropelTypes::SET_NATIVE, ['foo', 'bar', 'baz'], 'bar'), 'DEFAULT \'bar\''],
+            [static::createColumn(ColumnType::INTEGER, 0), 'DEFAULT 0'],
+            [static::createColumn(ColumnType::INTEGER, '0'), 'DEFAULT 0'],
+            [static::createColumn(ColumnType::VARCHAR, 'foo'), "DEFAULT 'foo'"],
+            [static::createColumn(ColumnType::VARCHAR, 0), "DEFAULT '0'"],
+            [static::createColumn(ColumnType::BOOLEAN, true), 'DEFAULT 1'],
+            [static::createColumn(ColumnType::BOOLEAN, false), 'DEFAULT 0'],
+            [static::createColumn(ColumnType::BOOLEAN, 'true'), 'DEFAULT 1'],
+            [static::createColumn(ColumnType::BOOLEAN, 'false'), 'DEFAULT 0'],
+            [static::createColumn(ColumnType::BOOLEAN, 'TRUE'), 'DEFAULT 1'],
+            [static::createColumn(ColumnType::BOOLEAN, 'FALSE'), 'DEFAULT 0'],
+            [static::createEnumeratedColumn(ColumnType::ENUM_BINARY, ['foo', 'bar', 'baz'], 'foo'), 'DEFAULT 0'],
+            [static::createEnumeratedColumn(ColumnType::ENUM_BINARY, ['foo', 'bar', 'baz'], 'bar'), 'DEFAULT 1'],
+            [static::createEnumeratedColumn(ColumnType::ENUM_BINARY, ['foo', 'bar', 'baz'], 'baz'), 'DEFAULT 2'],
+            [static::createEnumeratedColumn(ColumnType::SET_BINARY, ['foo', 'bar', 'baz'], 'foo'), 'DEFAULT 1'],
+            [static::createEnumeratedColumn(ColumnType::SET_BINARY, ['foo', 'bar', 'baz'], 'bar'), 'DEFAULT 2'],
+            [static::createEnumeratedColumn(ColumnType::SET_BINARY, ['foo', 'bar', 'baz'], 'baz'), 'DEFAULT 4'],
+            [static::createEnumeratedColumn(ColumnType::ENUM_NATIVE, ['foo', 'bar', 'baz'], 'bar'), 'DEFAULT \'bar\''],
+            [static::createEnumeratedColumn(ColumnType::SET_NATIVE, ['foo', 'bar', 'baz'], 'bar'), 'DEFAULT \'bar\''],
 
         ];
     }
@@ -163,8 +163,8 @@ class DefaultPlatformTest extends TestCase
     public static function getColumnBindingDataProvider(): array
     {
         return [
-            [static::createColumn(PropelTypes::DATE, '2020-02-03'), '$stmt->bindValue(ID, ACCESSOR, PDO::PARAM_STR);'],
-            [static::createColumn(PropelTypes::BLOB, 'BLOB'), '$stmt->bindValue(ID, ACCESSOR, PDO::PARAM_LOB);'],
+            [static::createColumn(ColumnType::DATE, '2020-02-03'), '$stmt->bindValue(ID, ACCESSOR, PDO::PARAM_STR);'],
+            [static::createColumn(ColumnType::BLOB, 'BLOB'), '$stmt->bindValue(ID, ACCESSOR, PDO::PARAM_LOB);'],
         ];
     }
 
@@ -188,14 +188,14 @@ class DefaultPlatformTest extends TestCase
     public static function GetTemporalFormatterDataProvider(): array
     {
         return [
-            [PropelTypes::DATE, null, 'Y-m-d'],
-            [PropelTypes::TIME, null, 'H:i:s'],
-            [PropelTypes::TIMESTAMP, null, 'Y-m-d H:i:s'],
-            [PropelTypes::DATETIME, null, 'Y-m-d H:i:s'],
-            [PropelTypes::DATE, 6, 'Y-m-d'],
-            [PropelTypes::TIME, 6, 'H:i:s.u'],
-            [PropelTypes::TIMESTAMP, 6, 'Y-m-d H:i:s.u'],
-            [PropelTypes::DATETIME, 6, 'Y-m-d H:i:s.u'],
+            [ColumnType::DATE, null, 'Y-m-d'],
+            [ColumnType::TIME, null, 'H:i:s'],
+            [ColumnType::TIMESTAMP, null, 'Y-m-d H:i:s'],
+            [ColumnType::DATETIME, null, 'Y-m-d H:i:s'],
+            [ColumnType::DATE, 6, 'Y-m-d'],
+            [ColumnType::TIME, 6, 'H:i:s.u'],
+            [ColumnType::TIMESTAMP, 6, 'Y-m-d H:i:s.u'],
+            [ColumnType::DATETIME, 6, 'Y-m-d H:i:s.u'],
         ];
     }
 

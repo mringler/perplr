@@ -390,7 +390,7 @@ class XmlDumper implements DumperInterface
             $columnNode->setAttribute('phpName', $column->getPhpName());
         }
 
-        $columnNode->setAttribute('type', $column->getType());
+        $columnNode->setAttribute('type', $column->getMappingType()->name);
 
         $domain = $column->getDomain();
         $size = $domain->getSize();

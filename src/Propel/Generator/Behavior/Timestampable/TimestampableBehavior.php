@@ -8,7 +8,7 @@ use DateTime;
 use Propel\Generator\Builder\Om\AbstractOMBuilder;
 use Propel\Generator\Builder\Om\ObjectBuilder;
 use Propel\Generator\Model\Behavior;
-use function strtoupper;
+use Propel\Generator\Model\Datatype\ColumnType;
 
 /**
  * Gives a model class the ability to track creation and last modification dates
@@ -107,7 +107,7 @@ class TimestampableBehavior extends Behavior
                 ? $builder->resolveColumnDateTimeClass($updateColumn)
                 : DateTime::class;
 
-            $valueSource = strtoupper($updateColumn->getType()) === 'INTEGER'
+            $valueSource = $updateColumn->getMappingType() === ColumnType::INTEGER
                 ? 'time()'
                 : "PropelDateTime::createHighPrecision(null, '$dateTimeClass')";
 
@@ -137,7 +137,7 @@ class TimestampableBehavior extends Behavior
                 ? $builder->resolveColumnDateTimeClass($createColumn)
                 : DateTime::class;
 
-            $valueSource = strtoupper($createColumn->getType()) === 'INTEGER'
+            $valueSource = $createColumn->getMappingType() === ColumnType::INTEGER
                 ? '(int)$mtime'
                 : "PropelDateTime::createHighPrecision(PropelDateTime::formatMicrotime(\$mtime), '$dateTimeClass')";
 
@@ -154,7 +154,7 @@ if (!\$this->isColumnModified(" . $this->getColumnConstant('create_column', $bui
                 ? $builder->resolveColumnDateTimeClass($updateColumn)
                 : DateTime::class;
 
-            $valueSource = strtoupper($updateColumn->getType()) === 'INTEGER'
+            $valueSource = $updateColumn->getMappingType() === ColumnType::INTEGER
                 ? '(int)$mtime'
                 : "PropelDateTime::createHighPrecision(PropelDateTime::formatMicrotime(\$mtime), '$dateTimeClass')";
 

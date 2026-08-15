@@ -917,7 +917,7 @@ class Database extends ScopedMappingModel
                 $columns[] = sprintf(
                     '      %s %s %s %s %s %s %s',
                     $column->getName(),
-                    $column->getType(),
+                    $column->getMappingType()->name,
                     $column->getSize() ? '(' . $column->getSize() . ')' : '',
                     $column->isPrimaryKey() ? 'PK' : '',
                     $column->isNotNull() ? 'NOT NULL' : '',

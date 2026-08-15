@@ -8,9 +8,9 @@ namespace Propel\Generator\Reverse;
 use PDO;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use RuntimeException;
@@ -25,59 +25,52 @@ use function strtolower;
 class MssqlSchemaParser extends AbstractSchemaParser
 {
     /**
-     * Map MSSQL native types to Propel types.
+     * @see AbstractSchemaParser::buildTypeMapping()
      *
-     * @var array<string>
-     */
-    private static $mssqlTypeMap = [
-        'binary' => PropelTypes::BINARY,
-        'bit' => PropelTypes::BOOLEAN,
-        'char' => PropelTypes::CHAR,
-        'datetime' => PropelTypes::TIMESTAMP,
-        'decimal() identity' => PropelTypes::DECIMAL,
-        'decimal' => PropelTypes::DECIMAL,
-        'image' => PropelTypes::LONGVARBINARY,
-        'int' => PropelTypes::INTEGER,
-        'int identity' => PropelTypes::INTEGER,
-        'integer' => PropelTypes::INTEGER,
-        'money' => PropelTypes::DECIMAL,
-        'nchar' => PropelTypes::CHAR,
-        'ntext' => PropelTypes::LONGVARCHAR,
-        'numeric() identity' => PropelTypes::NUMERIC,
-        'numeric' => PropelTypes::NUMERIC,
-        'nvarchar' => PropelTypes::VARCHAR,
-        'real' => PropelTypes::REAL,
-        'float' => PropelTypes::FLOAT,
-        'smalldatetime' => PropelTypes::TIMESTAMP,
-        'smallint' => PropelTypes::SMALLINT,
-        'smallint identity' => PropelTypes::SMALLINT,
-        'smallmoney' => PropelTypes::DECIMAL,
-        'sysname' => PropelTypes::VARCHAR,
-        'text' => PropelTypes::LONGVARCHAR,
-        'timestamp' => PropelTypes::BINARY,
-        'tinyint identity' => PropelTypes::TINYINT,
-        'tinyint' => PropelTypes::TINYINT,
-        'uniqueidentifier' => PropelTypes::UUID,
-        'varbinary' => PropelTypes::VARBINARY,
-        'varbinary(max)' => PropelTypes::CLOB,
-        'varchar' => PropelTypes::VARCHAR,
-        'varchar(max)' => PropelTypes::CLOB,
-        'geometry' => PropelTypes::GEOMETRY,
-        // SQL Server 2000 only
-        'bigint identity' => PropelTypes::BIGINT,
-        'bigint' => PropelTypes::BIGINT,
-        'sql_variant' => PropelTypes::VARCHAR,
-    ];
-
-    /**
-     * @see AbstractSchemaParser::getTypeMapping()
-     *
-     * @return array<string>
+     * @return array<\Propel\Generator\Model\Datatype\ColumnType>
      */
     #[\Override]
-    protected function getTypeMapping(): array
+    protected function buildTypeMapping(): array
     {
-        return self::$mssqlTypeMap;
+        return [
+            'binary' => ColumnType::BINARY,
+            'bit' => ColumnType::BOOLEAN,
+            'char' => ColumnType::CHAR,
+            'datetime' => ColumnType::TIMESTAMP,
+            'decimal() identity' => ColumnType::DECIMAL,
+            'decimal' => ColumnType::DECIMAL,
+            'image' => ColumnType::LONGVARBINARY,
+            'int' => ColumnType::INTEGER,
+            'int identity' => ColumnType::INTEGER,
+            'integer' => ColumnType::INTEGER,
+            'money' => ColumnType::DECIMAL,
+            'nchar' => ColumnType::CHAR,
+            'ntext' => ColumnType::LONGVARCHAR,
+            'numeric() identity' => ColumnType::NUMERIC,
+            'numeric' => ColumnType::NUMERIC,
+            'nvarchar' => ColumnType::VARCHAR,
+            'real' => ColumnType::REAL,
+            'float' => ColumnType::FLOAT,
+            'smalldatetime' => ColumnType::TIMESTAMP,
+            'smallint' => ColumnType::SMALLINT,
+            'smallint identity' => ColumnType::SMALLINT,
+            'smallmoney' => ColumnType::DECIMAL,
+            'sysname' => ColumnType::VARCHAR,
+            'text' => ColumnType::LONGVARCHAR,
+            'timestamp' => ColumnType::BINARY,
+            'tinyint identity' => ColumnType::TINYINT,
+            'tinyint' => ColumnType::TINYINT,
+            'uniqueidentifier' => ColumnType::UUID,
+            'varbinary' => ColumnType::VARBINARY,
+            'varbinary(max)' => ColumnType::CLOB,
+            'varchar' => ColumnType::VARCHAR,
+            'varchar(max)' => ColumnType::CLOB,
+            'geometry' => ColumnType::GEOMETRY,
+            // SQL Server 2000 only
+            'bigint identity' => ColumnType::BIGINT,
+            'bigint' => ColumnType::BIGINT,
+            'sql_variant' => ColumnType::VARCHAR,
+        ];
     }
 
     /**

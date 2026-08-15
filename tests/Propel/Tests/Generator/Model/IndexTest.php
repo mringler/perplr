@@ -9,8 +9,8 @@
 namespace Propel\Tests\Generator\Model;
 
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 
 /**
  * Unit test suite for the Index model class.
@@ -103,9 +103,9 @@ class IndexTest extends ModelTestCase
     public static function provideColumnDefinitions()
     {
         $dataset[0][] = [
-            new Column('foo', PropelTypes::VARCHAR, 100),
-            new Column('bar', PropelTypes::VARCHAR, 5),
-            new Column('baz', PropelTypes::VARCHAR, 0),
+            new Column('foo', ColumnType::VARCHAR, 100),
+            new Column('bar', ColumnType::VARCHAR, 5),
+            new Column('baz', ColumnType::VARCHAR, 0),
         ];
 
         $dataset[1][] = [

@@ -10,12 +10,12 @@ use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\DatabaseDiff;
 use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use Propel\Generator\Platform\Util\MysqlUuidMigrationBuilder;
@@ -44,29 +44,14 @@ use function var_export;
  */
 class MysqlPlatform extends DefaultPlatform
 {
-    /**
-     * @var string
-     */
     protected string $tableEngineKeyword = 'ENGINE';
 
-    /**
-     * @var string
-     */
     protected string $defaultTableEngine = 'InnoDB';
 
-    /**
-     * @var string|null
-     */
     protected string|null $serverVersion = null;
 
-    /**
-     * @var bool
-     */
     protected bool $useUuidNativeType = false;
 
-    /**
-     * @var bool
-     */
     protected bool $ignoreSizeOnIntegerTypes = true;
 
     /**
@@ -78,17 +63,26 @@ class MysqlPlatform extends DefaultPlatform
     protected function initializeTypeMap(): void
     {
         parent::initializeTypeMap();
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BOOLEAN, 'TINYINT', 1));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::NUMERIC, 'DECIMAL'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARCHAR, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BINARY, 'BINARY'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::VARBINARY, 'MEDIUMBLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARBINARY, 'LONGBLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::CLOB, 'LONGTEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::OBJECT, 'MEDIUMBLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::PHP_ARRAY, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::REAL, 'DOUBLE'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID_BINARY, 'BINARY', 16));
+
+        $sqlTypes = [
+            ColumnType::NUMERIC->name => 'DECIMAL',
+            ColumnType::LONGVARCHAR->name => 'TEXT',
+            ColumnType::BINARY->name => 'BINARY',
+            ColumnType::VARBINARY->name => 'MEDIUMBLOB',
+            ColumnType::LONGVARBINARY->name => 'LONGBLOB',
+            ColumnType::CLOB->name => 'LONGTEXT',
+            ColumnType::OBJECT->name => 'MEDIUMBLOB',
+            ColumnType::ARRAY->name => 'TEXT',
+            ColumnType::REAL->name => 'DOUBLE',
+            ColumnType::UUID_BINARY->name => 'BINARY',
+        ];
+
+        foreach ($sqlTypes as $mapping => $sqlType) {
+            $this->schemaDomainMap[$mapping]->setSqlType($sqlType);
+        }
+
+        $this->schemaDomainMap[ColumnType::BOOLEAN->name]->setSize(1);
+        $this->schemaDomainMap[ColumnType::UUID_BINARY->name]->setSize(16);
 
         $this->setUuidTypeMapping();
 
@@ -153,10 +147,10 @@ class MysqlPlatform extends DefaultPlatform
     protected function setUuidTypeMapping(): void
     {
         $domain = ($this->useUuidNativeType)
-            ? new Domain(PropelTypes::UUID, 'UUID')
-            : $this->schemaDomainMap[PropelTypes::UUID_BINARY];
+            ? new Domain(ColumnType::UUID, 'UUID')
+            : $this->schemaDomainMap[ColumnType::UUID_BINARY->name];
 
-        $this->schemaDomainMap[PropelTypes::UUID] = $domain;
+        $this->schemaDomainMap[ColumnType::UUID->name] = $domain;
     }
 
     /**
@@ -926,7 +920,7 @@ ALTER TABLE %s DROP %s;
         }
 
         // binary column from database does not know it is a UUID column
-        $fromBinaryColumn = in_array($fromColumn->getType(), [PropelTypes::BINARY, PropelTypes::UUID_BINARY], true);
+        $fromBinaryColumn = in_array($fromColumn->getMappingType(), [ColumnType::BINARY, ColumnType::UUID_BINARY], true);
         if ($fromBinaryColumn && $toColumn->isTextType() && $toColumn->isContent('UUID')) {
             return $this->getChangeColumnFromUuidBinaryType($fromColumn, $toColumn);
         }
@@ -1052,10 +1046,10 @@ ALTER TABLE %s ADD %s %s;
         if ($this->ignoreSizeOnIntegerTypes) {
             array_push(
                 $unSizedTypes,
-                PropelTypes::BIGINT,
-                PropelTypes::INTEGER,
-                PropelTypes::SMALLINT,
-                PropelTypes::TINYINT,
+                'BIGINT',
+                'INTEGER',
+                'SMALLINT',
+                'TINYINT',
             );
         }
 

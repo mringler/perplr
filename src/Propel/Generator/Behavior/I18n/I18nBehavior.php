@@ -10,8 +10,8 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Exception\LogicException;
 use Propel\Generator\Model\Behavior;
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use function array_find;
 use function array_merge;
@@ -291,7 +291,7 @@ class I18nBehavior extends Behavior
         if (!$this->getI18nTable()->hasColumn($localeColumnName)) {
             $this->getI18nTable()->addColumn([
                 'name' => $localeColumnName,
-                'type' => PropelTypes::VARCHAR,
+                'type' => ColumnType::VARCHAR,
                 'size' => $this->getParameter('locale_length') ? (int)$this->getParameter('locale_length') : 5,
                 'default' => $this->getDefaultLocale(),
                 'primaryKey' => 'true',

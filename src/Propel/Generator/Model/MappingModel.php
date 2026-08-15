@@ -123,7 +123,7 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return string|null
      */
-    protected function getDefaultValueForArray(string $stringValue): ?string
+    protected function buildDefaultValueExpressionForArray(string $stringValue): ?string
     {
         $stringValue = trim($stringValue);
 
@@ -151,7 +151,7 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return array|null
      */
-    protected function getDefaultValueForSet(string $stringValue): ?array
+    protected function buildDefaultValueExpressionForSet(string $stringValue): ?array
     {
         return SetColumnConverter::itemsCsvToArray($stringValue) ?: null;
     }

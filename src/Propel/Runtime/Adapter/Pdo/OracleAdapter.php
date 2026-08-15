@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Propel\Runtime\Adapter\Pdo;
 
 use PDO;
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Lock;
 use Propel\Runtime\Adapter\AdapterInterface;
@@ -251,7 +251,7 @@ class OracleAdapter extends PdoAdapter implements SqlAdapterInterface
     #[\Override]
     public function bindValue(StatementInterface $stmt, string $parameter, $value, ColumnMap $cMap, ?int $position = null): bool
     {
-        if ($cMap->getType() === PropelTypes::CLOB_EMU) {
+        if ($cMap->getTypeMapping() === ColumnType::CLOB_EMU) {
             return $stmt->bindParam(':p' . $position, $value, $cMap->getPdoType(), strlen($value));
         }
 

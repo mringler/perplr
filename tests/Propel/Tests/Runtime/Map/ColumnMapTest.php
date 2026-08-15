@@ -83,7 +83,7 @@ class ColumnMapTest extends TestCaseFixtures
         $this->assertEquals(static::COLUMN_NAME, $this->cmap->getName(), 'constructor sets the column name');
         $this->assertEquals($this->tmap, $this->cmap->getTable(), 'Constructor sets the table map');
         $this->assertEquals(static::PHP_NAME, $this->cmap->getPhpName(), 'constructor sets the php name');
-        $this->assertEquals(static::TYPE, $this->cmap->getType(), 'constructor sets the type');
+        $this->assertEquals(static::TYPE, $this->cmap->getTypeMapping(), 'constructor sets the type');
     }
 
     /**
@@ -101,7 +101,7 @@ class ColumnMapTest extends TestCaseFixtures
     public function testType()
     {
         $this->cmap->setType('FooBar');
-        $this->assertEquals('FooBar', $this->cmap->getType(), 'type is set by setType()');
+        $this->assertEquals('FooBar', $this->cmap->getTypeMapping(), 'type is set by setType()');
     }
 
     /**

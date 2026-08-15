@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Propel\Runtime\Map;
 
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Exception\LogicException;
 use Propel\Runtime\Map\Exception\ColumnNotFoundException;
@@ -455,7 +456,7 @@ class TableMap
      *
      * @param string $name A String with the column name.
      * @param string $phpName A string representing the PHP name.
-     * @param string $type A string specifying the Propel type.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type A string specifying the Propel type.
      * @param bool $isNotNull Whether column does not allow NULL values.
      * @param int|null $size An int specifying the size.
      * @param scalar|null $defaultValue
@@ -468,7 +469,7 @@ class TableMap
     public function addColumn(
         string $name,
         string $phpName,
-        string $type,
+        ColumnType $type,
         bool $isNotNull = false,
         ?int $size = null,
         $defaultValue = null,
@@ -606,19 +607,19 @@ class TableMap
     }
 
     /**
-     * @param string $columnName A String with the column name.
-     * @param string $phpName A string representing the PHP name.
-     * @param string $type A string specifying the Propel type.
-     * @param bool $isNotNull Whether column does not allow NULL values.
-     * @param int|null $size An int specifying the size.
-     * @param string|null $defaultValue The default value for this column.
+     * @param string $columnName
+     * @param string $phpName
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     * @param bool $isNotNull
+     * @param int|null $size
+     * @param string|null $defaultValue
      *
      * @return \Propel\Runtime\Map\ColumnMap Newly added PrimaryKey column.
      */
     public function addPrimaryKey(
         string $columnName,
         string $phpName,
-        string $type,
+        ColumnType $type,
         bool $isNotNull = false,
         ?int $size = null,
         ?string $defaultValue = null
@@ -627,21 +628,21 @@ class TableMap
     }
 
     /**
-     * @param string $columnName A String with the column name.
-     * @param string $phpName A string representing the PHP name.
-     * @param string $type A string specifying the Propel type.
-     * @param string $fkTable A String with the foreign key table name.
-     * @param string $fkColumn A String with the foreign key column name.
-     * @param bool $isNotNull Whether column does not allow NULL values.
-     * @param int|null $size An int specifying the size.
-     * @param scalar|null $defaultValue The default value for this column.
+     * @param string $columnName
+     * @param string $phpName
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     * @param string $fkTable
+     * @param string $fkColumn
+     * @param bool $isNotNull
+     * @param int|null $size
+     * @param scalar|null $defaultValue
      *
      * @return \Propel\Runtime\Map\ColumnMap Newly added ForeignKey column.
      */
     public function addForeignKey(
         string $columnName,
         string $phpName,
-        string $type,
+        ColumnType $type,
         string $fkTable,
         string $fkColumn,
         bool $isNotNull = false,
@@ -654,7 +655,7 @@ class TableMap
     /**
      * @param string $columnName
      * @param string $columnPhpName
-     * @param string $propelType
+     * @param \Propel\Generator\Model\Datatype\ColumnType $propelType
      * @param string $fkTableName
      * @param string $fkColumnName
      * @param bool $isNotNull
@@ -666,7 +667,7 @@ class TableMap
     public function addForeignPrimaryKey(
         string $columnName,
         string $columnPhpName,
-        string $propelType,
+        ColumnType $propelType,
         string $fkTableName,
         string $fkColumnName,
         bool $isNotNull = false,

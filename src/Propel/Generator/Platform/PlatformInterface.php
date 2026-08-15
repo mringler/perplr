@@ -6,6 +6,7 @@ namespace Propel\Generator\Platform;
 
 use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\Table;
 use Propel\Runtime\Connection\ConnectionInterface;
@@ -86,11 +87,11 @@ interface PlatformInterface
     /**
      * Returns the db specific domain for a propelType.
      *
-     * @param string $propelType the Propel type name.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $propelType the Propel type name.
      *
      * @return \Propel\Generator\Model\Domain The db specific domain.
      */
-    public function getDomainForType(string $propelType): Domain;
+    public function getDomainForType(ColumnType $propelType): Domain;
 
     /**
      * Returns the RDBMS-specific SQL fragment for <code>NULL</code>

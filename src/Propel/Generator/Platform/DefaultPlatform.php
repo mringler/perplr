@@ -9,6 +9,7 @@ use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\DatabaseDiff;
 use Propel\Generator\Model\Diff\TableDiff;
@@ -16,7 +17,6 @@ use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use Propel\Generator\Platform\Util\AlterTableStatementMerger;
@@ -168,20 +168,7 @@ class DefaultPlatform implements PlatformInterface
      */
     protected function initializeTypeMap(): void
     {
-        $this->schemaDomainMap = [];
-        foreach (PropelTypes::getPropelTypes() as $type) {
-            $this->schemaDomainMap[$type] = new Domain($type);
-        }
-        // BU_* no longer needed, so map these to the DATE/TIMESTAMP domains
-        $this->schemaDomainMap[PropelTypes::BU_DATE] = new Domain(PropelTypes::DATE);
-        $this->schemaDomainMap[PropelTypes::BU_TIMESTAMP] = new Domain(PropelTypes::TIMESTAMP);
-
-        // Boolean is a bit special, since typically it must be mapped to INT type.
-        $this->schemaDomainMap[PropelTypes::BOOLEAN] = new Domain(PropelTypes::BOOLEAN, 'INTEGER');
-
-        // Default aliases for enumerated types
-        $this->schemaDomainMap[PropelTypes::ENUM] = $this->schemaDomainMap[PropelTypes::ENUM_BINARY];
-        $this->schemaDomainMap[PropelTypes::SET] = $this->schemaDomainMap[PropelTypes::SET_BINARY];
+        $this->schemaDomainMap = ColumnType::buildDefaultDomainMap();
     }
 
     /**
@@ -193,24 +180,24 @@ class DefaultPlatform implements PlatformInterface
      */
     protected function setSetTypesMapping(bool $hasNativeType, Domain|null $binarySetDomain = null, Domain|null $binaryEnumDomain = null): void
     {
-        $binarySetDomain = ($binarySetDomain ?? $this->schemaDomainMap[PropelTypes::INTEGER])->cloneAs(PropelTypes::SET_BINARY);
+        $binarySetDomain = ($binarySetDomain ?? $this->schemaDomainMap[ColumnType::INTEGER->name])->cloneAs(ColumnType::SET_BINARY);
         $this->setSchemaDomainMapping($binarySetDomain);
 
-        $binaryEnumDomain = ($binaryEnumDomain ?? $this->schemaDomainMap[PropelTypes::TINYINT])->cloneAs(PropelTypes::ENUM_BINARY);
+        $binaryEnumDomain = ($binaryEnumDomain ?? $this->schemaDomainMap[ColumnType::TINYINT->name])->cloneAs(ColumnType::ENUM_BINARY);
         $this->setSchemaDomainMapping($binaryEnumDomain);
 
         if ($hasNativeType) {
-            $this->setSchemaDomainMapping(new Domain(PropelTypes::SET_NATIVE, 'VARCHAR'));
-            $this->setSchemaDomainMapping(new Domain(PropelTypes::ENUM_NATIVE, 'VARCHAR'));
+            $this->setSchemaDomainMapping(new Domain(ColumnType::SET_NATIVE, 'VARCHAR'));
+            $this->setSchemaDomainMapping(new Domain(ColumnType::ENUM_NATIVE, 'VARCHAR'));
         } else {
-            $this->schemaDomainMap[PropelTypes::ENUM_NATIVE] = $this->schemaDomainMap[PropelTypes::ENUM_BINARY];
-            $this->schemaDomainMap[PropelTypes::SET_NATIVE] = $this->schemaDomainMap[PropelTypes::SET_BINARY];
+            $this->schemaDomainMap[ColumnType::ENUM_NATIVE->name] = $this->schemaDomainMap[ColumnType::ENUM_BINARY->name];
+            $this->schemaDomainMap[ColumnType::SET_NATIVE->name] = $this->schemaDomainMap[ColumnType::SET_BINARY->name];
         }
 
         // aliases
         $useNative = $this->defaultToNativeEnumeratedColumnTypes;
-        $this->schemaDomainMap[PropelTypes::ENUM] = $this->schemaDomainMap[$useNative ? PropelTypes::ENUM_NATIVE : PropelTypes::ENUM_BINARY];
-        $this->schemaDomainMap[PropelTypes::SET] = $this->schemaDomainMap[$useNative ? PropelTypes::SET_NATIVE : PropelTypes::SET_BINARY];
+        $this->schemaDomainMap[ColumnType::ENUM->name] = $this->schemaDomainMap[$useNative ? ColumnType::ENUM_NATIVE->name : ColumnType::ENUM_BINARY->name];
+        $this->schemaDomainMap[ColumnType::SET->name] = $this->schemaDomainMap[$useNative ? ColumnType::SET_NATIVE->name : ColumnType::SET_BINARY->name];
     }
 
     /**
@@ -222,7 +209,7 @@ class DefaultPlatform implements PlatformInterface
      */
     protected function setSchemaDomainMapping(Domain $domain): void
     {
-        $this->schemaDomainMap[$domain->getType()] = $domain;
+        $this->schemaDomainMap[$domain->getMappingType()->name] = $domain;
     }
 
     /**
@@ -283,22 +270,22 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Returns the database specific domain for a mapping type.
+     * Returns the db specific domain for a propelType.
      *
-     * @param string $propelType
+     * @param \Propel\Generator\Model\Datatype\ColumnType $propelType the Propel type name.
      *
      * @throws \Propel\Generator\Exception\EngineException
      *
-     * @return \Propel\Generator\Model\Domain
+     * @return \Propel\Generator\Model\Domain The db specific domain.
      */
     #[\Override]
-    public function getDomainForType(string $propelType): Domain
+    public function getDomainForType(ColumnType $propelType): Domain
     {
-        if (!isset($this->schemaDomainMap[$propelType])) {
+        if (!isset($this->schemaDomainMap[$propelType->name])) {
             throw new EngineException(sprintf('Cannot map unknown Propel type %s to native database type.', var_export($propelType, true)));
         }
 
-        return $this->schemaDomainMap[$propelType];
+        return $this->schemaDomainMap[$propelType->name];
     }
 
     /**
@@ -527,14 +514,14 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
 
         if ($col->isTextType()) {
             $value = $this->quote((string)$value);
-        } elseif (in_array($col->getType(), [PropelTypes::BOOLEAN, PropelTypes::BOOLEAN_EMU], true)) {
+        } elseif (in_array($col->getMappingType(), [ColumnType::BOOLEAN, ColumnType::BOOLEAN_EMU], true)) {
             $value = $this->getBooleanString($value);
         } elseif ($col->isBinaryEnumType()) {
             $value = array_search($value, $col->getValueSet());
         } elseif ($col->isBinarySetType()) {
             $items = SetColumnConverter::itemsCsvToArray($value);
             $value = SetColumnConverter::convertToBitmask($items, $col->getValueSet());
-        } elseif ($col->getType() === PropelTypes::SET_NATIVE) {
+        } elseif ($col->getMappingType() === ColumnType::SET_NATIVE) {
             if (str_contains($value, ',')) {
                 return ''; // MySQL does not allow multiple values as default
             }
@@ -1537,11 +1524,11 @@ ALTER TABLE %s ADD
     {
         $withMilliseconds = (bool)$column->getDomain()->getSize();
 
-        return match ($column->getType()) {
-            PropelTypes::DATE => $this->getDateFormatter(),
-            PropelTypes::TIME => $this->getTimeFormatter($withMilliseconds),
-            PropelTypes::TIMESTAMP,
-            PropelTypes::DATETIME => $this->getTimestampFormatter($withMilliseconds),
+        return match ($column->getMappingType()) {
+            ColumnType::DATE => $this->getDateFormatter(),
+            ColumnType::TIME => $this->getTimeFormatter($withMilliseconds),
+            ColumnType::TIMESTAMP,
+            ColumnType::DATETIME => $this->getTimestampFormatter($withMilliseconds),
             default => null,
         };
     }
@@ -1593,7 +1580,7 @@ if (is_resource($columnValueAccessor)) {
 }";
         }
 
-        $pdoType = PropelTypes::getPdoTypeString($column->getType());
+        $pdoType = $column->getMappingType()->toPdoConstantName();
         $script .= "\n\$stmt->bindValue($identifier, $columnValueAccessor, $pdoType);";
 
         return preg_replace('/^(.+)/m', $tab . '$1', $script);
@@ -1648,15 +1635,15 @@ if (is_resource($columnValueAccessor)) {
     /**
      * Returns the default size of a specific type.
      *
-     * @param string $type
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
      * @return int
      */
-    public function getDefaultTypeSize(string $type): int
+    public function getDefaultTypeSize(ColumnType $type): int
     {
         $sizes = $this->getDefaultTypeSizes();
 
-        return $sizes[strtolower($type)] ?? 0;
+        return $sizes[strtolower($type->name)] ?? 0;
     }
 
     /**
@@ -1690,7 +1677,7 @@ if (is_resource($columnValueAccessor)) {
         }
 
         foreach ($table->getColumns() as $column) {
-            $defaultSize = $this->getDefaultTypeSize($column->getType());
+            $defaultSize = $this->getDefaultTypeSize($column->getMappingType());
 
             if ($column->getSize() && $defaultSize) {
                 if ($column->getScale() === null && (int)$column->getSize() === $defaultSize) {
@@ -1710,15 +1697,15 @@ if (is_resource($columnValueAccessor)) {
     #[\Override]
     public function buildNativeEnumeratedColumnSqlType(Column $column): string
     {
-        if (!in_array($column->getType(), [PropelTypes::ENUM_NATIVE, PropelTypes::SET_NATIVE])) {
-            throw new EngineException("Only native ENUM or SET type columns can be turned to sql type, but column '{$column->getConstantName()}' is {$column->getType()}");
+        if (!in_array($column->getMappingType(), [ColumnType::ENUM_NATIVE, ColumnType::SET_NATIVE])) {
+            throw new EngineException("Only native ENUM or SET type columns can be turned to sql type, but column '{$column->getConstantName()}' is {$column->getMappingType()->name}");
         }
 
         if (!$column->getValueSet()) {
             throw new EngineException("No values provided for enumerated column '{$column->getConstantName()}'");
         }
 
-        $typeLiteral = $column->getType() === PropelTypes::ENUM_NATIVE ? 'ENUM' : 'SET';
+        $typeLiteral = $column->getMappingType() === ColumnType::ENUM_NATIVE ? 'ENUM' : 'SET';
         $valuesCsv = "'" . implode("','", $column->getValueSet()) . "'";
 
         return "$typeLiteral($valuesCsv)";

@@ -13,6 +13,7 @@ use Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes\ColumnCodeProducerFact
 use Propel\Generator\Config\QuickGeneratorConfig;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\MysqlPlatform;
@@ -42,15 +43,15 @@ class ObjectBuilderTest extends TestCase
     public static function getDefaultValueStringProvider()
     {
         $col1 = new Column('Bar');
-        $col1->setDomain(new Domain('VARCHAR'));
+        $col1->setDomain(new Domain(ColumnType::VARCHAR));
         $col1->setDefaultValue(new ColumnDefaultValue('abc', ColumnDefaultValue::TYPE_VALUE));
         $val1 = "'abc'";
         $col2 = new Column('Bar');
-        $col2->setDomain(new Domain('INTEGER'));
+        $col2->setDomain(new Domain(ColumnType::INTEGER));
         $col2->setDefaultValue(new ColumnDefaultValue(1234, ColumnDefaultValue::TYPE_VALUE));
         $val2 = '1234';
         $col3 = new Column('Bar');
-        $col3->setDomain(new Domain('DATE'));
+        $col3->setDomain(new Domain(ColumnType::DATE));
         $col3->setDefaultValue(new ColumnDefaultValue('0000-00-00', ColumnDefaultValue::TYPE_VALUE));
         $val3 = 'null';
 

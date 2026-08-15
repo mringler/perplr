@@ -183,7 +183,7 @@ EOT;
         $columnRow = [
             $column->getName(),
             $column->getPhpName(),
-            $column->getType(),
+            $column->getMappingType()->name,
             $column->getSize(),
             $this->getFlagSymbol($column->isPrimaryKey()),
             $this->getFlagSymbol($column->isNotNull()),

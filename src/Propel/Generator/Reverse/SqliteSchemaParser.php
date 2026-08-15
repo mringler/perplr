@@ -7,9 +7,9 @@ namespace Propel\Generator\Reverse;
 use PDO;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use function count;
@@ -33,55 +33,46 @@ class SqliteSchemaParser extends AbstractSchemaParser
     protected $addVendorInfo;
 
     /**
-     * Map Sqlite native types to Propel types.
-     *
      * There really aren't any SQLite native types, so we're just
      * using the MySQL ones here.
      *
-     * @var array<string>
-     */
-    private static $sqliteTypeMap = [
-        'tinyint' => PropelTypes::TINYINT,
-        'smallint' => PropelTypes::SMALLINT,
-        'mediumint' => PropelTypes::SMALLINT,
-        'int' => PropelTypes::INTEGER,
-        'integer' => PropelTypes::INTEGER,
-        'bigint' => PropelTypes::BIGINT,
-        'int24' => PropelTypes::BIGINT,
-        'real' => PropelTypes::REAL,
-        'float' => PropelTypes::FLOAT,
-        'decimal' => PropelTypes::DECIMAL,
-        'numeric' => PropelTypes::NUMERIC,
-        'double' => PropelTypes::DOUBLE,
-        'char' => PropelTypes::CHAR,
-        'varchar' => PropelTypes::VARCHAR,
-        'date' => PropelTypes::DATE,
-        'time' => PropelTypes::TIME,
-        'year' => PropelTypes::INTEGER,
-        'datetime' => PropelTypes::DATETIME,
-        'timestamp' => PropelTypes::TIMESTAMP,
-        'tinyblob' => PropelTypes::BINARY,
-        'blob' => PropelTypes::BLOB,
-        'mediumblob' => PropelTypes::VARBINARY,
-        'longblob' => PropelTypes::LONGVARBINARY,
-        'longtext' => PropelTypes::CLOB,
-        'tinytext' => PropelTypes::VARCHAR,
-        'mediumtext' => PropelTypes::LONGVARCHAR,
-        'text' => PropelTypes::LONGVARCHAR,
-        'enum' => PropelTypes::CHAR,
-        'set' => PropelTypes::CHAR,
-        'uuid' => PropelTypes::UUID,
-    ];
-
-    /**
-     * Gets a type mapping from native types to Propel types
-     *
-     * @return array<string>
+     * @return array<\Propel\Generator\Model\Datatype\ColumnType>
      */
     #[\Override]
-    protected function getTypeMapping(): array
+    protected function buildTypeMapping(): array
     {
-        return self::$sqliteTypeMap;
+        return [
+            'tinyint' => ColumnType::TINYINT,
+            'smallint' => ColumnType::SMALLINT,
+            'mediumint' => ColumnType::SMALLINT,
+            'int' => ColumnType::INTEGER,
+            'integer' => ColumnType::INTEGER,
+            'bigint' => ColumnType::BIGINT,
+            'int24' => ColumnType::BIGINT,
+            'real' => ColumnType::REAL,
+            'float' => ColumnType::FLOAT,
+            'decimal' => ColumnType::DECIMAL,
+            'numeric' => ColumnType::NUMERIC,
+            'double' => ColumnType::DOUBLE,
+            'char' => ColumnType::CHAR,
+            'varchar' => ColumnType::VARCHAR,
+            'date' => ColumnType::DATE,
+            'time' => ColumnType::TIME,
+            'year' => ColumnType::INTEGER,
+            'datetime' => ColumnType::DATETIME,
+            'timestamp' => ColumnType::TIMESTAMP,
+            'tinyblob' => ColumnType::BINARY,
+            'blob' => ColumnType::BLOB,
+            'mediumblob' => ColumnType::VARBINARY,
+            'longblob' => ColumnType::LONGVARBINARY,
+            'longtext' => ColumnType::CLOB,
+            'tinytext' => ColumnType::VARCHAR,
+            'mediumtext' => ColumnType::LONGVARCHAR,
+            'text' => ColumnType::LONGVARCHAR,
+            'enum' => ColumnType::CHAR,
+            'set' => ColumnType::CHAR,
+            'uuid' => ColumnType::UUID,
+        ];
     }
 
     /**

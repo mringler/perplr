@@ -170,6 +170,6 @@ class OutputGroupBehavior extends Behavior
      */
     protected function parseListAttribute(MappingModel $model, string $attributeName): array
     {
-        return $this->getDefaultValueForSet($model->getAttribute($attributeName, '')) ?? [];
+        return $this->buildDefaultValueExpressionForSet($model->getAttribute($attributeName, '')) ?? [];
     }
 }

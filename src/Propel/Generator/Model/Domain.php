@@ -6,8 +6,9 @@ namespace Propel\Generator\Model;
 
 use DOMDocument;
 use DOMNode;
+use LogicException;
 use Propel\Generator\Exception\EngineException;
-use function in_array;
+use Propel\Generator\Model\Datatype\ColumnType;
 use function sprintf;
 use function strtoupper;
 
@@ -16,60 +17,34 @@ use function strtoupper;
  */
 class Domain extends MappingModel
 {
-    /**
-     * @var string|null
-     */
-    private $name;
+    private string|null $name = null;
+
+    private string|null $description = null;
+
+    private int|null $size = null;
+
+    private int|null $scale = null;
+
+    private ColumnType|null $mappingType = null;
+
+    private string|null $sqlType;
+
+    private ColumnDefaultValue|null $defaultValue = null;
+
+    private Database|null $database = null;
 
     /**
-     * @var string|null
-     */
-    private $description;
-
-    /**
-     * @var int|null
-     */
-    private $size;
-
-    /**
-     * @var int|null
-     */
-    private $scale;
-
-    /**
-     * @var string|null
-     */
-    private $mappingType;
-
-    /**
-     * @var string|null
-     */
-    private $sqlType;
-
-    /**
-     * @var \Propel\Generator\Model\ColumnDefaultValue|null
-     */
-    private $defaultValue;
-
-    /**
-     * @var \Propel\Generator\Model\Database|null
-     */
-    private $database;
-
-    /**
-     * Creates a new Domain object.
-     *
      * If this domain needs a name, it must be specified manually.
      *
-     * @param string|null $type Propel type.
+     * @param \Propel\Generator\Model\Datatype\ColumnType|null $type Propel type.
      * @param string|null $sqlType SQL type.
      * @param int|null $size
      * @param int|null $scale
      */
-    public function __construct(?string $type = null, ?string $sqlType = null, ?int $size = null, ?int $scale = null)
+    public function __construct(ColumnType|null $type = null, ?string $sqlType = null, ?int $size = null, ?int $scale = null)
     {
         if ($type !== null) {
-            $this->setType($type);
+            $this->setMappingType($type);
         }
 
         if ($size !== null) {
@@ -80,7 +55,7 @@ class Domain extends MappingModel
             $this->setScale($scale);
         }
 
-        $this->setSqlType($sqlType ?? $type);
+        $this->setSqlType($sqlType ?? $type?->name);
     }
 
     /**
@@ -98,7 +73,7 @@ class Domain extends MappingModel
         $this->scale = $domain->getScale();
         $this->size = $domain->getSize();
         $this->sqlType = $domain->getSqlType();
-        $this->mappingType = $domain->getType();
+        $this->mappingType = $domain->getMappingType();
     }
 
     /**
@@ -107,13 +82,14 @@ class Domain extends MappingModel
     #[\Override]
     protected function setupObject(): void
     {
-        $schemaType = !$this->getAttribute('type')
-            ? ''
-            : strtoupper($this->getAttribute('type'));
+        $type = $this->getAttribute('type');
+        if ($type) {
+            $type = strtoupper($type);
+            $mappingType = ColumnType::fromLiteral($type);
 
-        $this->copy($this->database->getPlatform()->getDomainForType($schemaType));
+            $this->copy($this->database->getPlatform()->getDomainForType($mappingType));
+        }
 
-        // Name
         $this->name = $this->getAttribute('name');
 
         // Default value
@@ -268,25 +244,25 @@ class Domain extends MappingModel
     }
 
     /**
-     * Returns the mapping type.
+     * @throws \LogicException
      *
-     * @return string
+     * @return \Propel\Generator\Model\Datatype\ColumnType
      */
-    public function getType(): string
+    public function getMappingType(): ColumnType
     {
-        // For some reason we're supporting null, but there are many functions that rely on the
-        // return value being a string.
-        return $this->mappingType ?: '';
+        if (!$this->mappingType) {
+            throw new LogicException('Mapping type not set');
+        }
+
+        return $this->mappingType;
     }
 
     /**
-     * Sets the mapping type.
-     *
-     * @param string|null $mappingType
+     * @param \Propel\Generator\Model\Datatype\ColumnType|null $mappingType
      *
      * @return void
      */
-    public function setType(?string $mappingType): void
+    public function setMappingType(?ColumnType $mappingType): void
     {
         $this->mappingType = $mappingType;
     }
@@ -294,11 +270,11 @@ class Domain extends MappingModel
     /**
      * Replaces the mapping type if the new value is not null.
      *
-     * @param string|null $mappingType
+     * @param \Propel\Generator\Model\Datatype\ColumnType|null $mappingType
      *
      * @return void
      */
-    public function replaceType(?string $mappingType): void
+    public function replaceType(?ColumnType $mappingType): void
     {
         if ($mappingType !== null) {
             $this->mappingType = $mappingType;
@@ -306,8 +282,6 @@ class Domain extends MappingModel
     }
 
     /**
-     * Returns the default value object.
-     *
      * @return \Propel\Generator\Model\ColumnDefaultValue|null
      */
     public function getDefaultValue(): ?ColumnDefaultValue
@@ -332,18 +306,15 @@ class Domain extends MappingModel
             throw new EngineException('Cannot get PHP version of default value for default value EXPRESSION.');
         }
 
-        if (in_array($this->mappingType, [PropelTypes::BOOLEAN, PropelTypes::BOOLEAN_EMU, PropelTypes::BOOLEAN_NATIVE_TYPE], true)) {
-            return $this->booleanValue($this->defaultValue->getValue());
-        }
+        $value = $this->defaultValue->getValue();
 
-        if ($this->mappingType === PropelTypes::PHP_ARRAY) {
-            return $this->getDefaultValueForArray((string)$this->defaultValue->getValue());
-        }
-        if ($this->mappingType === PropelTypes::SET_BINARY) {
-            return $this->getDefaultValueForSet((string)$this->defaultValue->getValue());
-        }
-
-        return $this->defaultValue->getValue();
+        return match ($this->mappingType) {
+            ColumnType::BOOLEAN,
+            ColumnType::BOOLEAN_EMU => $this->booleanValue($value),
+            ColumnType::ARRAY => $this->buildDefaultValueExpressionForArray((string)$value),
+            ColumnType::SET_BINARY => $this->buildDefaultValueExpressionForSet((string)$value),
+            default => $value
+        };
     }
 
     /**
@@ -451,14 +422,14 @@ class Domain extends MappingModel
     }
 
     /**
-     * @param string $type
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
      * @return static
      */
-    public function cloneAs(string $type): static
+    public function cloneAs(ColumnType $type): static
     {
         $clonedDomain = clone $this;
-        $clonedDomain->setType($type);
+        $clonedDomain->setMappingType($type);
 
         return $clonedDomain;
     }
@@ -476,10 +447,10 @@ class Domain extends MappingModel
 
         /** @var \DOMElement $domainNode */
         $domainNode = $node->appendChild($doc->createElement('domain'));
-        $domainNode->setAttribute('type', $this->getType());
+        $domainNode->setAttribute('type', $this->getMappingType()->name);
         $domainNode->setAttribute('name', $this->getName());
 
-        if ($this->getType() !== $this->sqlType) {
+        if ($this->getMappingType()->name !== $this->sqlType) {
             $domainNode->setAttribute('sqlType', $this->sqlType);
         }
 

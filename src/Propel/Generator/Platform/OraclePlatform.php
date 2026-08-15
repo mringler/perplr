@@ -7,11 +7,11 @@ namespace Propel\Generator\Platform;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use function count;
@@ -37,30 +37,30 @@ class OraclePlatform extends DefaultPlatform
     protected function initializeTypeMap(): void
     {
         parent::initializeTypeMap();
-        $this->schemaDomainMap[PropelTypes::BOOLEAN] = new Domain(PropelTypes::BOOLEAN_EMU, 'NUMBER', 1, 0);
-        $this->schemaDomainMap[PropelTypes::CLOB] = new Domain(PropelTypes::CLOB_EMU, 'CLOB');
-        $this->schemaDomainMap[PropelTypes::CLOB_EMU] = $this->schemaDomainMap[PropelTypes::CLOB];
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::TINYINT, 'NUMBER', 3, 0));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::SMALLINT, 'NUMBER', 5, 0));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::INTEGER, 'NUMBER'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BIGINT, 'NUMBER', 20, 0));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::REAL, 'NUMBER'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DOUBLE, 'FLOAT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DECIMAL, 'NUMBER'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::NUMERIC, 'NUMBER'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::VARCHAR, 'NVARCHAR2'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARCHAR, 'NVARCHAR2', 2000));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::TIME, 'DATE'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DATE, 'DATE'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DATETIME, 'TIMESTAMP'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::TIMESTAMP, 'TIMESTAMP'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BINARY, 'LONG RAW'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::VARBINARY, 'BLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARBINARY, 'LONG RAW'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::OBJECT, 'LONG RAW'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::PHP_ARRAY, 'NVARCHAR2', 2000));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID, 'UUID'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID_BINARY, 'RAW(16)'));
+        $this->schemaDomainMap[ColumnType::BOOLEAN->name] = new Domain(ColumnType::BOOLEAN_EMU, 'NUMBER', 1, 0);
+        $this->schemaDomainMap[ColumnType::CLOB->name] = new Domain(ColumnType::CLOB_EMU, 'CLOB');
+        $this->schemaDomainMap[ColumnType::CLOB_EMU->name] = $this->schemaDomainMap[ColumnType::CLOB->name];
+        $this->setSchemaDomainMapping(new Domain(ColumnType::TINYINT, 'NUMBER', 3, 0));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::SMALLINT, 'NUMBER', 5, 0));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::INTEGER, 'NUMBER'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::BIGINT, 'NUMBER', 20, 0));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::REAL, 'NUMBER'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::DOUBLE, 'FLOAT'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::DECIMAL, 'NUMBER'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::NUMERIC, 'NUMBER'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::VARCHAR, 'NVARCHAR2'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::LONGVARCHAR, 'NVARCHAR2', 2000));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::TIME, 'DATE'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::DATE, 'DATE'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::DATETIME, 'TIMESTAMP'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::TIMESTAMP, 'TIMESTAMP'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::BINARY, 'LONG RAW'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::VARBINARY, 'BLOB'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::LONGVARBINARY, 'LONG RAW'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::OBJECT, 'LONG RAW'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::ARRAY, 'NVARCHAR2', 2000));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::UUID, 'UUID'));
+        $this->setSchemaDomainMapping(new Domain(ColumnType::UUID_BINARY, 'RAW(16)'));
 
         $this->setSetTypesMapping(false);
     }
@@ -470,14 +470,14 @@ CREATE %sINDEX %s ON %s (%s)%s;
     #[\Override]
     public function getColumnBindingPHP(Column $column, string $identifier, string $columnValueAccessor, string $tab = '            '): string
     {
-        if ($column->getType() === PropelTypes::CLOB_EMU) {
+        if ($column->getMappingType() === ColumnType::CLOB_EMU) {
             return sprintf(
-                "%s\$stmt->bindParam(%s, %s, %s, strlen(%s));
+                "%s\$stmt->bindParam(%s, %s, %d, strlen(%s));
 ",
                 $tab,
                 $identifier,
                 $columnValueAccessor,
-                PropelTypes::getPdoTypeString($column->getType()),
+                $column->getMappingType()->toPdoConstantName(),
                 $columnValueAccessor,
             );
         }

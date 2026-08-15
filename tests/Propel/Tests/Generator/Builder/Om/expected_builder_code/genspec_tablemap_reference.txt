@@ -6,6 +6,7 @@ use Base\Collection\GenspecTableCollection;
 use Gen;
 use GenspecTable;
 use GenspecTableQuery;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Runtime\ActiveQuery\ColumnResolver\ColumnExpression\LocalColumnExpression;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\InstancePoolTrait;
@@ -245,8 +246,8 @@ class GenspecTableTableMap extends TableMap
         $this->setUseIdGenerator(true);
         $this->setSingleTableInheritance(true);
         // columns
-        $this->addPrimaryKey('id', 'Id', 'INTEGER', true, null, null);
-        $this->addColumn('type', 'Type', 'INTEGER', true, null, 0);
+        $this->addPrimaryKey('id', 'Id', ColumnType::INTEGER, true, null, null);
+        $this->addColumn('type', 'Type', ColumnType::INTEGER, true, null, 0);
     }
 
     /**

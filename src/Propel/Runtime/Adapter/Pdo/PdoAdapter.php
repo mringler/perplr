@@ -7,7 +7,7 @@ namespace Propel\Runtime\Adapter\Pdo;
 use DateTimeInterface;
 use PDO;
 use PDOException;
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Runtime\ActiveQuery\ColumnResolver\ColumnExpression\AbstractColumnExpression;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Adapter\AdapterInterface;
@@ -385,15 +385,15 @@ abstract class PdoAdapter
         }
         /** @var \DateTimeInterface $dt */
         $dt = $value instanceof DateTimeInterface ? $value : PropelDateTime::newInstance($value);
-        $format = match ($cMap->getType()) {
-            PropelTypes::DATE,
-            PropelTypes::BU_DATE
+        $format = match ($cMap->getTypeMapping()) {
+            ColumnType::DATE,
+            ColumnType::BU_DATE
                 => $this->getDateFormatter(),
-            PropelTypes::TIME
+            ColumnType::TIME
                 => $this->getTimeFormatter(),
-            PropelTypes::TIMESTAMP,
-            PropelTypes::BU_TIMESTAMP,
-            PropelTypes::DATETIME,
+            ColumnType::TIMESTAMP,
+            ColumnType::BU_TIMESTAMP,
+            ColumnType::DATETIME,
                 => $this->getTimestampFormatter(),
             default
                 => $this->getTimestampFormatter(),

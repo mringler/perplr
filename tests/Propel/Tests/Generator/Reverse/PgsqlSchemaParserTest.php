@@ -12,7 +12,7 @@ use PDO;
 use Propel\Generator\Config\QuickGeneratorConfig;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Platform\DefaultPlatform;
 use Propel\Generator\Reverse\PgsqlSchemaParser;
 use Propel\Runtime\Propel;
@@ -60,11 +60,11 @@ class PgsqlSchemaParserTest extends TestCaseFixturesDatabase
     {
         return [
             // columnDDL, expectedColumnPhpName, type, expectedColumnDefaultType, expectedColumnDefaultValue, expectedSize, expectedScale
-            ['my_column varchar(20) default null', 'MyColumn', PropelTypes::VARCHAR, ColumnDefaultValue::TYPE_VALUE, 'NULL', 20, null],
-            ["my_column varchar(20) default ''", 'MyColumn', PropelTypes::VARCHAR, ColumnDefaultValue::TYPE_VALUE, '', 20, null],
-            ['my_column numeric(11,0) default 0', 'MyColumn', PropelTypes::DECIMAL, ColumnDefaultValue::TYPE_VALUE, 0, 11, 0],
-            ['my_column numeric(55,8) default 0', 'MyColumn', PropelTypes::DECIMAL, ColumnDefaultValue::TYPE_VALUE, 0, 55, 8],
-            ['my_column uuid default null', 'MyColumn', PropelTypes::UUID, null, null, null, null],
+            ['my_column varchar(20) default null', 'MyColumn', ColumnType::VARCHAR, ColumnDefaultValue::TYPE_VALUE, 'NULL', 20, null],
+            ["my_column varchar(20) default ''", 'MyColumn', ColumnType::VARCHAR, ColumnDefaultValue::TYPE_VALUE, '', 20, null],
+            ['my_column numeric(11,0) default 0', 'MyColumn', ColumnType::DECIMAL, ColumnDefaultValue::TYPE_VALUE, 0, 11, 0],
+            ['my_column numeric(55,8) default 0', 'MyColumn', ColumnType::DECIMAL, ColumnDefaultValue::TYPE_VALUE, 0, 55, 8],
+            ['my_column uuid default null', 'MyColumn', ColumnType::UUID, null, null, null, null],
         ];
     }
 
@@ -92,7 +92,7 @@ class PgsqlSchemaParserTest extends TestCaseFixturesDatabase
 
         // check out our rev-eng column info
         $this->assertEquals($expectedPhpName, $column->getPhpName());
-        $this->assertEquals($expectedType, $column->getType());
+        $this->assertEquals($expectedType, $column->getMappingType());
 
         $defaultValue = $column->getDefaultValue();
         if($expectedDefaultType === null){

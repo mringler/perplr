@@ -66,8 +66,8 @@ class ColumnComparator
         if ($fromSqlType !== $toSqlType) {
             $changedProperties['sqlType'] = [$fromDomain->getSqlType(), $toDomain->getSqlType()];
 
-            if ($fromDomain->getType() !== $toDomain->getType()) {
-                $changedProperties['type'] = [$fromDomain->getType(), $toDomain->getType()];
+            if ($fromDomain->getMappingType() !== $toDomain->getMappingType()) {
+                $changedProperties['type'] = [$fromDomain->getMappingType(), $toDomain->getMappingType()];
             }
         }
 

@@ -8,7 +8,7 @@
 
 namespace Propel\Tests\Generator\Migration;
 
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 
 /**
  * @group database
@@ -357,7 +357,7 @@ class BaseTest extends MigrationTestCase
      */
     public function testNativeEnum()
     {
-        if ($this->getPlatform()->getDomainForType(PropelTypes::ENUM_NATIVE)->getType() === PropelTypes::ENUM_BINARY) {
+        if ($this->getPlatform()->getDomainForType(ColumnType::ENUM_NATIVE)->getMappingType() === ColumnType::ENUM_BINARY) {
             return $this->markTestSkipped('Test requires native SET/ENUM type.');
         }
 

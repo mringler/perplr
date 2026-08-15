@@ -12,6 +12,7 @@ use Propel\Generator\Builder\Util\PropelTemplate;
 use Propel\Generator\Exception\InvalidArgumentException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PlatformInterface;
 use Propel\Generator\Util\SqlParser;
@@ -687,7 +688,7 @@ class MigrationManager extends AbstractManager
     protected function createVersionColumn(PlatformInterface $platform): Column
     {
         $column = new Column(static::COL_VERSION);
-        $column->getDomain()->copy($platform->getDomainForType('INTEGER'));
+        $column->getDomain()->copy($platform->getDomainForType(ColumnType::INTEGER));
         $column->setDefaultValue('0');
 
         return $column;
@@ -701,7 +702,7 @@ class MigrationManager extends AbstractManager
     protected function createExecutionDatetimeColumn(PlatformInterface $platform): Column
     {
         $column = new Column(static::COL_EXECUTION_DATETIME);
-        $column->getDomain()->copy($platform->getDomainForType('DATETIME'));
+        $column->getDomain()->copy($platform->getDomainForType(ColumnType::DATETIME));
 
         return $column;
     }

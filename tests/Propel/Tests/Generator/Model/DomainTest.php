@@ -26,7 +26,7 @@ class DomainTest extends ModelTestCase
     {
         $domain = new Domain('FLOAT', 'DOUBLE', 10, 2);
 
-        $this->assertSame('FLOAT', $domain->getType());
+        $this->assertSame('FLOAT', $domain->getMappingType());
         $this->assertSame('DOUBLE', $domain->getSqlType());
         $this->assertSame(10, $domain->getSize());
         $this->assertSame(2, $domain->getScale());
@@ -58,7 +58,7 @@ class DomainTest extends ModelTestCase
             'description' => 'Some description',
         ]);
 
-        $this->assertSame('BOOLEAN', $domain->getType());
+        $this->assertSame('BOOLEAN', $domain->getMappingType());
         $this->assertSame('foo', $domain->getName());
         $this->assertInstanceOf('Propel\Generator\Model\ColumnDefaultValue', $domain->getDefaultValue());
         $this->assertSame(10, $domain->getSize());
@@ -97,7 +97,7 @@ class DomainTest extends ModelTestCase
         $domain->replaceSqlType('INT');
         $domain->replaceDefaultValue($value);
 
-        $this->assertSame('BOOLEAN', $domain->getType());
+        $this->assertSame('BOOLEAN', $domain->getMappingType());
         $this->assertSame('INT', $domain->getSqlType());
         $this->assertInstanceOf('Propel\Generator\Model\ColumnDefaultValue', $value);
     }
@@ -211,7 +211,7 @@ class DomainTest extends ModelTestCase
         $value = $this->getColumnDefaultValueMock();
 
         $domain = new Domain();
-        $domain->setType('FLOAT');
+        $domain->setMappingType('FLOAT');
         $domain->setSqlType('DOUBLE');
         $domain->setSize(10);
         $domain->setScale(2);
@@ -222,7 +222,7 @@ class DomainTest extends ModelTestCase
         $newDomain = new Domain();
         $newDomain->copy($domain);
 
-        $this->assertSame('FLOAT', $newDomain->getType());
+        $this->assertSame('FLOAT', $newDomain->getMappingType());
         $this->assertSame('DOUBLE', $newDomain->getSqlType());
         $this->assertSame(10, $newDomain->getSize());
         $this->assertSame(2, $newDomain->getScale());

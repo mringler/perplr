@@ -8,13 +8,12 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\TableDiff;
-use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use function filter_var;
@@ -47,25 +46,32 @@ class PgsqlPlatform extends DefaultPlatform
     protected function initializeTypeMap(): void
     {
         parent::initializeTypeMap();
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BOOLEAN, 'BOOLEAN'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::TINYINT, 'INT2'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::SMALLINT, 'INT2'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BIGINT, 'INT8'));
-        //$this->setSchemaDomainMapping(new Domain(PropelTypes::REAL, 'FLOAT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DOUBLE, 'DOUBLE PRECISION'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::FLOAT, 'DOUBLE PRECISION'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARCHAR, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BINARY, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::VARBINARY, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARBINARY, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BLOB, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::CLOB, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::OBJECT, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::PHP_ARRAY, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DECIMAL, 'NUMERIC'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DATETIME, 'TIMESTAMP'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID, 'uuid'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID_BINARY, 'BYTEA'));
+        $sqlTypes = [
+            ColumnType::BOOLEAN->name => 'BOOLEAN',
+            ColumnType::TINYINT->name => 'INT2',
+            ColumnType::SMALLINT->name => 'INT2',
+            ColumnType::BIGINT->name => 'INT8',
+            //ColumnType::REAL->name => 'FLOAT',
+            ColumnType::DOUBLE->name => 'DOUBLE PRECISION',
+            ColumnType::FLOAT->name => 'DOUBLE PRECISION',
+            ColumnType::LONGVARCHAR->name => 'TEXT',
+            ColumnType::BINARY->name => 'BYTEA',
+            ColumnType::VARBINARY->name => 'BYTEA',
+            ColumnType::LONGVARBINARY->name => 'BYTEA',
+            ColumnType::BLOB->name => 'BYTEA',
+            ColumnType::CLOB->name => 'TEXT',
+            ColumnType::OBJECT->name => 'BYTEA',
+            ColumnType::ARRAY->name => 'TEXT',
+            ColumnType::DECIMAL->name => 'NUMERIC',
+            ColumnType::DATETIME->name => 'TIMESTAMP',
+            ColumnType::UUID->name => 'uuid',
+            ColumnType::UUID_BINARY->name => 'BYTEA',
+
+        ];
+
+        foreach ($sqlTypes as $mapping => $sqlType) {
+            $this->schemaDomainMap[$mapping]->setSqlType($sqlType);
+        }
 
         $this->setSetTypesMapping(false);
     }
@@ -519,7 +525,7 @@ DROP TABLE IF EXISTS %s CASCADE;
         $sqlType = $domain->getSqlType();
         $table = $col->getTable();
         if ($col->isAutoIncrement() && $table && $table->getIdMethodParameters() == null) {
-            $sqlType = $col->getType() === PropelTypes::BIGINT ? 'bigserial' : 'serial';
+            $sqlType = $col->getMappingType() === ColumnType::BIGINT ? 'bigserial' : 'serial';
         }
         if ($this->hasSize($sqlType) && $col->isDefaultSqlType($this)) {
             if ($this->isNumber($sqlType)) {
