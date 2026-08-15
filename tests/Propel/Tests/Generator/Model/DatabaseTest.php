@@ -13,6 +13,7 @@ use Propel\Generator\Exception\BehaviorNotFoundException;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Exception\InvalidArgumentException;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Schema;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\MysqlPlatform;
@@ -101,7 +102,7 @@ class DatabaseTest extends ModelTestCase
         $platform
             ->expects($this->any())
             ->method('getColumnTypeMapping')
-            ->with($this->equalTo('TIMESTAMP'))
+            ->with($this->equalTo(ColumnType::TIMESTAMP))
             ->will($this->returnValue($this->getDomainMock('TIMESTAMP')));
 
         $database = new Database();

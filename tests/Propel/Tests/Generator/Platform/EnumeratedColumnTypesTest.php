@@ -63,14 +63,14 @@ class EnumeratedColumnTypesTest extends TestCase
      *
      * @param class-string<PlatformInterface> $platform
      * @param bool $defaultToNative
-     * @param string $columnType
+     * @param ColumnType $columnType
      * @param string $expectedColumnType
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('EnumAliasProvider')]
-    public function testEnumAliasOnPlatform(string $platformClass, bool $defaultToNative, string $columnType, string $expectedColumnType): void
+    public function testEnumAliasOnPlatform(string $platformClass, bool $defaultToNative, ColumnType $columnType, ColumnType $expectedColumnType): void
     {
-        $columnXml = '<column name="column" type="' . $columnType . '" valueSet="A,B"/>';
+        $columnXml = '<column name="column" type="' . $columnType->name . '" valueSet="A,B"/>';
         $column = $this->buildColumnForPlatform(new $platformClass, $defaultToNative, $columnXml);
         $actualColumnType = $column->getMappingType();
 
@@ -83,24 +83,24 @@ class EnumeratedColumnTypesTest extends TestCase
     public static function SqlTypeDataProvider(): array
     {
         return [
-            [ColumnType::ENUM_BINARY, 'A,B', ColumnType::TINYINT],
+            [ColumnType::ENUM_BINARY, 'A,B', 'TINYINT'],
             [ColumnType::ENUM_NATIVE, 'A,B', "ENUM('A','B')"],
-            [ColumnType::SET_BINARY, 'A,B', ColumnType::INTEGER],
+            [ColumnType::SET_BINARY, 'A,B', 'INTEGER'],
             [ColumnType::SET_NATIVE, 'A,B', "SET('A','B')"],
         ];
     }
 
     /**
      *
-     * @param string $columnType
+     * @param ColumnType $columnType
      * @param string $valueSetCsv
      * @param string $expectedSqlType
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('SqlTypeDataProvider')]
-    public function testSqlType(string $columnType, string $valueSetCsv, string $expectedSqlType): void
+    public function testSqlType(ColumnType $columnType, string $valueSetCsv, string $expectedSqlType): void
     {
-        $columnXml = '<column name="enumerated_column" type="' . $columnType . '" valueSet="' . $valueSetCsv . '"/>';
+        $columnXml = '<column name="enumerated_column" type="' . $columnType->name . '" valueSet="' . $valueSetCsv . '"/>';
         $column = $this->buildColumnForPlatform(new MysqlPlatform(), false, $columnXml);
 
         $this->assertSame($column->getSqlType(), $expectedSqlType);

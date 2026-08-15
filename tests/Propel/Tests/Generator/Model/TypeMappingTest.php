@@ -10,23 +10,21 @@ namespace Propel\Tests\Generator\Model;
 
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\ColumnDefaultValue;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\TypeMapping;
 
 /**
- * Unit test suite for the Domain model class.
- *
- * @author Hugo Hamon <webmaster@apprendre-php.com>
  */
-class DomainTest extends ModelTestCase
+class TypeMappingTest extends ModelTestCase
 {
     /**
      * @return void
      */
     public function testCreateNewDomain()
     {
-        $domain = new TypeMapping('FLOAT', 'DOUBLE', 10, 2);
+        $domain = new TypeMapping(ColumnType::FLOAT, 'DOUBLE', 10, 2);
 
-        $this->assertSame('FLOAT', $domain->getMappingType());
+        $this->assertSame(ColumnType::FLOAT, $domain->getMappingType());
         $this->assertSame('DOUBLE', $domain->getSqlType());
         $this->assertSame(10, $domain->getSize());
         $this->assertSame(2, $domain->getScale());
@@ -41,8 +39,8 @@ class DomainTest extends ModelTestCase
         $platform = $this->getPlatformMock();
         $platform
             ->expects($this->any())
-            ->method('getDomainForType')
-            ->will($this->returnValue(new TypeMapping('BOOLEAN')));
+            ->method('getColumnTypeMapping')
+            ->will($this->returnValue(new TypeMapping(ColumnType::BOOLEAN)));
 
         $domain = new TypeMapping();
         $domain->setDatabase($this->getDatabaseMock('bookstore', [
@@ -58,7 +56,7 @@ class DomainTest extends ModelTestCase
             'description' => 'Some description',
         ]);
 
-        $this->assertSame('BOOLEAN', $domain->getMappingType());
+        $this->assertSame(ColumnType::BOOLEAN, $domain->getMappingType());
         $this->assertSame('foo', $domain->getName());
         $this->assertInstanceOf('Propel\Generator\Model\ColumnDefaultValue', $domain->getDefaultValue());
         $this->assertSame(10, $domain->getSize());
@@ -92,12 +90,12 @@ class DomainTest extends ModelTestCase
     {
         $value = $this->getColumnDefaultValueMock();
 
-        $domain = new TypeMapping('FLOAT', 'DOUBLE');
-        $domain->replaceType('BOOLEAN');
+        $domain = new TypeMapping(ColumnType::FLOAT, 'DOUBLE');
+        $domain->replaceType(ColumnType::BOOLEAN);
         $domain->replaceSqlType('INT');
         $domain->replaceDefaultValue($value);
 
-        $this->assertSame('BOOLEAN', $domain->getMappingType());
+        $this->assertSame(ColumnType::BOOLEAN, $domain->getMappingType());
         $this->assertSame('INT', $domain->getSqlType());
         $this->assertInstanceOf('Propel\Generator\Model\ColumnDefaultValue', $value);
     }
@@ -123,7 +121,7 @@ class DomainTest extends ModelTestCase
             ->method('getValue')
             ->will($this->returnValue('foo'));
 
-        $domain = new TypeMapping('VARCHAR');
+        $domain = new TypeMapping(ColumnType::VARCHAR);
         $domain->setDefaultValue($value);
 
         $this->assertSame('foo', $domain->getPhpDefaultValue());
@@ -150,18 +148,18 @@ class DomainTest extends ModelTestCase
     public static function provideBooleanValues()
     {
         return [
-            ['BOOLEAN', '1', true],
-            ['BOOLEAN', '0', false],
-            ['BOOLEAN', 't', true],
-            ['BOOLEAN', 'f', false],
-            ['BOOLEAN', 'y', true],
-            ['BOOLEAN', 'n', false],
-            ['BOOLEAN', 'yes', true],
-            ['BOOLEAN', 'no', false],
-            ['BOOLEAN', 'true', true],
-            ['BOOLEAN_EMU', 'true', true],
-            ['BOOLEAN', 'false', false],
-            ['BOOLEAN_EMU', 'false', false],
+            [ColumnType::BOOLEAN, '1', true],
+            [ColumnType::BOOLEAN, '0', false],
+            [ColumnType::BOOLEAN, 't', true],
+            [ColumnType::BOOLEAN, 'f', false],
+            [ColumnType::BOOLEAN, 'y', true],
+            [ColumnType::BOOLEAN, 'n', false],
+            [ColumnType::BOOLEAN, 'yes', true],
+            [ColumnType::BOOLEAN, 'no', false],
+            [ColumnType::BOOLEAN, 'true', true],
+            [ColumnType::BOOLEAN_EMU, 'true', true],
+            [ColumnType::BOOLEAN, 'false', false],
+            [ColumnType::BOOLEAN_EMU, 'false', false],
         ];
     }
 
@@ -189,7 +187,7 @@ class DomainTest extends ModelTestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('provideSizeDefinitions')]
     public function testGetSizeDefinition($size, $scale, $definition)
     {
-        $domain = new TypeMapping('FLOAT', 'DOUBLE', $size, $scale);
+        $domain = new TypeMapping(ColumnType::FLOAT, 'DOUBLE', $size, $scale);
 
         $this->assertSame($definition, $domain->getSizeDefinition());
     }
@@ -211,7 +209,7 @@ class DomainTest extends ModelTestCase
         $value = $this->getColumnDefaultValueMock();
 
         $domain = new TypeMapping();
-        $domain->setMappingType('FLOAT');
+        $domain->setMappingType(ColumnType::FLOAT);
         $domain->setSqlType('DOUBLE');
         $domain->setSize(10);
         $domain->setScale(2);
@@ -222,7 +220,7 @@ class DomainTest extends ModelTestCase
         $newDomain = new TypeMapping();
         $newDomain->copy($domain);
 
-        $this->assertSame('FLOAT', $newDomain->getMappingType());
+        $this->assertSame(ColumnType::FLOAT, $newDomain->getMappingType());
         $this->assertSame('DOUBLE', $newDomain->getSqlType());
         $this->assertSame(10, $newDomain->getSize());
         $this->assertSame(2, $newDomain->getScale());

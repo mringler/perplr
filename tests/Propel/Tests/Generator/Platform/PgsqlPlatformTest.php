@@ -38,7 +38,7 @@ class PgsqlPlatformTest extends PlatformTestProvider
         $table = new Table('foo');
         $table->setIdMethod(IdMethod::NATIVE);
         $col = new Column('bar');
-        $col->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('INTEGER'));
+        $col->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::INTEGER));
         $col->setAutoIncrement(true);
         $table->addColumn($col);
         $expected = 'foo_bar_seq';
@@ -57,7 +57,7 @@ class PgsqlPlatformTest extends PlatformTestProvider
         $table->addIdMethodParameter($idMethodParameter);
         $table->setIdMethod(IdMethod::NATIVE);
         $col = new Column('bar');
-        $col->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('INTEGER'));
+        $col->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::INTEGER));
         $col->setAutoIncrement(true);
         $table->addColumn($col);
         $expected = 'foo_sequence';
@@ -541,7 +541,7 @@ DROP SEQUENCE "foo_sequence";
     public function testGetColumnDDL()
     {
         $c = new Column('foo');
-        $c->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('DOUBLE'));
+        $c->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
         $c->getTypeMapping()->replaceScale(2);
         $c->getTypeMapping()->replaceSize(3);
         $c->setNotNull(true);
@@ -574,7 +574,7 @@ DROP SEQUENCE "foo_sequence";
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping('DOUBLE'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
         $column->getTypeMapping()->replaceScale(2);
         $column->getTypeMapping()->replaceSize(3);
         $column->setNotNull(true);

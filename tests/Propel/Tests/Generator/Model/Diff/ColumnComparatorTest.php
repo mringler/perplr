@@ -10,6 +10,7 @@ namespace Propel\Tests\Generator\Model\Diff;
 
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnComparator;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\MysqlPlatform;
@@ -39,13 +40,13 @@ class ColumnComparatorTest extends TestCase
     public function testCompareNoDifference()
     {
         $c1 = new Column('');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->replaceScale(2);
         $c1->getTypeMapping()->replaceSize(3);
         $c1->setNotNull(true);
         $c1->getTypeMapping()->createDefaultValue(123);
         $c2 = new Column('');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
@@ -59,11 +60,11 @@ class ColumnComparatorTest extends TestCase
     public function testCompareType()
     {
         $c1 = new Column('');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c2 = new Column('');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('LONGVARCHAR'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $expectedChangedProperties = [
-            'type' => ['VARCHAR', 'LONGVARCHAR'],
+            'type' => [ColumnType::VARCHAR, ColumnType::LONGVARCHAR],
             'sqlType' => ['VARCHAR', 'TEXT'],
         ];
         $this->assertEquals($expectedChangedProperties, ColumnComparator::compareColumns($c1, $c2));
@@ -101,9 +102,9 @@ class ColumnComparatorTest extends TestCase
     public function testCompareSqlType()
     {
         $c1 = new Column('');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c2 = new Column('');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c2->getTypeMapping()->setSqlType('INTEGER(10) UNSIGNED');
         $expectedChangedProperties = ['sqlType' => ['INTEGER', 'INTEGER(10) UNSIGNED']];
         $this->assertEquals($expectedChangedProperties, ColumnComparator::compareColumns($c1, $c2));
@@ -215,16 +216,16 @@ class ColumnComparatorTest extends TestCase
     public function testCompareMultipleDifferences()
     {
         $c1 = new Column('');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c1->setNotNull(false);
         $c2 = new Column('');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
         $c2->getTypeMapping()->createDefaultValue(123);
         $expectedChangedProperties = [
-            'type' => ['INTEGER', 'DOUBLE'],
+            'type' => [ColumnType::INTEGER, ColumnType::DOUBLE],
             'sqlType' => ['INTEGER', 'DOUBLE'],
             'scale' => [null, 2],
             'size' => [null, 3],
@@ -241,7 +242,7 @@ class ColumnComparatorTest extends TestCase
     public function testIgnoreIntegerSizeOnMySQL()
     {
         $platform = new MysqlPlatform();
-        $domain = clone $platform->getColumnTypeMapping('INTEGER');
+        $domain = clone $platform->getColumnTypeMapping(ColumnType::INTEGER);
 
         $tableStub = $this->createStub(Table::class);
         $tableStub->method('getPlatform')->willReturn($platform);

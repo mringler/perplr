@@ -8,6 +8,7 @@
 
 namespace Propel\Tests\Runtime\Map;
 
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\DatabaseMap;
 use Propel\Runtime\Map\Exception\ColumnNotFoundException;
@@ -208,7 +209,7 @@ class DatabaseMapTest extends TestCaseFixtures
         } catch (ColumnNotFoundException $e) {
             $this->assertTrue(true, 'getColumn() throws an exception when called on an inexistent column of an existent table');
         }
-        $column = $tmap->addColumn('BAR', 'Bar', 'INTEGER');
+        $column = $tmap->addColumn('BAR', 'Bar', ColumnType::INTEGER);
         $this->assertEquals($column, $this->databaseMap->getColumn('foo.BAR'), 'getColumn() returns a ColumnMap object based on a fully qualified name');
     }
 

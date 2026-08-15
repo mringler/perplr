@@ -10,6 +10,7 @@ namespace Propel\Tests\Generator\Model\Diff;
 
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnComparator;
 use Propel\Generator\Model\Diff\TableComparator;
 use Propel\Generator\Model\Diff\TableDiff;
@@ -42,7 +43,7 @@ class PropelTableColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->replaceScale(2);
         $c1->getTypeMapping()->replaceSize(3);
         $c1->setNotNull(true);
@@ -50,7 +51,7 @@ class PropelTableColumnComparatorTest extends TestCase
         $t1->addColumn($c1);
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
@@ -102,7 +103,7 @@ class PropelTableColumnComparatorTest extends TestCase
         $t1 = new Table('');
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
@@ -126,7 +127,7 @@ class PropelTableColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Bar');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->replaceScale(2);
         $c1->getTypeMapping()->replaceSize(3);
         $c1->setNotNull(true);
@@ -151,13 +152,13 @@ class PropelTableColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c1->getTypeMapping()->replaceSize(255);
         $c1->setNotNull(false);
         $t1->addColumn($c1);
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
@@ -182,7 +183,7 @@ class PropelTableColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->replaceScale(2);
         $c1->getTypeMapping()->replaceSize(3);
         $c1->setNotNull(true);
@@ -190,7 +191,7 @@ class PropelTableColumnComparatorTest extends TestCase
         $t1->addColumn($c1);
         $t2 = new Table('');
         $c2 = new Column('Bar');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
@@ -216,33 +217,33 @@ class PropelTableColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('col1');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c1->getTypeMapping()->replaceSize(255);
         $c1->setNotNull(false);
         $t1->addColumn($c1);
         $c2 = new Column('col2');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c2->setNotNull(true);
         $t1->addColumn($c2);
         $c3 = new Column('col3');
-        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c3->getTypeMapping()->replaceSize(255);
         $t1->addColumn($c3);
 
         $t2 = new Table('');
         $c4 = new Column('col1');
-        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping('DOUBLE'));
+        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c4->getTypeMapping()->replaceScale(2);
         $c4->getTypeMapping()->replaceSize(3);
         $c4->setNotNull(true);
         $c4->getTypeMapping()->createDefaultValue(123);
         $t2->addColumn($c4);
         $c5 = new Column('col22');
-        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping('INTEGER'));
+        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c5->setNotNull(true);
         $t2->addColumn($c5);
         $c6 = new Column('col4');
-        $c6->getTypeMapping()->copy($this->platform->getColumnTypeMapping('LONGVARCHAR'));
+        $c6->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $c6->getTypeMapping()->setDefaultValue(new ColumnDefaultValue('123', ColumnDefaultValue::TYPE_VALUE));
         $t2->addColumn($c6);
 
@@ -267,29 +268,29 @@ class PropelTableColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('col1');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c1->getTypeMapping()->replaceSize(255);
         $t1->addColumn($c1);
         $c2 = new Column('col2');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c2->getTypeMapping()->replaceSize(255);
         $t1->addColumn($c2);
         $c3 = new Column('col3');
-        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c3->getTypeMapping()->replaceSize(255);
         $t1->addColumn($c3);
 
         $t2 = new Table('');
         $c4 = new Column('col4');
-        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c4->getTypeMapping()->replaceSize(255);
         $t2->addColumn($c4);
         $c5 = new Column('col5');
-        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c5->getTypeMapping()->replaceSize(255);
         $t2->addColumn($c5);
         $c6 = new Column('col3');
-        $c6->getTypeMapping()->copy($this->platform->getColumnTypeMapping('VARCHAR'));
+        $c6->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c6->getTypeMapping()->replaceSize(255);
         $t2->addColumn($c6);
 

@@ -14,6 +14,8 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Exception\SchemaException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Datatype\ColumnType;
+use Propel\Generator\Model\Table;
+use Propel\Generator\Model\TypeMapping;
 use Propel\Tests\Helpers\ColorsBackedEnum;
 use Propel\Tests\Helpers\ColorsUnitEnum;
 use Propel\Tests\TestCase;
@@ -81,8 +83,8 @@ class ColumnTest extends ModelTestCase
         $platform = $this->getPlatformMock();
         $platform
             ->expects($this->once())
-            ->method('getDomainForType')
-            ->with($this->equalTo('VARCHAR'))
+            ->method('getColumnTypeMapping')
+            ->with($this->equalTo(ColumnType::VARCHAR))
             ->will($this->returnValue($this->getDomainMock('VARCHAR')));
         $platform
             ->expects($this->any())
@@ -117,8 +119,8 @@ class ColumnTest extends ModelTestCase
         $platform = $this->getPlatformMock();
         $platform
             ->expects($this->once())
-            ->method('getDomainForType')
-            ->with($this->equalTo('DATE'))
+            ->method('getColumnTypeMapping')
+            ->with($this->equalTo(ColumnType::DATE))
             ->will($this->returnValue($this->getDomainMock('DATE')));
 
         $table = $this->getTableMock('books', [
@@ -126,9 +128,15 @@ class ColumnTest extends ModelTestCase
             'platform' => $platform,
         ]);
 
+        $domain = $this->getDomainMock('VARCHAR');
+        $domain
+            ->expects($this->any())
+            ->method('getMappingType')
+            ->will($this->returnValue(ColumnType::DATE));
+
         $column = new Column('');
         $column->setTable($table);
-        $column->setTypeMapping($this->getDomainMock('VARCHAR'));
+        $column->setTypeMapping($domain);
         $column->loadMapping([
             'type' => 'date',
             'name' => 'created_at',
@@ -146,7 +154,7 @@ class ColumnTest extends ModelTestCase
         $database = $this->getDatabaseMock('bookstore');
         $database
             ->expects($this->once())
-            ->method('getDomain')
+            ->method('getTypeMapping')
             ->with($this->equalTo('BOOLEAN'))
             ->will($this->returnValue($this->getDomainMock('INTEGER')));
 
@@ -249,7 +257,7 @@ class ColumnTest extends ModelTestCase
             ->method('setDefaultValue');
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -263,12 +271,12 @@ class ColumnTest extends ModelTestCase
     public static function provideDefaultValues()
     {
         return [
-            ['DOUBLE', 3.14, '3.14'],
-            ['VARCHAR', 'hello', "'hello'"],
-            ['VARCHAR', "john's bike", "'john\\'s bike'"],
-            ['BOOLEAN', 1, 'true'],
-            ['BOOLEAN', 0, 'false'],
-            ['ENUM', 'foo,bar', "'foo,bar'"],
+            [ColumnType::DOUBLE, 3.14, '3.14'],
+            [ColumnType::VARCHAR, 'hello', "'hello'"],
+            [ColumnType::VARCHAR, "john's bike", "'john\\'s bike'"],
+            [ColumnType::BOOLEAN, 1, 'true'],
+            [ColumnType::BOOLEAN, 0, 'false'],
+            [ColumnType::ENUM, 'foo,bar', "'foo,bar'"],
         ];
     }
 
@@ -371,8 +379,8 @@ class ColumnTest extends ModelTestCase
         $platform = $this->getPlatformMock();
         $platform
             ->expects($this->any())
-            ->method('getDomainForType')
-            ->with($this->equalTo('BOOLEAN'))
+            ->method('getColumnTypeMapping')
+            ->with($this->equalTo(ColumnType::BOOLEAN))
             ->will($this->returnValue($toCopy));
 
         $domain = $this->getDomainMock();
@@ -382,8 +390,8 @@ class ColumnTest extends ModelTestCase
             ->with($this->equalTo($toCopy));
         $domain
             ->expects($this->once())
-            ->method('getType')
-            ->will($this->returnValue('BOOLEAN'));
+            ->method('getMappingType')
+            ->will($this->returnValue(ColumnType::BOOLEAN));
         $domain
             ->expects($this->any())
             ->method('getSqlType')
@@ -394,7 +402,7 @@ class ColumnTest extends ModelTestCase
             'platform' => $platform,
         ]));
         $column->setTypeMapping($domain);
-        $column->setUpTypeMapping('BOOLEAN');
+        $column->setUpTypeMapping(ColumnType::BOOLEAN);
 
         $this->assertTrue($column->isDefaultSqlType($platform));
     }
@@ -438,7 +446,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -451,37 +459,37 @@ class ColumnTest extends ModelTestCase
     public static function providePdoTypes()
     {
         return [
-            ['CHAR', PDO::PARAM_STR],
-            ['VARCHAR', PDO::PARAM_STR],
-            ['LONGVARCHAR', PDO::PARAM_STR],
-            ['CLOB', PDO::PARAM_STR],
-            ['CLOB_EMU', PDO::PARAM_STR],
-            ['NUMERIC', PDO::PARAM_STR],
-            ['DECIMAL', PDO::PARAM_STR],
-            ['TINYINT', PDO::PARAM_INT],
-            ['SMALLINT', PDO::PARAM_INT],
-            ['INTEGER', PDO::PARAM_INT],
-            ['BIGINT', PDO::PARAM_INT],
-            ['REAL', PDO::PARAM_STR],
-            ['FLOAT', PDO::PARAM_STR],
-            ['DOUBLE', PDO::PARAM_STR],
-            ['BINARY', PDO::PARAM_STR],
-            ['VARBINARY', PDO::PARAM_LOB],
-            ['LONGVARBINARY', PDO::PARAM_LOB],
-            ['BLOB', PDO::PARAM_LOB],
-            ['DATE', PDO::PARAM_STR],
-            ['TIME', PDO::PARAM_STR],
-            ['TIMESTAMP', PDO::PARAM_STR],
-            ['BOOLEAN', PDO::PARAM_BOOL],
-            ['BOOLEAN_EMU', PDO::PARAM_INT],
-            ['OBJECT', PDO::PARAM_LOB],
-            ['ARRAY', PDO::PARAM_STR],
+            [ColumnType::CHAR, PDO::PARAM_STR],
+            [ColumnType::VARCHAR, PDO::PARAM_STR],
+            [ColumnType::LONGVARCHAR, PDO::PARAM_STR],
+            [ColumnType::CLOB, PDO::PARAM_STR],
+            [ColumnType::CLOB_EMU, PDO::PARAM_STR],
+            [ColumnType::NUMERIC, PDO::PARAM_STR],
+            [ColumnType::DECIMAL, PDO::PARAM_STR],
+            [ColumnType::TINYINT, PDO::PARAM_INT],
+            [ColumnType::SMALLINT, PDO::PARAM_INT],
+            [ColumnType::INTEGER, PDO::PARAM_INT],
+            [ColumnType::BIGINT, PDO::PARAM_INT],
+            [ColumnType::REAL, PDO::PARAM_STR],
+            [ColumnType::FLOAT, PDO::PARAM_STR],
+            [ColumnType::DOUBLE, PDO::PARAM_STR],
+            [ColumnType::BINARY, PDO::PARAM_STR],
+            [ColumnType::VARBINARY, PDO::PARAM_LOB],
+            [ColumnType::LONGVARBINARY, PDO::PARAM_LOB],
+            [ColumnType::BLOB, PDO::PARAM_LOB],
+            [ColumnType::DATE, PDO::PARAM_STR],
+            [ColumnType::TIME, PDO::PARAM_STR],
+            [ColumnType::TIMESTAMP, PDO::PARAM_STR],
+            [ColumnType::BOOLEAN, PDO::PARAM_BOOL],
+            [ColumnType::BOOLEAN_EMU, PDO::PARAM_INT],
+            [ColumnType::OBJECT, PDO::PARAM_LOB],
+            [ColumnType::ARRAY, PDO::PARAM_STR],
             [ColumnType::ENUM_BINARY, PDO::PARAM_INT],
             [ColumnType::SET_BINARY, PDO::PARAM_INT],
             [ColumnType::ENUM_NATIVE, PDO::PARAM_STR],
             [ColumnType::SET_NATIVE, PDO::PARAM_STR],
-            ['BU_DATE', PDO::PARAM_STR],
-            ['BU_TIMESTAMP', PDO::PARAM_STR],
+            [ColumnType::BU_DATE, PDO::PARAM_STR],
+            [ColumnType::BU_TIMESTAMP, PDO::PARAM_STR],
             [ColumnType::UUID, PDO::PARAM_STR],
             [ColumnType::UUID_BINARY, PDO::PARAM_LOB],
         ];
@@ -495,7 +503,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue(ColumnType::ENUM_BINARY));
 
         $column = new Column('');
@@ -518,7 +526,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue(ColumnType::SET_BINARY));
 
         $column = new Column('');
@@ -554,12 +562,12 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getType')
-            ->will($this->returnValue('OBJECT'));
+            ->method('getMappingType')
+            ->will($this->returnValue(ColumnType::OBJECT));
 
         $column = new Column('');
         $column->setTypeMapping($domain);
-        $column->setType('OBJECT');
+        $column->setType(ColumnType::OBJECT);
 
         $this->assertFalse($column->isPhpPrimitiveType());
         $this->assertTrue($column->isPhpObjectType());
@@ -574,12 +582,12 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->once())
-            ->method('setType')
+            ->method('setMappingType')
             ->with($this->equalTo($mappingType));
 
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -594,11 +602,11 @@ class ColumnTest extends ModelTestCase
     public static function provideMappingTemporalTypes()
     {
         return [
-            ['DATE'],
-            ['TIME'],
-            ['TIMESTAMP'],
-            ['BU_DATE'],
-            ['BU_TIMESTAMP'],
+            [ColumnType::DATE],
+            [ColumnType::TIME],
+            [ColumnType::TIMESTAMP],
+            [ColumnType::BU_DATE],
+            [ColumnType::BU_TIMESTAMP],
         ];
     }
 
@@ -611,12 +619,12 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->once())
-            ->method('setType')
+            ->method('setMappingType')
             ->with($this->equalTo($mappingType));
 
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -631,9 +639,9 @@ class ColumnTest extends ModelTestCase
     public static function provideMappingLobTypes()
     {
         return [
-            ['VARBINARY', 'string', true],
-            ['LONGVARBINARY', 'string', true],
-            ['BLOB', 'resource', false],
+            [ColumnType::VARBINARY, 'string', true],
+            [ColumnType::LONGVARBINARY, 'string', true],
+            [ColumnType::BLOB, 'resource', false],
         ];
     }
 
@@ -646,12 +654,12 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->once())
-            ->method('setType')
+            ->method('setMappingType')
             ->with($this->equalTo($mappingType));
 
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -666,8 +674,8 @@ class ColumnTest extends ModelTestCase
     public static function provideMappingBooleanTypes()
     {
         return [
-            ['BOOLEAN'],
-            ['BOOLEAN_EMU'],
+            [ColumnType::BOOLEAN],
+            [ColumnType::BOOLEAN_EMU],
         ];
     }
 
@@ -680,12 +688,12 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->once())
-            ->method('setType')
+            ->method('setMappingType')
             ->with($this->equalTo($mappingType));
 
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -701,15 +709,15 @@ class ColumnTest extends ModelTestCase
     public static function provideMappingNumericTypes()
     {
         return [
-            ['SMALLINT', 'int', true],
-            ['TINYINT', 'int', true],
-            ['INTEGER', 'int', true],
-            ['BIGINT', 'string', false],
-            ['FLOAT', 'float', true],
-            ['DOUBLE', 'float', true],
-            ['NUMERIC', 'string', false],
-            ['DECIMAL', 'string', false],
-            ['REAL', 'float', true],
+            [ColumnType::SMALLINT, 'int', true],
+            [ColumnType::TINYINT, 'int', true],
+            [ColumnType::INTEGER, 'int', true],
+            [ColumnType::BIGINT, 'string', false],
+            [ColumnType::FLOAT, 'float', true],
+            [ColumnType::DOUBLE, 'float', true],
+            [ColumnType::NUMERIC, 'string', false],
+            [ColumnType::DECIMAL, 'string', false],
+            [ColumnType::REAL, 'float', true],
         ];
     }
 
@@ -717,17 +725,17 @@ class ColumnTest extends ModelTestCase
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('provideMappingUuidTypes')]
-    public function testUuidType(string $columnType, string $phpType)
+    public function testUuidType(ColumnType $columnType, string $phpType)
     {
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->once())
-            ->method('setType')
+            ->method('setMappingType')
             ->with($this->equalTo($columnType));
 
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue($columnType));
 
         $column = new Column('');
@@ -758,12 +766,12 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->once())
-            ->method('setType')
+            ->method('setMappingType')
             ->with($this->equalTo($mappingType));
 
         $domain
             ->expects($this->any())
-            ->method('getType')
+            ->method('getMappingType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -778,15 +786,15 @@ class ColumnTest extends ModelTestCase
     public static function provideMappingTextTypes()
     {
         return [
-            ['CHAR'],
-            ['VARCHAR'],
-            ['LONGVARCHAR'],
-            ['CLOB'],
-            ['DATE'],
-            ['TIME'],
-            ['TIMESTAMP'],
-            ['BU_DATE'],
-            ['BU_TIMESTAMP'],
+            [ColumnType::CHAR],
+            [ColumnType::VARCHAR],
+            [ColumnType::LONGVARCHAR],
+            [ColumnType::CLOB],
+            [ColumnType::DATE],
+            [ColumnType::TIME],
+            [ColumnType::TIMESTAMP],
+            [ColumnType::BU_DATE],
+            [ColumnType::BU_TIMESTAMP],
         ];
     }
 
@@ -969,8 +977,6 @@ class ColumnTest extends ModelTestCase
     public function testIsPhpArrayType()
     {
         $column = new Column('');
-        $this->assertFalse($column->isPhpArrayType());
-
         $column->setType(ColumnType::ARRAY);
         $this->assertTrue($column->isPhpArrayType());
     }
@@ -1026,7 +1032,7 @@ class ColumnTest extends ModelTestCase
     {
         $column = new Column('');
 
-        $this->assertInstanceOf('Propel\Generator\Model\Domain', $column->getTypeMapping());
+        $this->assertInstanceOf(TypeMapping::class, $column->getTypeMapping());
     }
 
     /**
@@ -1048,7 +1054,7 @@ class ColumnTest extends ModelTestCase
         $column = new Column('');
         $column->setTable($this->getTableMock('books'));
 
-        $this->assertInstanceOf('Propel\Generator\Model\Table', $column->getTable());
+        $this->assertInstanceOf(Table::class, $column->getTable());
         $this->assertSame('books', $column->getTableName());
     }
 
@@ -1060,7 +1066,7 @@ class ColumnTest extends ModelTestCase
         $column = new Column('');
         $column->setTypeMapping($this->getDomainMock());
 
-        $this->assertInstanceOf('Propel\Generator\Model\Domain', $column->getTypeMapping());
+        $this->assertInstanceOf(TypeMapping::class, $column->getTypeMapping());
     }
 
     /**

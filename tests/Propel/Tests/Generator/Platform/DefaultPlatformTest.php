@@ -200,7 +200,7 @@ class DefaultPlatformTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('GetTemporalFormatterDataProvider')]
-    public function testGetTemporalFormatter(string $columnType, int|null $size, string $expectedFormat): void
+    public function testGetTemporalFormatter(ColumnType $columnType, int|null $size, string $expectedFormat): void
     {
         $column = static::createColumn($columnType, null, $size);
         $actual = static::getPlatform()->getTemporalFormatter($column);
