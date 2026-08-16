@@ -16,6 +16,7 @@ use Propel\Generator\Model\TypeMapping;
 use Propel\Generator\Model\Unique;
 use function count;
 use function implode;
+use function in_array;
 use function is_array;
 use function min;
 use function preg_replace;
@@ -29,38 +30,99 @@ use function substr;
 class OraclePlatform extends DefaultPlatform
 {
     /**
-     * @return void
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return \Propel\Generator\Model\TypeMapping
      */
     #[\Override]
-    protected function initializeTypeMap(): void
+    public function buildColumnTypeMapping(ColumnType $type): TypeMapping
     {
-        parent::initializeTypeMap();
-        $this->typeMap[ColumnType::BOOLEAN->name] = new TypeMapping(ColumnType::BOOLEAN_EMU, 'NUMBER', 1, 0);
-        $this->typeMap[ColumnType::CLOB->name] = new TypeMapping(ColumnType::CLOB_EMU, 'CLOB');
-        $this->typeMap[ColumnType::CLOB_EMU->name] = $this->typeMap[ColumnType::CLOB->name];
-        $this->setTypeMapping(new TypeMapping(ColumnType::TINYINT, 'NUMBER', 3, 0));
-        $this->setTypeMapping(new TypeMapping(ColumnType::SMALLINT, 'NUMBER', 5, 0));
-        $this->setTypeMapping(new TypeMapping(ColumnType::INTEGER, 'NUMBER'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::BIGINT, 'NUMBER', 20, 0));
-        $this->setTypeMapping(new TypeMapping(ColumnType::REAL, 'NUMBER'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::DOUBLE, 'FLOAT'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::DECIMAL, 'NUMBER'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::NUMERIC, 'NUMBER'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::VARCHAR, 'NVARCHAR2'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::LONGVARCHAR, 'NVARCHAR2', 2000));
-        $this->setTypeMapping(new TypeMapping(ColumnType::TIME, 'DATE'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::DATE, 'DATE'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::DATETIME, 'TIMESTAMP'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::TIMESTAMP, 'TIMESTAMP'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::BINARY, 'LONG RAW'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::VARBINARY, 'BLOB'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::LONGVARBINARY, 'LONG RAW'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::OBJECT, 'LONG RAW'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::ARRAY, 'NVARCHAR2', 2000));
-        $this->setTypeMapping(new TypeMapping(ColumnType::UUID, 'UUID'));
-        $this->setTypeMapping(new TypeMapping(ColumnType::UUID_BINARY, 'RAW(16)'));
+        if ($type === ColumnType::CLOB || $type === ColumnType::CLOB_EMU) {
+            return new TypeMapping(ColumnType::CLOB_EMU, 'CLOB'); // sic
+        }
 
-        $this->setSetTypesMapping(false);
+        $mapping = parent::buildColumnTypeMapping($type);
+
+        if (in_array($type, [ColumnType::BOOLEAN_EMU, ColumnType::TINYINT, ColumnType::SMALLINT, ColumnType::BIGINT])) {
+            $mapping->setScale(0);
+        }
+
+        return $mapping;
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return \Propel\Generator\Model\Datatype\ColumnType
+     */
+    #[\Override]
+    protected function resolveColumnTypeAlias(ColumnType $type): ColumnType
+    {
+        return match ($type) {
+            ColumnType::BOOLEAN => ColumnType::BOOLEAN_EMU,
+            default => parent::resolveColumnTypeAlias($type)
+        };
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return string|null
+     */
+    #[\Override]
+    protected function resolveSqlType(ColumnType $type): string|null
+    {
+        return match ($type) {
+            ColumnType::TINYINT,
+            ColumnType::SMALLINT,
+            ColumnType::INTEGER,
+            ColumnType::BIGINT,
+            ColumnType::REAL,
+            ColumnType::DECIMAL,
+            ColumnType::NUMERIC,
+            ColumnType::BOOLEAN_EMU,
+            => 'NUMBER',
+            ColumnType::DOUBLE => 'FLOAT',
+            ColumnType::VARCHAR,
+            ColumnType::LONGVARCHAR,
+            ColumnType::ARRAY,
+            => 'NVARCHAR2',
+            ColumnType::TIME,
+            ColumnType::DATE,
+            => 'DATE',
+            ColumnType::DATETIME,
+            ColumnType::TIMESTAMP,
+            => 'TIMESTAMP',
+            ColumnType::BINARY,
+            ColumnType::LONGVARBINARY,
+            ColumnType::OBJECT
+            => 'LONG RAW',
+            ColumnType::VARBINARY => 'BLOB',
+            ColumnType::UUID => 'UUID',
+            ColumnType::UUID_BINARY => 'RAW(16)',
+            ColumnType::CLOB_EMU => 'CLOB',
+            default => parent::resolveSqlType($type)
+        };
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return int|null
+     */
+    #[\Override]
+    protected function resolveTypeSize(ColumnType $type): int|null
+    {
+        return match ($type) {
+            ColumnType::BOOLEAN_EMU => 1,
+            ColumnType::TINYINT => 3,
+            ColumnType::SMALLINT => 5,
+            ColumnType::BIGINT => 20,
+            ColumnType::ARRAY,
+            ColumnType::LONGVARCHAR
+            => 2000,
+            default => parent::resolveTypeSize($type)
+        };
     }
 
     /**

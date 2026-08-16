@@ -43,7 +43,7 @@ class PropelTableIndexComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->replaceScale(2);
         $c1->getTypeMapping()->replaceSize(3);
         $c1->setNotNull(true);
@@ -54,7 +54,7 @@ class PropelTableIndexComparatorTest extends TestCase
         $t1->addIndex($i1);
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
@@ -74,7 +74,7 @@ class PropelTableIndexComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->replaceScale(2);
         $c1->getTypeMapping()->replaceSize(3);
         $c1->setNotNull(true);
@@ -85,7 +85,7 @@ class PropelTableIndexComparatorTest extends TestCase
         $t1->addIndex($i1);
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
@@ -106,7 +106,7 @@ class PropelTableIndexComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->replaceScale(2);
         $c1->getTypeMapping()->replaceSize(3);
         $c1->setNotNull(true);
@@ -118,7 +118,7 @@ class PropelTableIndexComparatorTest extends TestCase
 
         $t2 = new Table('');
         $c2 = new Column('fOO');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
@@ -140,7 +140,7 @@ class PropelTableIndexComparatorTest extends TestCase
         $t1 = new Table('');
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);
@@ -167,7 +167,7 @@ class PropelTableIndexComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Bar');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->replaceScale(2);
         $c1->getTypeMapping()->replaceSize(3);
         $c1->setNotNull(true);
@@ -195,7 +195,7 @@ class PropelTableIndexComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
+        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::VARCHAR));
         $c1->getTypeMapping()->replaceSize(255);
         $c1->setNotNull(false);
         $t1->addColumn($c1);
@@ -204,7 +204,7 @@ class PropelTableIndexComparatorTest extends TestCase
         $t1->addIndex($i1);
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->replaceScale(2);
         $c2->getTypeMapping()->replaceSize(3);
         $c2->setNotNull(true);

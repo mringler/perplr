@@ -39,7 +39,7 @@ class TypeMappingTest extends ModelTestCase
         $platform = $this->getPlatformMock();
         $platform
             ->expects($this->any())
-            ->method('getColumnTypeMapping')
+            ->method('buildColumnTypeMapping')
             ->will($this->returnValue(new TypeMapping(ColumnType::BOOLEAN)));
 
         $domain = new TypeMapping();

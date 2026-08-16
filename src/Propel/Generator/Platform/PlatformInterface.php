@@ -91,7 +91,7 @@ interface PlatformInterface
      *
      * @return \Propel\Generator\Model\TypeMapping The db specific mapping.
      */
-    public function getColumnTypeMapping(ColumnType $type): TypeMapping;
+    public function buildColumnTypeMapping(ColumnType $type): TypeMapping;
 
     /**
      * Returns the RDBMS-specific SQL fragment for <code>NULL</code>

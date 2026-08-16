@@ -7,7 +7,6 @@ namespace Propel\Generator\Model\Datatype;
 use Error;
 use InvalidArgumentException;
 use PDO;
-use Propel\Generator\Model\TypeMapping;
 use RuntimeException;
 use function array_map;
 use function constant;
@@ -101,31 +100,6 @@ enum ColumnType
 
             throw new RuntimeException($message);
         }
-    }
-
-    /**
-     * @return array<\Propel\Generator\Model\TypeMapping>
-     */
-    public static function buildDefaultTypeMapping(): array
-    {
-        /** @var array<\Propel\Generator\Model\TypeMapping> $map */
-        $map = [];
-        $specialTypes = [self::CLOB_EMU, self::GEOMETRY, self::ENUM, self::SET, self::BU_DATE, self::BU_TIMESTAMP];
-        foreach (self::cases() as $type) {
-            if (in_array($type, $specialTypes)) {
-                continue;
-            }
-
-            $map[$type->name] = new TypeMapping($type);
-        }
-
-        $map[self::ENUM->name] = $map[self::ENUM_BINARY->name];
-        $map[self::SET->name] = $map[self::SET_BINARY->name];
-        $map[self::BU_DATE->name] = $map[self::DATE->name];
-        $map[self::BU_TIMESTAMP->name] = $map[self::TIMESTAMP->name];
-        $map[self::BOOLEAN->name]->setSqlType('INTEGER');
-
-        return $map;
     }
 
     /**

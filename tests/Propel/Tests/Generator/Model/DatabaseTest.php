@@ -101,7 +101,7 @@ class DatabaseTest extends ModelTestCase
             ->will($this->returnValue(64));
         $platform
             ->expects($this->any())
-            ->method('getColumnTypeMapping')
+            ->method('buildColumnTypeMapping')
             ->with($this->equalTo(ColumnType::TIMESTAMP))
             ->will($this->returnValue($this->getDomainMock('TIMESTAMP')));
 

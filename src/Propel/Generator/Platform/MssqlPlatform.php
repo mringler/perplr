@@ -24,40 +24,40 @@ class MssqlPlatform extends DefaultPlatform
     protected static $dropCount = 0;
 
     /**
-     * @return void
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return string|null
      */
     #[\Override]
-    protected function initialize(): void
+    protected function resolveSqlType(ColumnType $type): string|null
     {
-        parent::initialize();
-
-        $sqlTypes = [
-            ColumnType::INTEGER->name => 'INT',
-            ColumnType::BOOLEAN->name => 'INT',
-            ColumnType::DOUBLE->name => 'FLOAT',
-            ColumnType::LONGVARCHAR->name => 'VARCHAR(MAX)',
-            ColumnType::CLOB->name => 'VARCHAR(MAX)',
-            ColumnType::DATE->name => 'DATE',
-            ColumnType::DATETIME->name => 'DATETIME2',
-            ColumnType::BU_DATE->name => 'DATE',
-            ColumnType::TIME->name => 'TIME',
-            ColumnType::TIMESTAMP->name => 'DATETIME2',
-            ColumnType::BU_TIMESTAMP->name => 'DATETIME2',
-            ColumnType::BINARY->name => 'BINARY(7132)',
-            ColumnType::VARBINARY->name => 'VARBINARY(MAX)',
-            ColumnType::LONGVARBINARY->name => 'VARBINARY(MAX)',
-            ColumnType::BLOB->name => 'VARBINARY(MAX)',
-            ColumnType::OBJECT->name => 'VARBINARY(MAX)',
-            ColumnType::ARRAY->name => 'VARCHAR(MAX)',
-            ColumnType::UUID->name => 'UNIQUEIDENTIFIER',
-            ColumnType::UUID_BINARY->name => 'BINARY(16)',
-        ];
-
-        foreach ($sqlTypes as $mapping => $sqlType) {
-            $this->typeMap[$mapping]->setSqlType($sqlType);
-        }
-
-        $this->setSetTypesMapping(false);
+        return match ($type) {
+            ColumnType::INTEGER,
+            ColumnType::BOOLEAN,
+            => 'INT',
+            ColumnType::DOUBLE => 'FLOAT',
+            ColumnType::LONGVARCHAR,
+            ColumnType::CLOB,
+            ColumnType::ARRAY,
+            => 'VARCHAR(MAX)',
+            ColumnType::DATE,
+            ColumnType::BU_DATE,
+            => 'DATE',
+            ColumnType::DATETIME,
+            ColumnType::TIMESTAMP,
+            ColumnType::BU_TIMESTAMP,
+             => 'DATETIME2',
+            ColumnType::TIME => 'TIME',
+            ColumnType::BINARY => 'BINARY(7132)',
+            ColumnType::VARBINARY,
+            ColumnType::LONGVARBINARY,
+            ColumnType::BLOB,
+            ColumnType::OBJECT,
+            => 'VARBINARY(MAX)',
+            ColumnType::UUID => 'UNIQUEIDENTIFIER',
+            ColumnType::UUID_BINARY => 'BINARY(16)',
+            default => parent::resolveSqlType($type)
+        };
     }
 
     /**

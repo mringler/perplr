@@ -453,7 +453,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDL()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
         $column->getTypeMapping()->replaceScale(2);
         $column->getTypeMapping()->replaceSize(3);
         $column->setNotNull(true);
@@ -468,7 +468,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetVendor()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Charset', 'greek');
         $column->addVendorInfo($vendor);
@@ -482,7 +482,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetCollation()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Collate', 'latin1_german2_ci');
         $column->addVendorInfo($vendor);
@@ -490,7 +490,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
 
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Collation', 'latin1_german2_ci');
         $column->addVendorInfo($vendor);
@@ -504,7 +504,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLComment()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::INTEGER));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::INTEGER));
         $column->setDescription('This is column Foo');
         $expected = '`foo` INTEGER COMMENT \'This is column Foo\'';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
@@ -516,7 +516,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetNotNull()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $column->setNotNull(true);
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Charset', 'greek');
@@ -531,7 +531,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
         $column->getTypeMapping()->replaceScale(2);
         $column->getTypeMapping()->replaceSize(3);
         $column->setNotNull(true);
@@ -652,7 +652,7 @@ DROP INDEX `babar` ON `foo`;
         $table = new Table('foo');
         $table->setIdentifierQuoting(true);
         $column1 = new Column('bar1');
-        $column1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::VARCHAR));
+        $column1->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::VARCHAR));
         $column1->setSize(5);
         $table->addColumn($column1);
         $index = new Index('bar_index');
@@ -670,7 +670,7 @@ DROP INDEX `babar` ON `foo`;
         $table = new Table('foo');
         $table->setIdentifierQuoting(true);
         $column1 = new Column('bar1');
-        $column1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column1->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $table->addColumn($column1);
         $index = new Index('bar_index');
         $index->addColumn($column1);

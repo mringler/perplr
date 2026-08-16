@@ -59,36 +59,32 @@ class SqlitePlatform extends DefaultPlatform
     }
 
     /**
-     * @return void
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return string|null
      */
     #[\Override]
-    protected function initializeTypeMap(): void
+    protected function resolveSqlType(ColumnType $type): string|null
     {
-        parent::initializeTypeMap();
-
-        $sqlTypes = [
-            ColumnType::NUMERIC->name => 'DECIMAL',
-            ColumnType::LONGVARCHAR->name => 'MEDIUMTEXT',
-            ColumnType::DATE->name => 'DATETIME',
-            ColumnType::DATETIME->name => 'DATETIME',
-            ColumnType::BINARY->name => 'BLOB',
-            ColumnType::VARBINARY->name => 'MEDIUMBLOB',
-            ColumnType::LONGVARBINARY->name => 'LONGBLOB',
-            ColumnType::BLOB->name => 'BLOB',
-            ColumnType::CLOB->name => 'LONGTEXT',
-            ColumnType::OBJECT->name => 'BLOB',
-            ColumnType::ARRAY->name => 'MEDIUMTEXT',
-            ColumnType::UUID_BINARY->name => 'BLOB',
-        ];
-
-        foreach ($sqlTypes as $mapping => $sqlType) {
-            $this->typeMap[$mapping]->setSqlType($sqlType);
-        }
-
-        // no native UUID type, use UUID_BINARY
-        $this->typeMap[ColumnType::UUID->name] = $this->typeMap[ColumnType::UUID_BINARY->name];
-
-        $this->setSetTypesMapping(false);
+        return match ($type) {
+            ColumnType::NUMERIC => 'DECIMAL',
+            ColumnType::LONGVARCHAR,
+            ColumnType::ARRAY,
+            => 'MEDIUMTEXT',
+            ColumnType::DATE,
+            ColumnType::DATETIME,
+            => 'DATETIME',
+            ColumnType::VARBINARY => 'MEDIUMBLOB',
+            ColumnType::LONGVARBINARY => 'LONGBLOB',
+            ColumnType::CLOB => 'LONGTEXT',
+            ColumnType::BINARY,
+            ColumnType::BLOB,
+            ColumnType::OBJECT,
+            ColumnType::UUID,
+            ColumnType::UUID_BINARY,
+             => 'BLOB',
+            default => parent::resolveSqlType($type)
+        };
     }
 
     /**

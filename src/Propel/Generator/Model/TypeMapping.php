@@ -7,7 +7,6 @@ namespace Propel\Generator\Model;
 use LogicException;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Datatype\ColumnType;
-use function sprintf;
 use function strtoupper;
 
 /**
@@ -23,7 +22,7 @@ class TypeMapping extends MappingModel
 
     private int|null $scale = null;
 
-    private ColumnType|null $mappingType = null;
+    private ColumnType|null $columnType = null;
 
     private string|null $sqlType;
 
@@ -69,7 +68,7 @@ class TypeMapping extends MappingModel
         $this->scale = $mapping->getScale();
         $this->size = $mapping->getSize();
         $this->sqlType = $mapping->getSqlType();
-        $this->mappingType = $mapping->getMappingType();
+        $this->columnType = $mapping->getMappingType();
     }
 
     /**
@@ -83,7 +82,7 @@ class TypeMapping extends MappingModel
             $type = strtoupper($type);
             $mappingType = ColumnType::fromLiteral($type);
 
-            $this->copy($this->database->getPlatform()->getColumnTypeMapping($mappingType));
+            $this->copy($this->database->getPlatform()->buildColumnTypeMapping($mappingType));
         }
 
         $this->name = $this->getAttribute('name');
@@ -230,11 +229,11 @@ class TypeMapping extends MappingModel
      */
     public function getMappingType(): ColumnType
     {
-        if (!$this->mappingType) {
+        if (!$this->columnType) {
             throw new LogicException('Mapping type not set');
         }
 
-        return $this->mappingType;
+        return $this->columnType;
     }
 
     /**
@@ -244,7 +243,7 @@ class TypeMapping extends MappingModel
      */
     public function setMappingType(?ColumnType $mappingType): void
     {
-        $this->mappingType = $mappingType;
+        $this->columnType = $mappingType;
     }
 
     /**
@@ -288,7 +287,7 @@ class TypeMapping extends MappingModel
 
         $value = $this->defaultValue->getValue();
 
-        return match ($this->mappingType) {
+        return match ($this->columnType) {
             ColumnType::BOOLEAN,
             ColumnType::BOOLEAN_EMU => $this->booleanValue($value),
             ColumnType::ARRAY => $this->buildDefaultValueExpressionForArray((string)$value),
@@ -380,15 +379,11 @@ class TypeMapping extends MappingModel
      */
     public function getSizeDefinition(): string
     {
-        if ($this->size === null) {
-            return '';
-        }
-
-        if ($this->scale !== null) {
-            return sprintf('(%u,%u)', $this->size, $this->scale);
-        }
-
-        return sprintf('(%u)', $this->size);
+        return match (true) {
+            $this->size === null => '',
+            $this->scale !== null => "($this->size,$this->scale)",
+            default => "($this->size)",
+        };
     }
 
     /**

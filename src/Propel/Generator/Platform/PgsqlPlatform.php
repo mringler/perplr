@@ -32,46 +32,43 @@ use const FILTER_VALIDATE_BOOLEAN;
  */
 class PgsqlPlatform extends DefaultPlatform
 {
-    /**
-     * @var string
-     */
-    protected $createOrDropSequences = '';
+    protected string $createOrDropSequences = '';
 
     /**
-     * @return void
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return string|null
      */
     #[\Override]
-    protected function initializeTypeMap(): void
+    protected function resolveSqlType(ColumnType $type): string|null
     {
-        parent::initializeTypeMap();
-        $sqlTypes = [
-            ColumnType::BOOLEAN->name => 'BOOLEAN',
-            ColumnType::TINYINT->name => 'INT2',
-            ColumnType::SMALLINT->name => 'INT2',
-            ColumnType::BIGINT->name => 'INT8',
-            //ColumnType::REAL->name => 'FLOAT',
-            ColumnType::DOUBLE->name => 'DOUBLE PRECISION',
-            ColumnType::FLOAT->name => 'DOUBLE PRECISION',
-            ColumnType::LONGVARCHAR->name => 'TEXT',
-            ColumnType::BINARY->name => 'BYTEA',
-            ColumnType::VARBINARY->name => 'BYTEA',
-            ColumnType::LONGVARBINARY->name => 'BYTEA',
-            ColumnType::BLOB->name => 'BYTEA',
-            ColumnType::CLOB->name => 'TEXT',
-            ColumnType::OBJECT->name => 'BYTEA',
-            ColumnType::ARRAY->name => 'TEXT',
-            ColumnType::DECIMAL->name => 'NUMERIC',
-            ColumnType::DATETIME->name => 'TIMESTAMP',
-            ColumnType::UUID->name => 'uuid',
-            ColumnType::UUID_BINARY->name => 'BYTEA',
-
-        ];
-
-        foreach ($sqlTypes as $mapping => $sqlType) {
-            $this->typeMap[$mapping]->setSqlType($sqlType);
-        }
-
-        $this->setSetTypesMapping(false);
+        return match ($type) {
+            ColumnType::BOOLEAN => 'BOOLEAN',
+            ColumnType::TINYINT,
+            ColumnType::SMALLINT,
+            ColumnType::ENUM_BINARY,
+             => 'INT2',
+            ColumnType::BIGINT => 'INT8',
+            //ColumnType::REAL => 'FLOAT',
+            ColumnType::DOUBLE,
+            ColumnType::FLOAT,
+            => 'DOUBLE PRECISION',
+            ColumnType::BINARY,
+            ColumnType::VARBINARY,
+            ColumnType::LONGVARBINARY,
+            ColumnType::BLOB,
+            ColumnType::OBJECT,
+            ColumnType::UUID_BINARY,
+            => 'BYTEA',
+            ColumnType::LONGVARCHAR,
+            ColumnType::CLOB,
+            ColumnType::ARRAY
+            => 'TEXT',
+            ColumnType::DECIMAL => 'NUMERIC',
+            ColumnType::DATETIME => 'TIMESTAMP',
+            ColumnType::UUID => 'uuid',
+            default => parent::resolveSqlType($type)
+        };
     }
 
     /**

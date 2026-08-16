@@ -235,7 +235,7 @@ DROP SEQUENCE foo_sequence;
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
         $column->getTypeMapping()->replaceScale(2);
         $column->getTypeMapping()->replaceSize(3);
         $column->setNotNull(true);

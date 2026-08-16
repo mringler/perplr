@@ -465,7 +465,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDL()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
         $column->getTypeMapping()->replaceScale(2);
         $column->getTypeMapping()->replaceSize(3);
         $column->setNotNull(true);
@@ -503,7 +503,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     {
         $platform = new MysqlPlatform();
         $this->setObjectPropertyValue($platform, 'ignoreSizeOnIntegerTypes', $ignoreSize);
-        $domain = clone $platform->getColumnTypeMapping($integerType);
+        $domain = clone $platform->buildColumnTypeMapping($integerType);
         $domain->replaceSize(3);
 
         $column = new Column('foo');
@@ -521,7 +521,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLTextDefaultValue(): void
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $column->getTypeMapping()->setDefaultValue(new ColumnDefaultValue('hello', ColumnDefaultValue::TYPE_VALUE));
         $expected = '`foo` TEXT DEFAULT \'hello\'';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
@@ -536,7 +536,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
         $this->expectExceptionMessage('BLOB columns cannot have DEFAULT values in MySQL.');
 
         $column = new Column('bar');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::BLOB));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::BLOB));
         $column->getTypeMapping()->setDefaultValue(new ColumnDefaultValue('data', ColumnDefaultValue::TYPE_VALUE));
         static::getPlatform()->getColumnDDL($column);
     }
@@ -547,7 +547,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetVendor()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Charset', 'greek');
         $column->addVendorInfo($vendor);
@@ -561,7 +561,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetCollation()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Collate', 'latin1_german2_ci');
         $column->addVendorInfo($vendor);
@@ -569,7 +569,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
 
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Collation', 'latin1_german2_ci');
         $column->addVendorInfo($vendor);
@@ -583,7 +583,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLComment()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::INTEGER));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::INTEGER));
         $column->setDescription('This is column Foo');
         $expected = '`foo` INTEGER COMMENT \'This is column Foo\'';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
@@ -595,7 +595,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetNotNull()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $column->setNotNull(true);
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Charset', 'greek');
@@ -610,7 +610,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
         $column->getTypeMapping()->replaceScale(2);
         $column->getTypeMapping()->replaceSize(3);
         $column->setNotNull(true);
@@ -731,7 +731,7 @@ DROP INDEX `babar` ON `foo`;
         $table = new Table('foo');
         $table->setIdentifierQuoting(true);
         $column1 = new Column('bar1');
-        $column1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::VARCHAR));
+        $column1->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::VARCHAR));
         $column1->setSize(5);
         $table->addColumn($column1);
         $index = new Index('bar_index');
@@ -749,7 +749,7 @@ DROP INDEX `babar` ON `foo`;
         $table = new Table('foo');
         $table->setIdentifierQuoting(true);
         $column1 = new Column('bar1');
-        $column1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column1->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
         $table->addColumn($column1);
         $index = new Index('bar_index');
         $index->addColumn($column1);
@@ -993,7 +993,7 @@ CREATE TABLE `foo`
     public function testNormalizeTable()
     {
         $column = new Column('price', ColumnType::DECIMAL);
-        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DECIMAL));
+        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DECIMAL));
         $column->setSize(10);
         $column->setScale(3);
         $table = new Table('prices');
@@ -1012,7 +1012,7 @@ CREATE TABLE `foo`
     
     #[\PHPUnit\Framework\Attributes\DataProvider('typeMappingDataProvider')]
     public function testTypeMapping(ColumnType $propelDataType, string $expectedMysqlDataType){
-        $actualMysqlDataType = static::getPlatform()->getColumnTypeMapping($propelDataType)->getSqlType();
+        $actualMysqlDataType = static::getPlatform()->buildColumnTypeMapping($propelDataType)->getSqlType();
         $this->assertEquals($expectedMysqlDataType, $actualMysqlDataType);
     }
 
@@ -1059,7 +1059,7 @@ CREATE TABLE `foo`
     {
         $platform = new MysqlPlatform();
 
-        $uuidSqlType = $platform->getColumnTypeMapping(ColumnType::UUID)->getSqlType();
+        $uuidSqlType = $platform->buildColumnTypeMapping(ColumnType::UUID)->getSqlType();
         $this->assertEquals('BINARY', $uuidSqlType);
     }
 
@@ -1074,7 +1074,7 @@ CREATE TABLE `foo`
         $config = new GeneratorConfig(__DIR__ . '/../../../../Fixtures/bookstore', $configProp);
         $platform->setGeneratorConfig($config);
 
-        $uuidSqlType = $platform->getColumnTypeMapping(ColumnType::UUID)->getSqlType();
+        $uuidSqlType = $platform->buildColumnTypeMapping(ColumnType::UUID)->getSqlType();
         $this->assertEquals('UUID', $uuidSqlType);
     }
 }

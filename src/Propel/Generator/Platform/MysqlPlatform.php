@@ -16,7 +16,6 @@ use Propel\Generator\Model\Diff\DatabaseDiff;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
-use Propel\Generator\Model\TypeMapping;
 use Propel\Generator\Model\Unique;
 use Propel\Generator\Platform\Util\MysqlUuidMigrationBuilder;
 use function addslashes;
@@ -54,37 +53,61 @@ class MysqlPlatform extends DefaultPlatform
 
     protected bool $ignoreSizeOnIntegerTypes = true;
 
+    protected bool $hasNativeEnumType = true;
+
     /**
-     * @return void
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return \Propel\Generator\Model\Datatype\ColumnType
      */
     #[\Override]
-    protected function initializeTypeMap(): void
+    protected function resolveColumnTypeAlias(ColumnType $type): ColumnType
     {
-        parent::initializeTypeMap();
-
-        $sqlTypes = [
-            ColumnType::NUMERIC->name => 'DECIMAL',
-            ColumnType::LONGVARCHAR->name => 'TEXT',
-            ColumnType::BINARY->name => 'BINARY',
-            ColumnType::VARBINARY->name => 'MEDIUMBLOB',
-            ColumnType::LONGVARBINARY->name => 'LONGBLOB',
-            ColumnType::CLOB->name => 'LONGTEXT',
-            ColumnType::OBJECT->name => 'MEDIUMBLOB',
-            ColumnType::ARRAY->name => 'TEXT',
-            ColumnType::REAL->name => 'DOUBLE',
-            ColumnType::UUID_BINARY->name => 'BINARY',
-        ];
-
-        foreach ($sqlTypes as $mapping => $sqlType) {
-            $this->typeMap[$mapping]->setSqlType($sqlType);
+        if ($type === ColumnType::UUID && !$this->useUuidNativeType) {
+            return ColumnType::UUID_BINARY;
         }
 
-        $this->typeMap[ColumnType::BOOLEAN->name]->setSize(1);
-        $this->typeMap[ColumnType::UUID_BINARY->name]->setSize(16);
+        return parent::resolveColumnTypeAlias($type);
+    }
 
-        $this->setUuidTypeMapping();
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return string|null
+     */
+    #[\Override]
+    protected function resolveSqlType(ColumnType $type): string|null
+    {
+        return match ($type) {
+            ColumnType::NUMERIC => 'DECIMAL',
+            ColumnType::LONGVARCHAR => 'TEXT',
+            ColumnType::BINARY => 'BINARY',
+            ColumnType::VARBINARY,
+            ColumnType::OBJECT,
+            => 'MEDIUMBLOB',
+            ColumnType::LONGVARBINARY => 'LONGBLOB',
+            ColumnType::CLOB => 'LONGTEXT',
+            ColumnType::ARRAY => 'TEXT',
+            ColumnType::REAL => 'DOUBLE',
+            ColumnType::UUID_BINARY => 'BINARY',
+            ColumnType::UUID => 'UUID',
+            default => parent::resolveSqlType($type)
+        };
+    }
 
-        $this->setSetTypesMapping(true);
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return int|null
+     */
+    #[\Override]
+    protected function resolveTypeSize(ColumnType $type): int|null
+    {
+        return match ($type) {
+            ColumnType::BOOLEAN => 1,
+            ColumnType::UUID_BINARY => 16,
+            default => parent::resolveTypeSize($type)
+        };
     }
 
     /**
@@ -132,23 +155,6 @@ class MysqlPlatform extends DefaultPlatform
     public function setUuidNativeType(bool $enable): void
     {
         $this->useUuidNativeType = $enable;
-        $this->setUuidTypeMapping();
-    }
-
-    /**
-     * Set column type for UUIDs according to MysqlPlatform::useUuidNativeType.
-     *
-     * Currently, only MariaDB has a native UUID type.
-     *
-     * @return void
-     */
-    protected function setUuidTypeMapping(): void
-    {
-        $typeMapping = ($this->useUuidNativeType)
-            ? new TypeMapping(ColumnType::UUID, 'UUID')
-            : $this->typeMap[ColumnType::UUID_BINARY->name];
-
-        $this->typeMap[ColumnType::UUID->name] = $typeMapping;
     }
 
     /**

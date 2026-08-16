@@ -16,6 +16,7 @@ use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\TypeMapping;
+use Propel\Generator\Platform\MysqlPlatform;
 use Propel\Tests\Helpers\ColorsBackedEnum;
 use Propel\Tests\Helpers\ColorsUnitEnum;
 use Propel\Tests\TestCase;
@@ -83,7 +84,7 @@ class ColumnTest extends ModelTestCase
         $platform = $this->getPlatformMock();
         $platform
             ->expects($this->once())
-            ->method('getColumnTypeMapping')
+            ->method('buildColumnTypeMapping')
             ->with($this->equalTo(ColumnType::VARCHAR))
             ->will($this->returnValue($this->getDomainMock('VARCHAR')));
         $platform
@@ -119,7 +120,7 @@ class ColumnTest extends ModelTestCase
         $platform = $this->getPlatformMock();
         $platform
             ->expects($this->once())
-            ->method('getColumnTypeMapping')
+            ->method('buildColumnTypeMapping')
             ->with($this->equalTo(ColumnType::DATE))
             ->will($this->returnValue($this->getDomainMock('DATE')));
 
@@ -370,38 +371,12 @@ class ColumnTest extends ModelTestCase
      */
     public function testIsDefaultSqlTypeFromDomain()
     {
-        $toCopy = $this->getDomainMock();
-        $toCopy
-            ->expects($this->once())
-            ->method('getSqlType')
-            ->will($this->returnValue('INTEGER'));
-
-        $platform = $this->getPlatformMock();
-        $platform
-            ->expects($this->any())
-            ->method('getColumnTypeMapping')
-            ->with($this->equalTo(ColumnType::BOOLEAN))
-            ->will($this->returnValue($toCopy));
-
-        $domain = $this->getDomainMock();
-        $domain
-            ->expects($this->once())
-            ->method('copy')
-            ->with($this->equalTo($toCopy));
-        $domain
-            ->expects($this->once())
-            ->method('getMappingType')
-            ->will($this->returnValue(ColumnType::BOOLEAN));
-        $domain
-            ->expects($this->any())
-            ->method('getSqlType')
-            ->will($this->returnValue('INTEGER'));
+        $platform = new MysqlPlatform();
 
         $column = new Column('');
         $column->setTable($this->getTableMock('books', [
             'platform' => $platform,
         ]));
-        $column->setTypeMapping($domain);
         $column->setUpTypeMapping(ColumnType::BOOLEAN);
 
         $this->assertTrue($column->isDefaultSqlType($platform));

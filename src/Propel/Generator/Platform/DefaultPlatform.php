@@ -38,36 +38,19 @@ use function strtolower;
 use function strtr;
 use function substr;
 use function trim;
-use function var_export;
 
 /**
  * Default implementation for the PlatformInterface interface.
  */
 class DefaultPlatform implements PlatformInterface
 {
-    /**
-     * Mapping from column types to type mapping.
-     *
-     * @var array<\Propel\Generator\Model\TypeMapping>
-     */
-    protected $typeMap;
+    protected ConnectionInterface|null $con = null;
 
-    /**
-     * The database connection.
-     *
-     * @var \Propel\Runtime\Connection\ConnectionInterface|null Database connection.
-     */
-    protected $con;
+    protected bool $identifierQuoting = true;
 
-    /**
-     * @var bool
-     */
-    protected $identifierQuoting = true;
-
-    /**
-     * @var bool
-     */
     protected bool $defaultToNativeEnumeratedColumnTypes = false;
+
+    protected bool $hasNativeEnumType = false;
 
     /**
      * @param \Propel\Runtime\Connection\ConnectionInterface|null $con Optional database connection to use in this platform.
@@ -148,9 +131,6 @@ class DefaultPlatform implements PlatformInterface
     public function setGeneratorConfig(AbstractGeneratorConfig $generatorConfig): void
     {
         $this->defaultToNativeEnumeratedColumnTypes = (bool)($generatorConfig->getConfigProperty('generator.defaultToNativeEnumeratedColumnTypes') ?? false);
-        if ($this->defaultToNativeEnumeratedColumnTypes) {
-            $this->initializeTypeMap();
-        }
     }
 
     /**
@@ -158,54 +138,74 @@ class DefaultPlatform implements PlatformInterface
      */
     protected function initialize(): void
     {
-        $this->initializeTypeMap();
     }
 
     /**
-     * @return void
-     */
-    protected function initializeTypeMap(): void
-    {
-        $this->typeMap = ColumnType::buildDefaultTypeMapping();
-    }
-
-    /**
-     * @param bool $hasNativeType
-     * @param \Propel\Generator\Model\TypeMapping|null $binarySetType
-     * @param \Propel\Generator\Model\TypeMapping|null $binaryEnumType
+     * Returns the db specific mapping for a column type.
      *
-     * @return void
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type the Propel type name.
+     *
+     * @return \Propel\Generator\Model\TypeMapping The db specific type mapping.
      */
-    protected function setSetTypesMapping(bool $hasNativeType, TypeMapping|null $binarySetType = null, TypeMapping|null $binaryEnumType = null): void
+    #[\Override]
+    public function buildColumnTypeMapping(ColumnType $type): TypeMapping
     {
-        $binarySetType = ($binarySetType ?? $this->typeMap[ColumnType::INTEGER->name])->cloneAs(ColumnType::SET_BINARY);
-        $this->setTypeMapping($binarySetType);
+        $resolvedType = $this->resolveColumnTypeAlias($type);
+        $sqlType = $this->resolveSqlType($resolvedType);
+        $size = $this->resolveTypeSize($resolvedType);
 
-        $binaryEnumType = ($binaryEnumType ?? $this->typeMap[ColumnType::TINYINT->name])->cloneAs(ColumnType::ENUM_BINARY);
-        $this->setTypeMapping($binaryEnumType);
-
-        if ($hasNativeType) {
-            $this->setTypeMapping(new TypeMapping(ColumnType::SET_NATIVE, 'VARCHAR'));
-            $this->setTypeMapping(new TypeMapping(ColumnType::ENUM_NATIVE, 'VARCHAR'));
-        } else {
-            $this->typeMap[ColumnType::ENUM_NATIVE->name] = $this->typeMap[ColumnType::ENUM_BINARY->name];
-            $this->typeMap[ColumnType::SET_NATIVE->name] = $this->typeMap[ColumnType::SET_BINARY->name];
-        }
-
-        // aliases
-        $useNative = $this->defaultToNativeEnumeratedColumnTypes;
-        $this->typeMap[ColumnType::ENUM->name] = $this->typeMap[$useNative ? ColumnType::ENUM_NATIVE->name : ColumnType::ENUM_BINARY->name];
-        $this->typeMap[ColumnType::SET->name] = $this->typeMap[$useNative ? ColumnType::SET_NATIVE->name : ColumnType::SET_BINARY->name];
+        return new TypeMapping($resolvedType, $sqlType, $size);
     }
 
     /**
-     * @param \Propel\Generator\Model\TypeMapping $type
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
-     * @return void
+     * @return \Propel\Generator\Model\Datatype\ColumnType
      */
-    protected function setTypeMapping(TypeMapping $type): void
+    protected function resolveColumnTypeAlias(ColumnType $type): ColumnType
     {
-        $this->typeMap[$type->getMappingType()->name] = $type;
+        return match ($type) {
+            ColumnType::ENUM => $this->resolveColumnTypeAlias($this->defaultToNativeEnumeratedColumnTypes ? ColumnType::ENUM_NATIVE : ColumnType::ENUM_BINARY),
+            ColumnType::SET => $this->resolveColumnTypeAlias($this->defaultToNativeEnumeratedColumnTypes ? ColumnType::SET_NATIVE : ColumnType::SET_BINARY),
+            ColumnType::BU_DATE => ColumnType::DATE,
+            ColumnType::BU_TIMESTAMP => ColumnType::TIMESTAMP,
+            ColumnType::SET_NATIVE => $this->hasNativeEnumType ? $type : ColumnType::SET_BINARY,
+            ColumnType::ENUM_NATIVE => $this->hasNativeEnumType ? $type : ColumnType::ENUM_BINARY,
+
+            default => $type
+        };
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return string|null
+     */
+    protected function resolveSqlType(ColumnType $type): string|null
+    {
+        return match ($type) {
+            ColumnType::BOOLEAN,
+            ColumnType::SET_BINARY
+                => 'INTEGER',
+            ColumnType::ENUM_BINARY
+                => 'TINYINT',
+            ColumnType::SET_NATIVE,
+            ColumnType::ENUM_NATIVE
+                => 'VARCHAR',
+            default => null
+        };
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return int|null
+     */
+    protected function resolveTypeSize(ColumnType $type): int|null
+    {
+        return match ($type) {
+            default => null
+        };
     }
 
     /**
@@ -266,25 +266,6 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Returns the db specific mapping for a column type.
-     *
-     * @param \Propel\Generator\Model\Datatype\ColumnType $type the Propel type name.
-     *
-     * @throws \Propel\Generator\Exception\EngineException
-     *
-     * @return \Propel\Generator\Model\TypeMapping The db specific type mapping.
-     */
-    #[\Override]
-    public function getColumnTypeMapping(ColumnType $type): TypeMapping
-    {
-        if (!isset($this->typeMap[$type->name])) {
-            throw new EngineException(sprintf('Cannot map unknown Propel type %s to native database type.', var_export($type, true)));
-        }
-
-        return $this->typeMap[$type->name];
-    }
-
-    /**
      * @deprecated Use {@see static::getColumnTypeMapping()}
      *
      * @param \Propel\Generator\Model\Datatype\ColumnType $propelType
@@ -293,7 +274,7 @@ class DefaultPlatform implements PlatformInterface
      */
     public function getDomainForType(ColumnType $propelType): TypeMapping
     {
-        return $this->getColumnTypeMapping($propelType);
+        return $this->buildColumnTypeMapping($propelType);
     }
 
     /**
