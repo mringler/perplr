@@ -177,7 +177,21 @@ class TypeMapping extends MappingModel
     }
 
     /**
-     * Replaces the size if the new value is not null.
+     * Set scale if the new value is not null.
+     *
+     * @param int|null $scale
+     *
+     * @return void
+     */
+    public function setScaleToValueIfNotNull(?int $scale): void
+    {
+        if ($scale !== null) {
+            $this->scale = $scale;
+        }
+    }
+
+    /**
+     * @deprecated Use aptly named {@see static::setScaleToValueIfNotNull()}
      *
      * @param int|null $scale
      *
@@ -185,9 +199,7 @@ class TypeMapping extends MappingModel
      */
     public function replaceScale(?int $scale): void
     {
-        if ($scale !== null) {
-            $this->scale = $scale;
-        }
+        $this->setScaleToValueIfNotNull($scale);
     }
 
     /**
@@ -209,7 +221,21 @@ class TypeMapping extends MappingModel
     }
 
     /**
-     * Replaces the size if the new value is not null.
+     * Set size if the new value is not null.
+     *
+     * @param int|null $size
+     *
+     * @return void
+     */
+    public function setSizeToValueIfNotNull(?int $size): void
+    {
+        if ($size !== null) {
+            $this->size = $size;
+        }
+    }
+
+    /**
+     * @deprecated Use aptly named {@see static::setSizeToValueIfNotNull()}
      *
      * @param int|null $size
      *
@@ -217,9 +243,7 @@ class TypeMapping extends MappingModel
      */
     public function replaceSize(?int $size): void
     {
-        if ($size !== null) {
-            $this->size = $size;
-        }
+        $this->setSizeToValueIfNotNull($size);
     }
 
     /**
@@ -244,20 +268,6 @@ class TypeMapping extends MappingModel
     public function setMappingType(?ColumnType $mappingType): void
     {
         $this->columnType = $mappingType;
-    }
-
-    /**
-     * Replaces the mapping type if the new value is not null.
-     *
-     * @param \Propel\Generator\Model\Datatype\ColumnType|null $mappingType
-     *
-     * @return void
-     */
-    public function replaceType(?ColumnType $mappingType): void
-    {
-        if ($mappingType !== null) {
-            $this->mappingType = $mappingType;
-        }
     }
 
     /**
@@ -323,20 +333,6 @@ class TypeMapping extends MappingModel
     }
 
     /**
-     * Replaces the default value if the new value is not null.
-     *
-     * @param \Propel\Generator\Model\ColumnDefaultValue|null $value
-     *
-     * @return void
-     */
-    public function replaceDefaultValue(?ColumnDefaultValue $value = null): void
-    {
-        if ($value !== null) {
-            $this->defaultValue = $value;
-        }
-    }
-
-    /**
      * Returns the SQL type.
      *
      * @return string|null
@@ -359,7 +355,7 @@ class TypeMapping extends MappingModel
     }
 
     /**
-     * Replaces the SQL type if the new value is not null.
+     * @deprecated Use aptly named {@see static::setSizeToValueIfNotNull()}
      *
      * @param string|null $sqlType
      *
@@ -367,9 +363,7 @@ class TypeMapping extends MappingModel
      */
     public function replaceSqlType(?string $sqlType): void
     {
-        if ($sqlType !== null) {
-            $this->sqlType = $sqlType;
-        }
+        $sqlType !== null && $this->setSqlType($sqlType);
     }
 
     /**

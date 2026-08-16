@@ -292,12 +292,12 @@ class MysqlSchemaParser extends AbstractSchemaParser
 
         $typeMapping = $this->getPlatform()->buildColumnTypeMapping($propelType);
         if ($sqlType) {
-            $typeMapping->replaceSqlType($sqlType);
+            $typeMapping->setSqlType($sqlType);
         } elseif (in_array(strtoupper($nativeType), ['TINYTEXT', 'MEDIUMTEXT', 'TINYBLOB'], true)) {
-            $typeMapping->replaceSqlType(strtoupper($nativeType));
+            $typeMapping->setSqlType(strtoupper($nativeType));
         }
-        $typeMapping->replaceSize($size);
-        $typeMapping->replaceScale($scale);
+        $typeMapping->setSizeToValueIfNotNull($size);
+        $typeMapping->setScaleToValueIfNotNull($scale);
 
         $defaultValue = $this->extractDefaultValue($defaultValueLiteral, $propelType, $nativeType, $extra);
         if ($defaultValue) {

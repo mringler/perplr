@@ -86,23 +86,6 @@ class TypeMappingTest extends ModelTestCase
     /**
      * @return void
      */
-    public function testReplaceMappingAndSqlTypes()
-    {
-        $value = $this->getColumnDefaultValueMock();
-
-        $domain = new TypeMapping(ColumnType::FLOAT, 'DOUBLE');
-        $domain->replaceType(ColumnType::BOOLEAN);
-        $domain->replaceSqlType('INT');
-        $domain->replaceDefaultValue($value);
-
-        $this->assertSame(ColumnType::BOOLEAN, $domain->getMappingType());
-        $this->assertSame('INT', $domain->getSqlType());
-        $this->assertInstanceOf('Propel\Generator\Model\ColumnDefaultValue', $value);
-    }
-
-    /**
-     * @return void
-     */
     public function testGetNoPhpDefaultValue()
     {
         $domain = new TypeMapping();

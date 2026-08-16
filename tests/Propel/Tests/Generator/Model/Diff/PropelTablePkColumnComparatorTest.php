@@ -129,8 +129,8 @@ class PropelTablePkColumnComparatorTest extends TestCase
         $t1 = new Table('');
         $c1 = new Column('Foo');
         $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
-        $c1->getTypeMapping()->replaceScale(2);
-        $c1->getTypeMapping()->replaceSize(3);
+        $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
         $c1->getTypeMapping()->createDefaultValue(123);
         $c1->setPrimaryKey(true);
@@ -138,8 +138,8 @@ class PropelTablePkColumnComparatorTest extends TestCase
         $t2 = new Table('');
         $c2 = new Column('Bar');
         $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
-        $c2->getTypeMapping()->replaceScale(2);
-        $c2->getTypeMapping()->replaceSize(3);
+        $c2->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c2->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c2->setNotNull(true);
         $c2->getTypeMapping()->createDefaultValue(123);
         $c2->setPrimaryKey(true);
@@ -165,7 +165,7 @@ class PropelTablePkColumnComparatorTest extends TestCase
         $t1 = new Table('');
         $c1 = new Column('col1');
         $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::VARCHAR));
-        $c1->getTypeMapping()->replaceSize(255);
+        $c1->getTypeMapping()->setSizeToValueIfNotNull(255);
         $c1->setNotNull(false);
         $t1->addColumn($c1);
         $c2 = new Column('col2');
@@ -175,15 +175,15 @@ class PropelTablePkColumnComparatorTest extends TestCase
         $t1->addColumn($c2);
         $c3 = new Column('col3');
         $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::VARCHAR));
-        $c3->getTypeMapping()->replaceSize(255);
+        $c3->getTypeMapping()->setSizeToValueIfNotNull(255);
         $c3->setPrimaryKey(true);
         $t1->addColumn($c3);
 
         $t2 = new Table('');
         $c4 = new Column('col1');
         $c4->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
-        $c4->getTypeMapping()->replaceScale(2);
-        $c4->getTypeMapping()->replaceSize(3);
+        $c4->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c4->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c4->setNotNull(true);
         $c4->getTypeMapping()->createDefaultValue(123);
         $t2->addColumn($c4);

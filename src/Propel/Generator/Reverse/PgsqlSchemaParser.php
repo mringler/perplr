@@ -329,9 +329,9 @@ class PgsqlSchemaParser extends AbstractSchemaParser
             $column = new Column($name);
             $column->setTable($table);
             $column->setUpTypeMapping($propelType);
-            $column->getTypeMapping()->replaceSize($size);
+            $column->getTypeMapping()->setSizeToValueIfNotNull($size);
             if ($scale) {
-                $column->getTypeMapping()->replaceScale($scale);
+                $column->getTypeMapping()->setScaleToValueIfNotNull($scale);
             }
 
             if ($default !== null) {

@@ -165,8 +165,8 @@ class OracleSchemaParser extends AbstractSchemaParser
             $column->setPhpName(); // Prevent problems with strange col names
             $column->setTable($table);
             $column->setUpTypeMapping($propelType);
-            $column->getTypeMapping()->replaceSize($size);
-            $column->getTypeMapping()->replaceScale($scale);
+            $column->getTypeMapping()->setSizeToValueIfNotNull($size);
+            $column->getTypeMapping()->setScaleToValueIfNotNull($scale);
             if ($default !== null) {
                 $column->getTypeMapping()->createDefaultValue($default);
             }

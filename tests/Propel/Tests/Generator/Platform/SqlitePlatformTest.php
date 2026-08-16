@@ -219,8 +219,8 @@ DROP TABLE IF EXISTS [foo];
     {
         $c = new Column('foo');
         $c->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
-        $c->getTypeMapping()->replaceScale(2);
-        $c->getTypeMapping()->replaceSize(3);
+        $c->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c->setNotNull(true);
         $c->getTypeMapping()->createDefaultValue(123);
         $expected = '[foo] DOUBLE(3,2) DEFAULT 123 NOT NULL';
@@ -234,11 +234,11 @@ DROP TABLE IF EXISTS [foo];
     {
         $column = new Column('foo');
         $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
-        $column->getTypeMapping()->replaceScale(2);
-        $column->getTypeMapping()->replaceSize(3);
+        $column->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $column->getTypeMapping()->setSizeToValueIfNotNull(3);
         $column->setNotNull(true);
         $column->getTypeMapping()->createDefaultValue(123);
-        $column->getTypeMapping()->replaceSqlType('DECIMAL(5,6)');
+        $column->getTypeMapping()->setSqlType('DECIMAL(5,6)');
         $expected = '[foo] DECIMAL(5,6) DEFAULT 123 NOT NULL';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
     }

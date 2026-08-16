@@ -278,9 +278,9 @@ class Column extends MappingModel
 
             // Add type, size information to associated type mapping
             if ($this->getAttribute('sqlType')) {
-                $typeMapping->replaceSqlType($this->getAttribute('sqlType'));
+                $typeMapping->setSqlType($this->getAttribute('sqlType'));
             } elseif ($this->getPlatform() && in_array($this->getMappingType(), [ColumnType::SET_NATIVE, ColumnType::ENUM_NATIVE], true)) {
-                $typeMapping->replaceSqlType($this->getPlatform()->buildNativeEnumeratedColumnSqlType($this));
+                $typeMapping->setSqlType($this->getPlatform()->buildNativeEnumeratedColumnSqlType($this));
             }
 
             if (
@@ -294,10 +294,10 @@ class Column extends MappingModel
             } else {
                 $size = $this->getAttribute('size') ? (int)$this->getAttribute('size') : null;
             }
-            $typeMapping->replaceSize($size);
+            $typeMapping->setSizeToValueIfNotNull($size);
 
             $scale = $this->getAttribute('scale') ? (int)$this->getAttribute('scale') : null;
-            $typeMapping->replaceScale($scale);
+            $typeMapping->setScaleToValueIfNotNull($scale);
 
             foreach (['defaultValue', 'default', 'defaultExpr'] as $key) {
                 $defaultValue = $this->getAttribute($key);

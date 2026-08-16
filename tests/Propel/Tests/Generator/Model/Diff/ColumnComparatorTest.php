@@ -41,14 +41,14 @@ class ColumnComparatorTest extends TestCase
     {
         $c1 = new Column('');
         $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
-        $c1->getTypeMapping()->replaceScale(2);
-        $c1->getTypeMapping()->replaceSize(3);
+        $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
         $c1->getTypeMapping()->createDefaultValue(123);
         $c2 = new Column('');
         $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
-        $c2->getTypeMapping()->replaceScale(2);
-        $c2->getTypeMapping()->replaceSize(3);
+        $c2->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c2->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c2->setNotNull(true);
         $c2->getTypeMapping()->createDefaultValue(123);
         $this->assertEquals([], ColumnComparator::compareColumns($c1, $c2));
@@ -76,9 +76,9 @@ class ColumnComparatorTest extends TestCase
     public function testCompareScale()
     {
         $c1 = new Column('');
-        $c1->getTypeMapping()->replaceScale(2);
+        $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c2 = new Column('');
-        $c2->getTypeMapping()->replaceScale(3);
+        $c2->getTypeMapping()->setScaleToValueIfNotNull(3);
         $expectedChangedProperties = ['scale' => [2, 3]];
         $this->assertEquals($expectedChangedProperties, ColumnComparator::compareColumns($c1, $c2));
     }
@@ -89,9 +89,9 @@ class ColumnComparatorTest extends TestCase
     public function testCompareSize()
     {
         $c1 = new Column('');
-        $c1->getTypeMapping()->replaceSize(2);
+        $c1->getTypeMapping()->setSizeToValueIfNotNull(2);
         $c2 = new Column('');
-        $c2->getTypeMapping()->replaceSize(3);
+        $c2->getTypeMapping()->setSizeToValueIfNotNull(3);
         $expectedChangedProperties = ['size' => [2, 3]];
         $this->assertEquals($expectedChangedProperties, ColumnComparator::compareColumns($c1, $c2));
     }
@@ -220,8 +220,8 @@ class ColumnComparatorTest extends TestCase
         $c1->setNotNull(false);
         $c2 = new Column('');
         $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
-        $c2->getTypeMapping()->replaceScale(2);
-        $c2->getTypeMapping()->replaceSize(3);
+        $c2->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c2->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c2->setNotNull(true);
         $c2->getTypeMapping()->createDefaultValue(123);
         $expectedChangedProperties = [

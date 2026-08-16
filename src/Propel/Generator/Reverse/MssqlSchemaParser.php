@@ -152,8 +152,8 @@ class MssqlSchemaParser extends AbstractSchemaParser
             $column = new Column($name);
             $column->setTable($table);
             $column->setUpTypeMapping($propelType);
-            $column->getTypeMapping()->replaceSize($size);
-            $column->getTypeMapping()->replaceScale($scale);
+            $column->getTypeMapping()->setSizeToValueIfNotNull($size);
+            $column->getTypeMapping()->setScaleToValueIfNotNull($scale);
             if ($default !== null) {
                 $column->getTypeMapping()->createDefaultValue($default);
             }
