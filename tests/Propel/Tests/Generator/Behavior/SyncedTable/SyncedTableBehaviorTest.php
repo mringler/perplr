@@ -1,23 +1,9 @@
 <?php
 
-/*
- *	$Id$
- * This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- *
- * @license MIT License
- */
-
-/**
- * MIT License. This file is part of the Propel package.
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace Propel\Tests\Generator\Behavior\SyncedTable;
 
 use Exception;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Diff\TableComparator;
@@ -1051,5 +1037,37 @@ EOF;
         $this->assertCount(2, $database->getTables());
         $this->assertNotNull($targetTable);
         $this->assertTrue($targetTable->hasColumn('custom_column'));
+    }
+    
+    /**
+     * @return string[][]
+     */
+    public static function SchemaTestDataProvider(): array
+    {
+        return [
+            ['', 'target_table'],
+            ['fooSchema', 'fooSchema§target_table'],
+            ['barSchema', 'barSchema§target_table'],
+        ];
+    }
+
+    #[DataProvider('SchemaTestDataProvider')]
+    public function testWithSchema(string|null $schema, string $expectedTableNameFq): void
+    {
+
+        $inputSchemaXml = <<<EOT
+<database>
+    <table name="source_table" schema="fooSchema">
+        <behavior name="synced_table">
+            <parameter name="table_name" value="target_table"/>
+            <parameter name="schema" value="$schema"/>
+        </behavior>
+    </table>
+</database>
+EOT;
+
+        $database = $this->buildDatabaseFromSchema($inputSchemaXml);
+        $generatedTable = $database->getTables()[1];
+        $this->assertSame($expectedTableNameFq, $generatedTable->getName());
     }
 }

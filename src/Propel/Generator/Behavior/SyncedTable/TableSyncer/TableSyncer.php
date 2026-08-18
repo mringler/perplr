@@ -25,7 +25,6 @@ use function array_unique;
 use function count;
 use function in_array;
 use function reset;
-use function str_contains;
 
 /**
  * Creates the the synced table according to the given behavior.
@@ -71,20 +70,13 @@ class TableSyncer
     protected function buildSyncedTable(Table $sourceTable): Table
     {
         $database = $sourceTable->getDatabase();
-        $syncedTableName = $this->config->resolveSyncedTableName();
+        $schema = $this->config->getSyncedTableSchema() ?? $sourceTable->getSchema();
+        $syncedTableName = ($schema ? $schema . $database->getSchemaDelimiter() : '') . $this->config->resolveSyncedTableName();
 
-        $syncedTable = $database->getTable($syncedTableName);
-        $schemaDelimiter = $database->getSchemaDelimiter();
-        if (
-            $syncedTable === null
-            && $sourceTable->getSchema()
-            && !str_contains($syncedTableName, $schemaDelimiter)
-        ) {
-            $syncedTableName = $sourceTable->getSchema() . $schemaDelimiter . $syncedTableName;
-            $syncedTable = $database->getTable($syncedTableName);
-        }
-        $tableExistsInSchema = $syncedTable !== null;
-        $syncedTable ??= $this->createSyncedTable($sourceTable);
+        $tableExistsInSchema = $database->hasTable($syncedTableName);
+        $syncedTable = $tableExistsInSchema
+            ? $database->getTable($syncedTableName)
+            : $this->createSyncedTable($sourceTable);
 
         $this->resolveInheritance($syncedTable);
 
@@ -111,7 +103,7 @@ class TableSyncer
             'name' => $this->config->resolveSyncedTableName(),
             'phpName' => $this->config->getSyncedTablePhpName(),
             'package' => $sourceTable->getPackage(),
-            'schema' => $sourceTable->getSchema(),
+            'schema' => $this->config->getSyncedTableSchema() ?? $sourceTable->getSchema(),
             'namespace' => $sourceTable->getNamespace() ? '\\' . $sourceTable->getNamespace() : null,
             'identifierQuoting' => $sourceTable->isIdentifierQuotingEnabled(),
         ];
@@ -145,7 +137,8 @@ class TableSyncer
         $behavior->setId('sync_to_table_' . $targetTable->getName());
         $behavior->setTable($sourceTable);
         $defaultParameters = [
-            SyncedTableBehaviorDeclaration::PARAMETER_KEY_SYNCED_TABLE => $targetTable->getName(),
+            SyncedTableBehaviorDeclaration::PARAMETER_KEY_SYNCED_TABLE => $targetTable->getCommonName(),
+            SyncedTableBehaviorDeclaration::PARAMETER_KEY_SCHEMA => $this->config->getSyncedTableSchema(),
             SyncedTableBehaviorDeclaration::PARAMETER_KEY_SYNC => 'true',
             SyncedTableBehaviorDeclaration::PARAMETER_KEY_SYNC_INDEXES => 'true',
             SyncedTableBehaviorDeclaration::PARAMETER_KEY_SYNC_UNIQUE_AS => 'unique',
