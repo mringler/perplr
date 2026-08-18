@@ -52,7 +52,7 @@ class OgTableMapModifier
     /**
      * @param \Propel\Generator\Builder\Om\TableMapBuilder $builder
      *
-     * @return array<array{'column_index'?: array<int>, 'relation'?: array<string>}> $outputGroups
+     * @return array<array{'column_index'?: array<int>, 'relation'?: array<string>}>
      */
     protected function buildOutputGroups(TableMapBuilder $builder): array
     {
