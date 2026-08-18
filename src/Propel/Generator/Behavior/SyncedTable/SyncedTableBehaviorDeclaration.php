@@ -34,6 +34,11 @@ abstract class SyncedTableBehaviorDeclaration extends BehaviorWithParameterAcces
     /**
      * @var string
      */
+    public const PARAMETER_KEY_SCHEMA = 'schema';
+
+    /**
+     * @var string
+     */
     public const PARAMETER_KEY_SYNCED_PHPNAME = 'synced_phpname';
 
     /**
@@ -159,6 +164,7 @@ abstract class SyncedTableBehaviorDeclaration extends BehaviorWithParameterAcces
     {
         return [
             static::PARAMETER_KEY_SYNCED_TABLE => '',
+            static::PARAMETER_KEY_SCHEMA => null,
             static::PARAMETER_KEY_SYNCED_PHPNAME => null,
             static::PARAMETER_KEY_ADD_PK => null,
             static::PARAMETER_KEY_SYNC => 'true',
@@ -180,6 +186,15 @@ abstract class SyncedTableBehaviorDeclaration extends BehaviorWithParameterAcces
     public function getSyncedTableName(): ?string
     {
         return $this->getParameter(static::PARAMETER_KEY_SYNCED_TABLE);
+    }
+
+    /**
+     * @return string|null
+     */
+    #[\Override]
+    public function getSyncedTableSchema(): ?string
+    {
+        return $this->getParameter(static::PARAMETER_KEY_SCHEMA);
     }
 
     /**

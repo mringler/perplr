@@ -26,6 +26,11 @@ interface TableSyncerConfigInterface
     /**
      * @return string|null
      */
+    public function getSyncedTableSchema(): ?string;
+
+    /**
+     * @return string|null
+     */
     public function getSyncedTablePhpName(): ?string;
 
     /**
