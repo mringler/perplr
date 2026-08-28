@@ -26,6 +26,13 @@
         <exclude name="Spryker.Commenting.DocBlockParamAllowDefaultValue.Typehint"/> <!-- fails to recognize array shapes (like `array{int, string})`-->
         <exclude name="Spryker.Commenting.DocBlockParamAllowDefaultValue.WrongNullable"/> <!-- Checks for null as '?' (?string) but not '|null' (string|null) in spryker/code-sniffer 0.17.30 -->
         <exclude name="Spryker.Classes.ReturnTypeHint.InvalidSelf"/> <!-- Prohibits return type hint for @return $this -->
+        <exclude name="SlevomatCodingStandard.TypeHints.UnionTypeHintFormat"/> <!-- Deprecated but still loaded in spryker 0.17.36 -->
+    </rule>
+
+    <rule ref="SlevomatCodingStandard.TypeHints.DNFTypeHintFormat"> <!-- Replaces deprecated SlevomatCodingStandard.TypeHints.UnionTypeHintFormat -->
+        <properties>
+            <property name="withSpacesAroundOperators" value="no"/>
+        </properties>
     </rule>
 
     <rule ref="Spryker.Internal.SprykerDisallowFunctions">
