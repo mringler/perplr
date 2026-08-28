@@ -290,7 +290,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
             $propelType = ColumnType::BOOLEAN;
         }
 
-        $typeMapping = $this->getPlatform()->buildColumnTypeMapping($propelType);
+        $typeMapping = $this->getPlatform()->getColumnTypeMapping($propelType);
         if ($sqlType) {
             $typeMapping->setSqlType($sqlType);
         } elseif (in_array(strtoupper($nativeType), ['TINYTEXT', 'MEDIUMTEXT', 'TINYBLOB'], true)) {

@@ -44,7 +44,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('Foo_Table');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
@@ -57,7 +57,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d2 = new Database();
         $t3 = new Table('Foo_Table');
         $c3 = new Column('Foo');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c3->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c3->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c3->setNotNull(true);
@@ -109,7 +109,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('Foo_Table');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
@@ -120,7 +120,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d2 = new Database();
         $t3 = new Table('Foo_Table');
         $c3 = new Column('Foo');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c3->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c3->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c3->setNotNull(true);
@@ -148,7 +148,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('Foo_Table');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
@@ -159,7 +159,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d2 = new Database();
         $t3 = new Table('Foo_Table');
         $c3 = new Column('Foo');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c3->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c3->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c3->setNotNull(true);
@@ -186,7 +186,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('Foo_Table');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
@@ -220,7 +220,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('Foo_Table');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
@@ -233,7 +233,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d2 = new Database();
         $t3 = new Table('Foo_Table');
         $c3 = new Column('Foo');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c3->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c3->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c3->setNotNull(true);
@@ -259,7 +259,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('Foo_Table');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
@@ -273,7 +273,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d2 = new Database();
         $t3 = new Table('Foo_Table');
         $c3 = new Column('Foo');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c3->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c3->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c3->setNotNull(true);
@@ -297,14 +297,14 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('Foo_Table');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
         $c1->getTypeMapping()->createDefaultValue(123);
         $t1->addColumn($c1);
         $c2 = new Column('Foo2');
-        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $t1->addColumn($c2);
         $d1->addTable($t1);
         $t2 = new Table('Bar');
@@ -313,7 +313,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d2 = new Database();
         $t3 = new Table('Foo_Table');
         $c3 = new Column('Foo');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c3->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c3->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c3->setNotNull(true);
@@ -342,7 +342,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('Foo_Table');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
@@ -355,7 +355,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d2 = new Database();
         $t3 = new Table('Foo_Table2');
         $c3 = new Column('Foo');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c3->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c3->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c3->setNotNull(true);
@@ -386,7 +386,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('Foo_Table');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
@@ -395,7 +395,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d1->addTable($t1);
         $t2 = new Table('Bar');
         $c2 = new Column('Bar_Column');
-        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $t2->addColumn($c2);
         $d1->addTable($t2);
         $t11 = new Table('Baz');
@@ -404,7 +404,7 @@ class DatabaseTableComparatorTest extends TestCase
         $d2 = new Database();
         $t3 = new Table('Foo_Table');
         $c3 = new Column('Foo1');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c3->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c3->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c3->setNotNull(true);
@@ -413,12 +413,12 @@ class DatabaseTableComparatorTest extends TestCase
         $d2->addTable($t3);
         $t4 = new Table('Bar2');
         $c4 = new Column('Bar_Column');
-        $c4->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $t4->addColumn($c4);
         $d2->addTable($t4);
         $t5 = new Table('Biz');
         $c5 = new Column('Biz_Column');
-        $c5->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $t5->addColumn($c5);
         $d2->addTable($t5);
 
@@ -444,34 +444,34 @@ class DatabaseTableComparatorTest extends TestCase
         $d1 = new Database();
         $t1 = new Table('table1');
         $c1 = new Column('col1');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $t1->addColumn($c1);
         $d1->addTable($t1);
         $t2 = new Table('table2');
         $c2 = new Column('col1');
-        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $t2->addColumn($c2);
         $d1->addTable($t2);
         $t3 = new Table('table3');
         $c3 = new Column('col1');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $t3->addColumn($c3);
         $d1->addTable($t3);
 
         $d2 = new Database();
         $t4 = new Table('table4');
         $c4 = new Column('col1');
-        $c4->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $t4->addColumn($c4);
         $d2->addTable($t4);
         $t5 = new Table('table5');
         $c5 = new Column('col1');
-        $c5->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $t5->addColumn($c5);
         $d2->addTable($t5);
         $t6 = new Table('table3');
         $c6 = new Column('col1');
-        $c6->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c6->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $t6->addColumn($c6);
         $d2->addTable($t6);
 

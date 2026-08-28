@@ -223,7 +223,7 @@ abstract class ModelTestCase extends TestCase
      * @param array $options An array of options
      * @param string $schemaDelimiter
      *
-     * @return \Propel\Generator\Platform\PlatformInterface
+     * @return \Propel\Generator\Platform\DefaultPlatform
      */
     protected function getPlatformMock($supportsSchemas = true, array $options = [], $schemaDelimiter = '.')
     {

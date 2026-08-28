@@ -35,13 +35,13 @@ class OraclePlatform extends DefaultPlatform
      * @return \Propel\Generator\Model\TypeMapping
      */
     #[\Override]
-    public function buildColumnTypeMapping(ColumnType $type): TypeMapping
+    protected function resolveColumnTypeMapping(ColumnType $type): TypeMapping
     {
         if ($type === ColumnType::CLOB || $type === ColumnType::CLOB_EMU) {
             return new TypeMapping(ColumnType::CLOB_EMU, 'CLOB'); // sic
         }
 
-        $mapping = parent::buildColumnTypeMapping($type);
+        $mapping = parent::resolveColumnTypeMapping($type);
 
         if (in_array($type, [ColumnType::BOOLEAN_EMU, ColumnType::TINYINT, ColumnType::SMALLINT, ColumnType::BIGINT])) {
             $mapping->setScale(0);

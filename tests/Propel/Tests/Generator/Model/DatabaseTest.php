@@ -16,6 +16,7 @@ use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Schema;
 use Propel\Generator\Model\Table;
+use Propel\Generator\Platform\DefaultPlatform;
 use Propel\Generator\Platform\MysqlPlatform;
 use Propel\Generator\Platform\PgsqlPlatform;
 use Propel\Generator\Util\VfsTrait;
@@ -94,19 +95,8 @@ class DatabaseTest extends ModelTestCase
             'generator_config' => $config,
         ]);
 
-        $platform = $this->getPlatformMock();
-        $platform
-            ->expects($this->any())
-            ->method('getMaxColumnNameLength')
-            ->will($this->returnValue(64));
-        $platform
-            ->expects($this->any())
-            ->method('buildColumnTypeMapping')
-            ->with($this->equalTo(ColumnType::TIMESTAMP))
-            ->will($this->returnValue($this->getDomainMock('TIMESTAMP')));
-
         $database = new Database();
-        $database->setPlatform($platform);
+        $database->setPlatform(new DefaultPlatform());
         $database->setParentSchema($schema);
         $database->addTable($this->getTableMock('foo'));
         $database->addTable($this->getTableMock('bar'));

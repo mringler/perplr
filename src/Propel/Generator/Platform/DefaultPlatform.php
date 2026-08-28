@@ -53,6 +53,11 @@ class DefaultPlatform implements PlatformInterface
     protected bool $hasNativeEnumType = false;
 
     /**
+     * @var array<string, \Propel\Generator\Model\TypeMapping>
+     */
+    protected array $columnTypeMappingCache = [];
+
+    /**
      * @param \Propel\Runtime\Connection\ConnectionInterface|null $con Optional database connection to use in this platform.
      */
     public function __construct(?ConnectionInterface $con = null)
@@ -130,6 +135,7 @@ class DefaultPlatform implements PlatformInterface
     #[\Override]
     public function setGeneratorConfig(AbstractGeneratorConfig $generatorConfig): void
     {
+        $this->columnTypeMappingCache = [];
         $this->defaultToNativeEnumeratedColumnTypes = (bool)($generatorConfig->getConfigProperty('generator.defaultToNativeEnumeratedColumnTypes') ?? false);
     }
 
@@ -143,12 +149,27 @@ class DefaultPlatform implements PlatformInterface
     /**
      * Returns the db specific mapping for a column type.
      *
-     * @param \Propel\Generator\Model\Datatype\ColumnType $type the Propel type name.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
-     * @return \Propel\Generator\Model\TypeMapping The db specific type mapping.
+     * @return \Propel\Generator\Model\TypeMapping
      */
     #[\Override]
-    public function buildColumnTypeMapping(ColumnType $type): TypeMapping
+    final public function getColumnTypeMapping(ColumnType $type): TypeMapping
+    {
+        $key = $type->name;
+        if (empty($this->columnTypeMappingCache[$key])) {
+            $this->columnTypeMappingCache[$key] = $this->resolveColumnTypeMapping($type);
+        }
+
+        return clone $this->columnTypeMappingCache[$key];
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return \Propel\Generator\Model\TypeMapping
+     */
+    protected function resolveColumnTypeMapping(ColumnType $type): TypeMapping
     {
         $resolvedType = $this->resolveColumnTypeAlias($type);
         $sqlType = $this->resolveSqlType($resolvedType);
@@ -274,7 +295,7 @@ class DefaultPlatform implements PlatformInterface
      */
     public function getDomainForType(ColumnType $propelType): TypeMapping
     {
-        return $this->buildColumnTypeMapping($propelType);
+        return $this->getColumnTypeMapping($propelType);
     }
 
     /**

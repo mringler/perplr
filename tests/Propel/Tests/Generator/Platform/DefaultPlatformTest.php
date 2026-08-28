@@ -8,6 +8,7 @@
 
 namespace Propel\Tests\Generator\Platform;
 
+use Propel\Generator\Config\QuickGeneratorConfig;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Platform\DefaultPlatform;
@@ -206,5 +207,31 @@ class DefaultPlatformTest extends TestCase
         $actual = static::getPlatform()->getTemporalFormatter($column);
 
         $this->assertSame($expectedFormat, $actual);
+    }
+
+    public function testTypeMappingCache(): void
+    {
+        $platform = new DefaultPlatform();
+        $this->assertObjectPropertyValue([], $platform, 'columnTypeMappingCache');
+
+        $expected = [
+            ColumnType::INTEGER->name => $platform->getColumnTypeMapping(ColumnType::INTEGER), 
+            ColumnType::BLOB->name => $platform->getColumnTypeMapping(ColumnType::BLOB)
+        ];
+        $this->assertObjectPropertyValue($expected, $platform, 'columnTypeMappingCache');
+
+        $platform->setGeneratorConfig(new QuickGeneratorConfig());
+        $this->assertObjectPropertyValue([], $platform, 'columnTypeMappingCache');
+    }
+
+    public function testTypeMapppingReturnsClone(): void
+    {
+        $platform = new DefaultPlatform();
+        $integerMapping = $platform->getColumnTypeMapping(ColumnType::INTEGER);
+        $cache = $this->getObjectPropertyValue($platform, 'columnTypeMappingCache');
+        $cachedMapping = $cache[ColumnType::INTEGER->name];
+
+        $this->assertEquals($cachedMapping, $integerMapping);
+        $this->assertNotSame($cachedMapping, $integerMapping);
     }
 }

@@ -80,18 +80,18 @@ interface PlatformInterface
     /**
      * Returns the max column length supported by the db.
      *
-     * @return int The max column length
+     * @return int
      */
     public function getMaxColumnNameLength(): int;
 
     /**
      * Returns the db specific type mapping for a column type.
      *
-     * @param \Propel\Generator\Model\Datatype\ColumnType $type the Propel type name.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
-     * @return \Propel\Generator\Model\TypeMapping The db specific mapping.
+     * @return \Propel\Generator\Model\TypeMapping
      */
-    public function buildColumnTypeMapping(ColumnType $type): TypeMapping;
+    public function getColumnTypeMapping(ColumnType $type): TypeMapping;
 
     /**
      * Returns the RDBMS-specific SQL fragment for <code>NULL</code>

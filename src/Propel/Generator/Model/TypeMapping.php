@@ -82,7 +82,7 @@ class TypeMapping extends MappingModel
             $type = strtoupper($type);
             $mappingType = ColumnType::fromLiteral($type);
 
-            $this->copy($this->database->getPlatform()->buildColumnTypeMapping($mappingType));
+            $this->copy($this->database->getPlatform()->getColumnTypeMapping($mappingType));
         }
 
         $this->name = $this->getAttribute('name');

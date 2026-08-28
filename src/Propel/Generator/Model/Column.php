@@ -198,7 +198,7 @@ class Column extends MappingModel
         $type = $typeInput instanceof ColumnType ? $typeInput : ColumnType::fromLiteral($typeInput);
 
         if ($platform) {
-            return $platform->buildColumnTypeMapping($type);
+            return $platform->getColumnTypeMapping($type);
         }
 
         // no platform - probably during tests
@@ -1188,7 +1188,7 @@ class Column extends MappingModel
      */
     public function setUpTypeMapping(ColumnType $columnType): void
     {
-        $this->typeMapping = $this->getPlatform()->buildColumnTypeMapping($columnType);
+        $this->typeMapping = $this->getPlatform()->getColumnTypeMapping($columnType);
     }
 
     /**
@@ -1265,7 +1265,7 @@ class Column extends MappingModel
             return true;
         }
 
-        $defaultSqlType = $platform->buildColumnTypeMapping($this->getMappingType())->getSqlType();
+        $defaultSqlType = $platform->getColumnTypeMapping($this->getMappingType())->getSqlType();
 
         return $defaultSqlType === $this->getTypeMapping()->getSqlType();
     }

@@ -218,7 +218,7 @@ DROP TABLE IF EXISTS [foo];
     public function testGetColumnDDL()
     {
         $c = new Column('foo');
-        $c->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
         $c->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c->setNotNull(true);
@@ -233,7 +233,7 @@ DROP TABLE IF EXISTS [foo];
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
         $column->getTypeMapping()->setScaleToValueIfNotNull(2);
         $column->getTypeMapping()->setSizeToValueIfNotNull(3);
         $column->setNotNull(true);

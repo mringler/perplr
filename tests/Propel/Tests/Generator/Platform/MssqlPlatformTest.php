@@ -456,7 +456,7 @@ END
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getTypeMapping()->copy(static::getPlatform()->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
         $column->getTypeMapping()->setScaleToValueIfNotNull(2);
         $column->getTypeMapping()->setSizeToValueIfNotNull(3);
         $column->setNotNull(true);

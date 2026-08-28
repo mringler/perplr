@@ -16,6 +16,7 @@ use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\TypeMapping;
+use Propel\Generator\Platform\DefaultPlatform;
 use Propel\Generator\Platform\MysqlPlatform;
 use Propel\Tests\Helpers\ColorsBackedEnum;
 use Propel\Tests\Helpers\ColorsUnitEnum;
@@ -82,15 +83,7 @@ class ColumnTest extends ModelTestCase
     {
         $database = $this->getDatabaseMock('bookstore');
         $platform = $this->getPlatformMock();
-        $platform
-            ->expects($this->once())
-            ->method('buildColumnTypeMapping')
-            ->with($this->equalTo(ColumnType::VARCHAR))
-            ->will($this->returnValue($this->getDomainMock('VARCHAR')));
-        $platform
-            ->expects($this->any())
-            ->method('supportsVarcharWithoutSize')
-            ->will($this->returnValue(false));
+        $platform = new DefaultPlatform();
 
         $table = $this->getTableMock('books', [
             'database' => $database,
@@ -117,12 +110,7 @@ class ColumnTest extends ModelTestCase
     public function testSetupObjectWithPlatformAndType()
     {
         $database = $this->getDatabaseMock('bookstore');
-        $platform = $this->getPlatformMock();
-        $platform
-            ->expects($this->once())
-            ->method('buildColumnTypeMapping')
-            ->with($this->equalTo(ColumnType::DATE))
-            ->will($this->returnValue($this->getDomainMock('DATE')));
+        $platform = new DefaultPlatform();
 
         $table = $this->getTableMock('books', [
             'database' => $database,

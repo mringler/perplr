@@ -12,6 +12,7 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\TypeMapping;
+use Propel\Generator\Platform\DefaultPlatform;
 
 /**
  */
@@ -36,11 +37,7 @@ class TypeMappingTest extends ModelTestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('provideDomainData')]
     public function testSetupObject($default, $expression)
     {
-        $platform = $this->getPlatformMock();
-        $platform
-            ->expects($this->any())
-            ->method('buildColumnTypeMapping')
-            ->will($this->returnValue(new TypeMapping(ColumnType::BOOLEAN)));
+        $platform = new DefaultPlatform();
 
         $domain = new TypeMapping();
         $domain->setDatabase($this->getDatabaseMock('bookstore', [

@@ -42,12 +42,12 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->setPrimaryKey(true);
         $t1->addColumn($c1);
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c2->setPrimaryKey(true);
         $t2->addColumn($c2);
 
@@ -79,11 +79,11 @@ class PropelTablePkColumnComparatorTest extends TestCase
         $t1 = new Table('');
         $t2 = new Table('');
         $c2 = new Column('Foo');
-        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c2->setPrimaryKey(true);
         $t2->addColumn($c2);
         $c3 = new Column('Bar');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $t2->addColumn($c3);
 
         $tc = new TableComparator();
@@ -103,11 +103,11 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c1->setPrimaryKey(true);
         $t1->addColumn($c1);
         $c2 = new Column('Bar');
-        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $t1->addColumn($c2);
         $t2 = new Table('');
 
@@ -128,7 +128,7 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('Foo');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
@@ -137,7 +137,7 @@ class PropelTablePkColumnComparatorTest extends TestCase
         $t1->addColumn($c1);
         $t2 = new Table('');
         $c2 = new Column('Bar');
-        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c2->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c2->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c2->setNotNull(true);
@@ -164,36 +164,36 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('col1');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::VARCHAR));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c1->getTypeMapping()->setSizeToValueIfNotNull(255);
         $c1->setNotNull(false);
         $t1->addColumn($c1);
         $c2 = new Column('col2');
-        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c2->setNotNull(true);
         $c2->setPrimaryKey(true);
         $t1->addColumn($c2);
         $c3 = new Column('col3');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::VARCHAR));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c3->getTypeMapping()->setSizeToValueIfNotNull(255);
         $c3->setPrimaryKey(true);
         $t1->addColumn($c3);
 
         $t2 = new Table('');
         $c4 = new Column('col1');
-        $c4->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::DOUBLE));
+        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
         $c4->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c4->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c4->setNotNull(true);
         $c4->getTypeMapping()->createDefaultValue(123);
         $t2->addColumn($c4);
         $c5 = new Column('col22');
-        $c5->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c5->setNotNull(true);
         $c5->setPrimaryKey(true);
         $t2->addColumn($c5);
         $c6 = new Column('col4');
-        $c6->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $c6->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $c6->getTypeMapping()->setDefaultValue(new ColumnDefaultValue('123', ColumnDefaultValue::TYPE_VALUE));
         $c6->setPrimaryKey(true);
         $t2->addColumn($c6);
@@ -217,34 +217,34 @@ class PropelTablePkColumnComparatorTest extends TestCase
     {
         $t1 = new Table('');
         $c1 = new Column('col1');
-        $c1->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c1->setNotNull(true);
         $c1->setPrimaryKey(true);
         $t1->addColumn($c1);
         $c2 = new Column('col2');
-        $c2->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c2->setNotNull(true);
         $c2->setPrimaryKey(true);
         $t1->addColumn($c2);
         $c3 = new Column('col3');
-        $c3->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c3->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c3->setNotNull(true);
         $c3->setPrimaryKey(true);
         $t1->addColumn($c3);
 
         $t2 = new Table('');
         $c4 = new Column('col4');
-        $c4->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c4->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c4->setNotNull(true);
         $c4->setPrimaryKey(true);
         $t2->addColumn($c4);
         $c5 = new Column('col5');
-        $c5->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c5->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c5->setNotNull(true);
         $c5->setPrimaryKey(true);
         $t2->addColumn($c5);
         $c6 = new Column('col3');
-        $c6->getTypeMapping()->copy($this->platform->buildColumnTypeMapping(ColumnType::INTEGER));
+        $c6->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c6->setNotNull(true);
         $c6->setPrimaryKey(true);
         $t2->addColumn($c6);
