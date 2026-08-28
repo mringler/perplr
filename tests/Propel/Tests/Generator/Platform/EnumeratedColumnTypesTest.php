@@ -13,7 +13,8 @@ use Propel\Generator\Builder\Om\AbstractOMBuilder;
 use Propel\Generator\Builder\Om\BuilderType;
 use Propel\Generator\Config\QuickGeneratorConfig;
 use Propel\Generator\Model\Column;
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
+use Propel\Generator\Model\Datatype\PhpDatatype;
 use Propel\Generator\Platform\DefaultPlatform;
 use Propel\Generator\Platform\MssqlPlatform;
 use Propel\Generator\Platform\MysqlPlatform;
@@ -43,16 +44,16 @@ class EnumeratedColumnTypesTest extends TestCase
 
         $data = [];
         foreach (array_merge($platformsWithoutNativeType, $platformsWithNativeType) as $platform) {
-            $data[] = [$platform, false, PropelTypes::ENUM , PropelTypes::ENUM_BINARY];
-            $data[] = [$platform, false, PropelTypes::SET, PropelTypes::SET_BINARY];
+            $data[] = [$platform, false, ColumnType::ENUM , ColumnType::ENUM_BINARY];
+            $data[] = [$platform, false, ColumnType::SET, ColumnType::SET_BINARY];
         }
         foreach ($platformsWithoutNativeType as $platform) {
-            $data[] = [$platform, true, PropelTypes::ENUM , PropelTypes::ENUM_BINARY];
-            $data[] = [$platform, true, PropelTypes::SET, PropelTypes::SET_BINARY];
+            $data[] = [$platform, true, ColumnType::ENUM , ColumnType::ENUM_BINARY];
+            $data[] = [$platform, true, ColumnType::SET, ColumnType::SET_BINARY];
         }
         foreach ($platformsWithNativeType as $platform) {
-            $data[] = [$platform, true, PropelTypes::ENUM , PropelTypes::ENUM_NATIVE];
-            $data[] = [$platform, true, PropelTypes::SET, PropelTypes::SET_NATIVE];
+            $data[] = [$platform, true, ColumnType::ENUM , ColumnType::ENUM_NATIVE];
+            $data[] = [$platform, true, ColumnType::SET, ColumnType::SET_NATIVE];
         }
 
         return $data;
@@ -62,16 +63,16 @@ class EnumeratedColumnTypesTest extends TestCase
      *
      * @param class-string<PlatformInterface> $platform
      * @param bool $defaultToNative
-     * @param string $columnType
+     * @param ColumnType $columnType
      * @param string $expectedColumnType
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('EnumAliasProvider')]
-    public function testEnumAliasOnPlatform(string $platformClass, bool $defaultToNative, string $columnType, string $expectedColumnType): void
+    public function testEnumAliasOnPlatform(string $platformClass, bool $defaultToNative, ColumnType $columnType, ColumnType $expectedColumnType): void
     {
-        $columnXml = '<column name="column" type="' . $columnType . '" valueSet="A,B"/>';
+        $columnXml = '<column name="column" type="' . $columnType->name . '" valueSet="A,B"/>';
         $column = $this->buildColumnForPlatform(new $platformClass, $defaultToNative, $columnXml);
-        $actualColumnType = $column->getType();
+        $actualColumnType = $column->getMappingType();
 
         $this->assertSame($expectedColumnType, $actualColumnType);
     }
@@ -82,24 +83,24 @@ class EnumeratedColumnTypesTest extends TestCase
     public static function SqlTypeDataProvider(): array
     {
         return [
-            [PropelTypes::ENUM_BINARY, 'A,B', PropelTypes::TINYINT],
-            [PropelTypes::ENUM_NATIVE, 'A,B', "ENUM('A','B')"],
-            [PropelTypes::SET_BINARY, 'A,B', PropelTypes::INTEGER],
-            [PropelTypes::SET_NATIVE, 'A,B', "SET('A','B')"],
+            [ColumnType::ENUM_BINARY, 'A,B', 'TINYINT'],
+            [ColumnType::ENUM_NATIVE, 'A,B', "ENUM('A','B')"],
+            [ColumnType::SET_BINARY, 'A,B', 'INTEGER'],
+            [ColumnType::SET_NATIVE, 'A,B', "SET('A','B')"],
         ];
     }
 
     /**
      *
-     * @param string $columnType
+     * @param ColumnType $columnType
      * @param string $valueSetCsv
      * @param string $expectedSqlType
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('SqlTypeDataProvider')]
-    public function testSqlType(string $columnType, string $valueSetCsv, string $expectedSqlType): void
+    public function testSqlType(ColumnType $columnType, string $valueSetCsv, string $expectedSqlType): void
     {
-        $columnXml = '<column name="enumerated_column" type="' . $columnType . '" valueSet="' . $valueSetCsv . '"/>';
+        $columnXml = '<column name="enumerated_column" type="' . $columnType->name . '" valueSet="' . $valueSetCsv . '"/>';
         $column = $this->buildColumnForPlatform(new MysqlPlatform(), false, $columnXml);
 
         $this->assertSame($column->getSqlType(), $expectedSqlType);
@@ -129,18 +130,18 @@ class EnumeratedColumnTypesTest extends TestCase
 
     public function testIsPhpBackedEnumType(): void
     {
-        $this->assertTrue(PropelTypes::isPhpBackedEnumType(ColorsBackedEnum::class));
-        $this->assertFalse(PropelTypes::isPhpBackedEnumType(ColorsUnitEnum::class));
-        $this->assertFalse(PropelTypes::isPhpBackedEnumType('string'));
-        $this->assertFalse(PropelTypes::isPhpBackedEnumType(\stdClass::class));
+        $this->assertTrue(PhpDatatype::isPhpBackedEnumType(ColorsBackedEnum::class));
+        $this->assertFalse(PhpDatatype::isPhpBackedEnumType(ColorsUnitEnum::class));
+        $this->assertFalse(PhpDatatype::isPhpBackedEnumType('string'));
+        $this->assertFalse(PhpDatatype::isPhpBackedEnumType(\stdClass::class));
     }
 
     public function testIsPhpUnitEnumType(): void
     {
-        $this->assertTrue(PropelTypes::isPhpUnitEnumType(ColorsUnitEnum::class));
-        $this->assertFalse(PropelTypes::isPhpUnitEnumType(ColorsBackedEnum::class));
-        $this->assertFalse(PropelTypes::isPhpUnitEnumType('string'));
-        $this->assertFalse(PropelTypes::isPhpUnitEnumType(\stdClass::class));
+        $this->assertTrue(PhpDatatype::isPhpUnitEnumType(ColorsUnitEnum::class));
+        $this->assertFalse(PhpDatatype::isPhpUnitEnumType(ColorsBackedEnum::class));
+        $this->assertFalse(PhpDatatype::isPhpUnitEnumType('string'));
+        $this->assertFalse(PhpDatatype::isPhpUnitEnumType(\stdClass::class));
     }
 
 

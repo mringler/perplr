@@ -9,9 +9,9 @@ use Propel\Generator\Builder\Om\TableMapBuilder\TableMapBuilderValidation;
 use Propel\Generator\Builder\Util\EntityObjectClassNames;
 use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PgsqlPlatform;
 use Propel\Generator\Platform\PlatformInterface;
@@ -450,7 +450,7 @@ class $className extends TableMap
         }
 
         $classKeyColumnName = $col->getName();
-        $isNumericKey = $col->isNumericType() && $col->getType() !== PropelTypes::DECIMAL;
+        $isNumericKey = $col->isNumericType() && $col->getMappingType() !== ColumnType::DECIMAL;
         $type = $isNumericKey ? 'int' : 'string';
         $keyToClassName = [];
 
@@ -676,25 +676,26 @@ class $className extends TableMap
         // Add columns to map
         $script .= "
         // columns";
+        $this->declareClass(ColumnType::class);
         foreach ($table->getColumns() as $col) {
             $columnName = $col->getName();
             $phpName = $col->getPhpName();
             $size = $col->getSize() ?: 'null';
             $default = $col->getDefaultValueString();
-            $columnType = $col->getType();
+            $columnType = 'ColumnType::' . $col->getMappingType()->name;
             $isNotNull = $col->isNotNull() ? 'true' : 'false';
 
             if (!$col->isForeignKey()) {
                 $method = $col->isPrimaryKey() ? 'addPrimaryKey' : 'addColumn';
                 $script .= "
-        \$this->$method('$columnName', '$phpName', '$columnType', $isNotNull, $size, $default);";
+        \$this->$method('$columnName', '$phpName', $columnType, $isNotNull, $size, $default);";
             } else {
                 $method = $col->isPrimaryKey() ? 'addForeignPrimaryKey' : 'addForeignKey';
                 foreach ($col->getForeignKeys() as $fk) {
                     $foreignTableName = $fk->getForeignTableName();
                     $mappedForeignColumn = $fk->getMappedForeignColumn($col->getName());
                     $script .= "
-        \$this->$method('$columnName', '$phpName', '$columnType', '$foreignTableName', '$mappedForeignColumn', $isNotNull, $size, $default);";
+        \$this->$method('$columnName', '$phpName', $columnType, '$foreignTableName', '$mappedForeignColumn', $isNotNull, $size, $default);";
                 }
             }
 
@@ -978,8 +979,8 @@ class $className extends TableMap
         $varName = \$row[\$indexType === TableMap::TYPE_NUM ? $index + \$offset : static::translateFieldName('$phpName', TableMap::TYPE_PHPNAME, \$indexType)];";
 
             if (
-                $column->getType() === PropelTypes::OBJECT
-                || ($this->getPlatform() instanceof PgsqlPlatform && $column->getType() === PropelTypes::UUID_BINARY )
+                $column->getMappingType() === ColumnType::OBJECT
+                || ($this->getPlatform() instanceof PgsqlPlatform && $column->getMappingType() === ColumnType::UUID_BINARY )
             ) {
                 $this->declareGlobalFunction('is_resource', 'stream_get_contents', 'is_callable');
                 $script .= "

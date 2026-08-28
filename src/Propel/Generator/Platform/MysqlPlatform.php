@@ -10,12 +10,11 @@ use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\DatabaseDiff;
-use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use Propel\Generator\Platform\Util\MysqlUuidMigrationBuilder;
@@ -44,55 +43,71 @@ use function var_export;
  */
 class MysqlPlatform extends DefaultPlatform
 {
-    /**
-     * @var string
-     */
     protected string $tableEngineKeyword = 'ENGINE';
 
-    /**
-     * @var string
-     */
     protected string $defaultTableEngine = 'InnoDB';
 
-    /**
-     * @var string|null
-     */
     protected string|null $serverVersion = null;
 
-    /**
-     * @var bool
-     */
     protected bool $useUuidNativeType = false;
 
-    /**
-     * @var bool
-     */
     protected bool $ignoreSizeOnIntegerTypes = true;
 
+    protected bool $hasNativeEnumType = true;
+
     /**
-     * Initializes db specific domain mapping.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
-     * @return void
+     * @return \Propel\Generator\Model\Datatype\ColumnType
      */
     #[\Override]
-    protected function initializeTypeMap(): void
+    protected function resolveColumnTypeAlias(ColumnType $type): ColumnType
     {
-        parent::initializeTypeMap();
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BOOLEAN, 'TINYINT', 1));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::NUMERIC, 'DECIMAL'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARCHAR, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BINARY, 'BINARY'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::VARBINARY, 'MEDIUMBLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARBINARY, 'LONGBLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::CLOB, 'LONGTEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::OBJECT, 'MEDIUMBLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::PHP_ARRAY, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::REAL, 'DOUBLE'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID_BINARY, 'BINARY', 16));
+        if ($type === ColumnType::UUID && !$this->useUuidNativeType) {
+            return ColumnType::UUID_BINARY;
+        }
 
-        $this->setUuidTypeMapping();
+        return parent::resolveColumnTypeAlias($type);
+    }
 
-        $this->setSetTypesMapping(true);
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return string|null
+     */
+    #[\Override]
+    protected function resolveSqlType(ColumnType $type): string|null
+    {
+        return match ($type) {
+            ColumnType::NUMERIC => 'DECIMAL',
+            ColumnType::LONGVARCHAR => 'TEXT',
+            ColumnType::BINARY => 'BINARY',
+            ColumnType::VARBINARY,
+            ColumnType::OBJECT,
+            => 'MEDIUMBLOB',
+            ColumnType::LONGVARBINARY => 'LONGBLOB',
+            ColumnType::CLOB => 'LONGTEXT',
+            ColumnType::ARRAY => 'TEXT',
+            ColumnType::REAL => 'DOUBLE',
+            ColumnType::UUID_BINARY => 'BINARY',
+            ColumnType::UUID => 'UUID',
+            default => parent::resolveSqlType($type)
+        };
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     *
+     * @return int|null
+     */
+    #[\Override]
+    protected function resolveTypeSize(ColumnType $type): int|null
+    {
+        return match ($type) {
+            ColumnType::BOOLEAN => 1,
+            ColumnType::UUID_BINARY => 16,
+            default => parent::resolveTypeSize($type)
+        };
     }
 
     /**
@@ -140,23 +155,6 @@ class MysqlPlatform extends DefaultPlatform
     public function setUuidNativeType(bool $enable): void
     {
         $this->useUuidNativeType = $enable;
-        $this->setUuidTypeMapping();
-    }
-
-    /**
-     * Set column type for UUIDs according to MysqlPlatform::useUuidNativeType.
-     *
-     * Currently, only MariaDB has a native UUID type.
-     *
-     * @return void
-     */
-    protected function setUuidTypeMapping(): void
-    {
-        $domain = ($this->useUuidNativeType)
-            ? new Domain(PropelTypes::UUID, 'UUID')
-            : $this->schemaDomainMap[PropelTypes::UUID_BINARY];
-
-        $this->schemaDomainMap[PropelTypes::UUID] = $domain;
     }
 
     /**
@@ -485,26 +483,26 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     #[\Override]
     public function getColumnDDL(Column $col): string
     {
-        $domain = $col->getDomain();
-        $sqlType = $domain->getSqlType();
+        $typeMapping = $col->getTypeMapping();
+        $sqlType = $typeMapping->getSqlType();
         $notNullString = $this->getNullString($col->isNotNull());
         $defaultSetting = $this->getColumnDefaultValueDDL($col);
 
         // Special handling of TIMESTAMP/DATETIME types ...
         // See: http://propel.phpdb.org/trac/ticket/538
         if ($sqlType === 'DATETIME') {
-            $def = $domain->getDefaultValue();
+            $def = $typeMapping->getDefaultValue();
             if ($def && $def->isExpression()) {
                 // DATETIME values can only have constant expressions
                 $sqlType = 'TIMESTAMP';
             }
         } elseif ($sqlType === 'DATE') {
-            $def = $domain->getDefaultValue();
+            $def = $typeMapping->getDefaultValue();
             if ($def && $def->isExpression()) {
                 throw new EngineException('DATE columns cannot have default *expressions* in MySQL.');
             }
         } elseif ($sqlType === 'BLOB') {
-            if ($domain->getDefaultValue()) {
+            if ($typeMapping->getDefaultValue()) {
                 throw new EngineException('BLOB columns cannot have DEFAULT values in MySQL.');
             }
         }
@@ -571,7 +569,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     /**
      * Returns the SQL type as a string.
      *
-     * @see Domain::getSqlType()
+     * @see TypeMapping::getSqlType()
      *
      * @param \Propel\Generator\Model\Column $column
      *
@@ -926,7 +924,7 @@ ALTER TABLE %s DROP %s;
         }
 
         // binary column from database does not know it is a UUID column
-        $fromBinaryColumn = in_array($fromColumn->getType(), [PropelTypes::BINARY, PropelTypes::UUID_BINARY], true);
+        $fromBinaryColumn = in_array($fromColumn->getMappingType(), [ColumnType::BINARY, ColumnType::UUID_BINARY], true);
         if ($fromBinaryColumn && $toColumn->isTextType() && $toColumn->isContent('UUID')) {
             return $this->getChangeColumnFromUuidBinaryType($fromColumn, $toColumn);
         }
@@ -1052,10 +1050,10 @@ ALTER TABLE %s ADD %s %s;
         if ($this->ignoreSizeOnIntegerTypes) {
             array_push(
                 $unSizedTypes,
-                PropelTypes::BIGINT,
-                PropelTypes::INTEGER,
-                PropelTypes::SMALLINT,
-                PropelTypes::TINYINT,
+                'BIGINT',
+                'INTEGER',
+                'SMALLINT',
+                'TINYINT',
             );
         }
 

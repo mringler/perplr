@@ -7,9 +7,9 @@ namespace Propel\Generator\Reverse;
 use PDO;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use RuntimeException;
@@ -35,56 +35,6 @@ use function trim;
 class PgsqlSchemaParser extends AbstractSchemaParser
 {
     /**
-     * Map PostgreSQL native types to Propel types.
-     *
-     * @var array<string>
-     */
-    private static $pgsqlTypeMap = [
-        'bool' => PropelTypes::BOOLEAN,
-        'boolean' => PropelTypes::BOOLEAN,
-        'tinyint' => PropelTypes::TINYINT,
-        'smallint' => PropelTypes::SMALLINT,
-        'mediumint' => PropelTypes::SMALLINT,
-        'int2' => PropelTypes::SMALLINT,
-        'int' => PropelTypes::INTEGER,
-        'int4' => PropelTypes::INTEGER,
-        'serial4' => PropelTypes::INTEGER,
-        'integer' => PropelTypes::INTEGER,
-        'int8' => PropelTypes::BIGINT,
-        'bigint' => PropelTypes::BIGINT,
-        'bigserial' => PropelTypes::BIGINT,
-        'serial8' => PropelTypes::BIGINT,
-        'int24' => PropelTypes::BIGINT,
-        'real' => PropelTypes::REAL,
-        'float' => PropelTypes::FLOAT,
-        'float4' => PropelTypes::REAL,
-        'decimal' => PropelTypes::DECIMAL,
-        'numeric' => PropelTypes::DECIMAL,
-        'double' => PropelTypes::DOUBLE,
-        'float8' => PropelTypes::DOUBLE,
-        'char' => PropelTypes::CHAR,
-        'character' => PropelTypes::CHAR,
-        'character varying' => PropelTypes::VARCHAR,
-        'varchar' => PropelTypes::VARCHAR,
-        'date' => PropelTypes::DATE,
-        'time' => PropelTypes::TIME,
-        'timetz' => PropelTypes::TIME,
-        //'year' => PropelTypes::YEAR,  PropelTypes::YEAR does not exist... does this need to be mapped to a different propel type?
-        'datetime' => PropelTypes::TIMESTAMP,
-        'timestamp' => PropelTypes::TIMESTAMP,
-        'timestamptz' => PropelTypes::TIMESTAMP,
-        'bytea' => PropelTypes::BLOB,
-        'text' => PropelTypes::LONGVARCHAR,
-        'time without time zone' => PropelTypes::TIME,
-        'time with time zone' => PropelTypes::TIME,
-        'timestamp without time zone' => PropelTypes::TIMESTAMP,
-        'timestamp with time zone' => PropelTypes::TIMESTAMP,
-        'double precision' => PropelTypes::DOUBLE,
-        'json' => PropelTypes::JSON,
-        'uuid' => PropelTypes::UUID,
-    ];
-
-    /**
      * @var array<int>
      */
     protected static $defaultTypeSizes = [
@@ -99,12 +49,55 @@ class PgsqlSchemaParser extends AbstractSchemaParser
     /**
      * Gets a type mapping from native types to Propel types
      *
-     * @return array<string>
+     * @return array<\Propel\Generator\Model\Datatype\ColumnType>
      */
     #[\Override]
-    protected function getTypeMapping(): array
+    protected function buildTypeMapping(): array
     {
-        return self::$pgsqlTypeMap;
+        return [
+            'bool' => ColumnType::BOOLEAN,
+            'boolean' => ColumnType::BOOLEAN,
+            'tinyint' => ColumnType::TINYINT,
+            'smallint' => ColumnType::SMALLINT,
+            'mediumint' => ColumnType::SMALLINT,
+            'int2' => ColumnType::SMALLINT,
+            'int' => ColumnType::INTEGER,
+            'int4' => ColumnType::INTEGER,
+            'serial4' => ColumnType::INTEGER,
+            'integer' => ColumnType::INTEGER,
+            'int8' => ColumnType::BIGINT,
+            'bigint' => ColumnType::BIGINT,
+            'bigserial' => ColumnType::BIGINT,
+            'serial8' => ColumnType::BIGINT,
+            'int24' => ColumnType::BIGINT,
+            'real' => ColumnType::REAL,
+            'float' => ColumnType::FLOAT,
+            'float4' => ColumnType::REAL,
+            'decimal' => ColumnType::DECIMAL,
+            'numeric' => ColumnType::DECIMAL,
+            'double' => ColumnType::DOUBLE,
+            'float8' => ColumnType::DOUBLE,
+            'char' => ColumnType::CHAR,
+            'character' => ColumnType::CHAR,
+            'character varying' => ColumnType::VARCHAR,
+            'varchar' => ColumnType::VARCHAR,
+            'date' => ColumnType::DATE,
+            'time' => ColumnType::TIME,
+            'timetz' => ColumnType::TIME,
+            //'year' => ColumnType::YEAR,  ColumnType::YEAR does not exist... does this need to be mapped to a different propel type?
+            'datetime' => ColumnType::TIMESTAMP,
+            'timestamp' => ColumnType::TIMESTAMP,
+            'timestamptz' => ColumnType::TIMESTAMP,
+            'bytea' => ColumnType::BLOB,
+            'text' => ColumnType::LONGVARCHAR,
+            'time without time zone' => ColumnType::TIME,
+            'time with time zone' => ColumnType::TIME,
+            'timestamp without time zone' => ColumnType::TIMESTAMP,
+            'timestamp with time zone' => ColumnType::TIMESTAMP,
+            'double precision' => ColumnType::DOUBLE,
+            'json' => ColumnType::JSON,
+            'uuid' => ColumnType::UUID,
+        ];
     }
 
     /**
@@ -335,10 +328,10 @@ class PgsqlSchemaParser extends AbstractSchemaParser
 
             $column = new Column($name);
             $column->setTable($table);
-            $column->setDomainForType($propelType);
-            $column->getDomain()->replaceSize($size);
+            $column->setUpTypeMapping($propelType);
+            $column->getTypeMapping()->setSizeToValueIfNotNull($size);
             if ($scale) {
-                $column->getDomain()->replaceScale($scale);
+                $column->getTypeMapping()->setScaleToValueIfNotNull($scale);
             }
 
             if ($default !== null) {
@@ -346,7 +339,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
                 if (!$isExpression) {
                     $default = str_replace("'", '', $strDefault);
                 }
-                $column->getDomain()->createDefaultValue($default, $isExpression);
+                $column->getTypeMapping()->createDefaultValue($default, $isExpression);
             }
 
             $column->setAutoIncrement((bool)$autoincrement);

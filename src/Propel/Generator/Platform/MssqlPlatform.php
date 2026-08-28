@@ -5,9 +5,8 @@ declare(strict_types = 1);
 namespace Propel\Generator\Platform;
 
 use Propel\Generator\Model\Database;
-use Propel\Generator\Model\Domain;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use function in_array;
@@ -25,36 +24,40 @@ class MssqlPlatform extends DefaultPlatform
     protected static $dropCount = 0;
 
     /**
-     * Initializes db specific domain mapping.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
-     * @return void
+     * @return string|null
      */
     #[\Override]
-    protected function initialize(): void
+    protected function resolveSqlType(ColumnType $type): string|null
     {
-        parent::initialize();
-
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::INTEGER, 'INT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BOOLEAN, 'INT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DOUBLE, 'FLOAT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARCHAR, 'VARCHAR(MAX)'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::CLOB, 'VARCHAR(MAX)'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DATE, 'DATE'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DATETIME, 'DATETIME2'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BU_DATE, 'DATE'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::TIME, 'TIME'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::TIMESTAMP, 'DATETIME2'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BU_TIMESTAMP, 'DATETIME2'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BINARY, 'BINARY(7132)'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::VARBINARY, 'VARBINARY(MAX)'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARBINARY, 'VARBINARY(MAX)'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BLOB, 'VARBINARY(MAX)'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::OBJECT, 'VARBINARY(MAX)'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::PHP_ARRAY, 'VARCHAR(MAX)'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID, 'UNIQUEIDENTIFIER'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID_BINARY, 'BINARY(16)'));
-
-        $this->setSetTypesMapping(false);
+        return match ($type) {
+            ColumnType::INTEGER,
+            ColumnType::BOOLEAN,
+            => 'INT',
+            ColumnType::DOUBLE => 'FLOAT',
+            ColumnType::LONGVARCHAR,
+            ColumnType::CLOB,
+            ColumnType::ARRAY,
+            => 'VARCHAR(MAX)',
+            ColumnType::DATE,
+            ColumnType::BU_DATE,
+            => 'DATE',
+            ColumnType::DATETIME,
+            ColumnType::TIMESTAMP,
+            ColumnType::BU_TIMESTAMP,
+             => 'DATETIME2',
+            ColumnType::TIME => 'TIME',
+            ColumnType::BINARY => 'BINARY(7132)',
+            ColumnType::VARBINARY,
+            ColumnType::LONGVARBINARY,
+            ColumnType::BLOB,
+            ColumnType::OBJECT,
+            => 'VARBINARY(MAX)',
+            ColumnType::UUID => 'UNIQUEIDENTIFIER',
+            ColumnType::UUID_BINARY => 'BINARY(16)',
+            default => parent::resolveSqlType($type)
+        };
     }
 
     /**

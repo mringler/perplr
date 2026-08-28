@@ -24,7 +24,6 @@ use Propel\Generator\Exception\LogicException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Inheritance;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PlatformInterface;
 use function array_map;
@@ -646,11 +645,9 @@ abstract class DataModelBuilder
      */
     public function resolveColumnDateTimeClass(Column $column): string
     {
-        if (PropelTypes::isPhpObjectType($column->getPhpType())) {
-            return $column->getPhpType();
-        }
-
-        return $this->getBuildPropertyString('generator.dateTime.dateTimeClass') ?: '\DateTime';
+        return $column->isPhpObjectType()
+            ? $column->getPhpType()
+            : ($this->getBuildPropertyString('generator.dateTime.dateTimeClass') ?: '\DateTime');
     }
 
     /**

@@ -5,11 +5,11 @@ declare(strict_types = 1);
 namespace Propel\Generator\Reverse;
 
 use Propel\Generator\Config\AbstractGeneratorConfig;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\VendorInfo;
 use Propel\Generator\Platform\PlatformInterface;
 use Propel\Runtime\Connection\ConnectionInterface;
 use RuntimeException;
-use function array_flip;
 
 /**
  * Base class for reverse engineering a database schema.
@@ -41,7 +41,7 @@ abstract class AbstractSchemaParser implements SchemaParserInterface
      * Map native DB types to Propel types.
      * (Override in subclasses.)
      *
-     * @var array
+     * @var array<\Propel\Generator\Model\Datatype\ColumnType>
      */
     protected $nativeToPropelTypeMap;
 
@@ -173,40 +173,24 @@ abstract class AbstractSchemaParser implements SchemaParserInterface
     /**
      * Gets a type mapping from native type to Propel type.
      *
-     * @return array<string> The mapped Propel type.
+     * @return array<\Propel\Generator\Model\Datatype\ColumnType>
      */
-    abstract protected function getTypeMapping(): array;
+    abstract protected function buildTypeMapping(): array;
 
     /**
      * Gets a mapped Propel type for specified native type.
      *
      * @param string $nativeType
      *
-     * @return string|null The mapped Propel type.
+     * @return \Propel\Generator\Model\Datatype\ColumnType|null The mapped Propel type.
      */
-    protected function getMappedPropelType(string $nativeType): ?string
+    protected function getMappedPropelType(string $nativeType): ?ColumnType
     {
         if ($this->nativeToPropelTypeMap === null) {
-            $this->nativeToPropelTypeMap = $this->getTypeMapping();
+            $this->nativeToPropelTypeMap = $this->buildTypeMapping();
         }
 
         return $this->nativeToPropelTypeMap[$nativeType] ?? null;
-    }
-
-    /**
-     * Give a best guess at the native type.
-     *
-     * @param string $propelType
-     *
-     * @return string|null The native SQL type that best matches the specified Propel type.
-     */
-    protected function getMappedNativeType(string $propelType): ?string
-    {
-        if ($this->reverseTypeMap === null) {
-            $this->reverseTypeMap = array_flip($this->getTypeMapping());
-        }
-
-        return $this->reverseTypeMap[$propelType] ?? null;
     }
 
     /**

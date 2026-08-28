@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Propel\Runtime\Map;
 
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Runtime\Adapter\AdapterInterface;
 use Propel\Runtime\Map\Exception\ForeignKeyNotFoundException;
 use function array_key_exists;
@@ -28,108 +28,52 @@ use function trim;
  */
 class ColumnMap
 {
-    /**
-     * Propel type of the column
-     *
-     * @var string
-     */
-    protected $type;
+    protected string $columnName;
+
+    protected string $phpName;
+
+    protected TableMap $table;
+
+    protected ColumnType $typeMapping;
+
+    protected int $size = 0;
+
+    protected bool $pk = false;
+
+    protected bool $notNull = false;
 
     /**
-     * Size of the column
-     *
-     * @var int
-     */
-    protected $size = 0;
-
-    /**
-     * Is it a primary key?
-     *
-     * @var bool
-     */
-    protected $pk = false;
-
-    /**
-     * Is null value allowed?
-     *
-     * @var bool
-     */
-    protected $notNull = false;
-
-    /**
-     * The default value for this column
-     *
      * @var scalar|null
      */
     protected $defaultValue;
 
-    /**
-     * Name of the table that this column is related to
-     *
-     * @var string
-     */
-    protected $relatedTableName = '';
+    protected string $relatedTableName = '';
+
+    protected string $relatedColumnName = '';
 
     /**
-     * Name of the column that this column is related to
-     *
-     * @var string
+     * Values for ENUM or SET column
      */
-    protected $relatedColumnName = '';
+    protected array $valueSet = [];
 
-    /**
-     * The TableMap for this column
-     *
-     * @var \Propel\Runtime\Map\TableMap
-     */
-    protected $table;
-
-    /**
-     * The name of the column
-     *
-     * @var string
-     */
-    protected $columnName;
-
-    /**
-     * The php name of the column
-     *
-     * @var string
-     */
-    protected $phpName;
-
-    /**
-     * The allowed values for an ENUM or SET column
-     *
-     * @var array
-     */
-    protected $valueSet = [];
-
-    /**
-     * Is this a primaryString column?
-     *
-     * @var bool
-     */
-    protected $isPkString = false;
+    protected bool $isPkString = false;
 
     /**
      * @param string $name The name of the column.
      * @param \Propel\Runtime\Map\TableMap $containingTable TableMap of the table this column is in.
      * @param string $phpName The php name of the column.
-     * @param string $type A string specifying the Propel type.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type A string specifying the Propel type.
      */
-    public function __construct(string $name, TableMap $containingTable, string $phpName, string $type)
+    public function __construct(string $name, TableMap $containingTable, string $phpName, ColumnType $type)
     {
         $this->columnName = $name;
         $this->table = $containingTable;
         $this->phpName = $phpName;
-        $this->type = $type;
+        $this->typeMapping = $type;
     }
 
     /**
-     * Get the name of a column.
-     *
-     * @return string A String with the column name.
+     * @return string
      */
     public function getName(): string
     {
@@ -138,8 +82,6 @@ class ColumnMap
 
     /**
      * @deprecated use aptly named getTableMap().
-     *
-     * Get the table map this column belongs to.
      *
      * @return \Propel\Runtime\Map\TableMap
      */
@@ -203,33 +145,29 @@ class ColumnMap
     /**
      * Set the Propel type of this column.
      *
-     * @param string $type A string representing the Propel type (e.g. PropelTypes::DATE).
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
      * @return void
      */
-    public function setType(string $type): void
+    public function setType(ColumnType $type): void
     {
-        $this->type = $type;
+        $this->typeMapping = $type;
     }
 
     /**
-     * Get the Propel type of this column.
-     *
-     * @return string A string representing the Propel type (e.g. PropelTypes::DATE).
+     * @return \Propel\Generator\Model\Datatype\ColumnType
      */
-    public function getType(): string
+    public function getTypeMapping(): ColumnType
     {
-        return $this->type;
+        return $this->typeMapping;
     }
 
     /**
-     * Get the PDO type of this column.
-     *
      * @return int The PDO::PARAM_* value
      */
     public function getPdoType(): int
     {
-        return PropelTypes::getPdoType($this->type);
+        return $this->typeMapping->toPdoType();
     }
 
     /**
@@ -239,10 +177,10 @@ class ColumnMap
      */
     public function isLob(): bool
     {
-        return in_array($this->type, [
-            PropelTypes::BLOB,
-            PropelTypes::VARBINARY,
-            PropelTypes::LONGVARBINARY,
+        return in_array($this->typeMapping, [
+            ColumnType::BLOB,
+            ColumnType::VARBINARY,
+            ColumnType::LONGVARBINARY,
         ], true);
     }
 
@@ -253,14 +191,7 @@ class ColumnMap
      */
     public function isTemporal(): bool
     {
-        return in_array($this->type, [
-            PropelTypes::TIMESTAMP,
-            PropelTypes::DATE,
-            PropelTypes::DATETIME,
-            PropelTypes::TIME,
-            PropelTypes::BU_DATE,
-            PropelTypes::BU_TIMESTAMP,
-        ], true);
+        return $this->typeMapping->isTemporalType();
     }
 
     /**
@@ -270,27 +201,15 @@ class ColumnMap
      */
     public function isNumeric(): bool
     {
-        return in_array($this->type, [
-            PropelTypes::NUMERIC,
-            PropelTypes::DECIMAL,
-            PropelTypes::TINYINT,
-            PropelTypes::SMALLINT,
-            PropelTypes::INTEGER,
-            PropelTypes::BIGINT,
-            PropelTypes::REAL,
-            PropelTypes::FLOAT,
-            PropelTypes::DOUBLE,
-        ], true);
+        return $this->typeMapping->isNumericType();
     }
 
     /**
-     * @deprecated Check against PropelTypes::SET_BINARY directly
-     *
      * @return bool
      */
     public function isSetType(): bool
     {
-        return $this->type === PropelTypes::SET_BINARY;
+        return $this->typeMapping === ColumnType::SET_BINARY;
     }
 
     /**
@@ -300,10 +219,10 @@ class ColumnMap
      */
     public function isText(): bool
     {
-        return in_array($this->type, [
-            PropelTypes::VARCHAR,
-            PropelTypes::LONGVARCHAR,
-            PropelTypes::CHAR,
+        return in_array($this->typeMapping, [
+            ColumnType::VARCHAR,
+            ColumnType::LONGVARCHAR,
+            ColumnType::CHAR,
         ], true);
     }
 
@@ -314,7 +233,7 @@ class ColumnMap
      */
     public function isUuid(): bool
     {
-        return PropelTypes::isUuidType($this->type);
+        return $this->typeMapping->isUuidType();
     }
 
     /**
@@ -362,21 +281,17 @@ class ColumnMap
     }
 
     /**
-     * Set if this column may be null.
-     *
-     * @param bool $nn True if column may be null.
+     * @param bool $isNotNull
      *
      * @return void
      */
-    public function setNotNull(bool $nn): void
+    public function setNotNull(bool $isNotNull): void
     {
-        $this->notNull = $nn;
+        $this->notNull = $isNotNull;
     }
 
     /**
-     * Is null value allowed ?
-     *
-     * @return bool True if column may not be null.
+     * @return bool
      */
     public function isNotNull(): bool
     {
@@ -446,14 +361,14 @@ class ColumnMap
             return null;
         }
 
+        $nameFq = $this->getFullyQualifiedName();
         foreach ($this->getTableMap()->getRelations() as $relation) {
-            if ($relation->getType() === RelationMap::MANY_TO_ONE) {
-                if (
-                    $relation->getForeignTable()->getName() === $this->getRelatedTableName()
-                    && array_key_exists($this->getFullyQualifiedName(), $relation->getColumnMappings())
-                ) {
-                    return $relation;
-                }
+            if (
+                $relation->getType() === RelationMap::MANY_TO_ONE &&
+                $relation->getForeignTable()->getName() === $this->getRelatedTableName() &&
+                array_key_exists($nameFq, $relation->getColumnMappings())
+            ) {
+                return $relation;
             }
         }
 

@@ -10,6 +10,7 @@ namespace Propel\Tests\Generator\Model\Diff;
 
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnComparator;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\MysqlPlatform;
@@ -39,17 +40,17 @@ class ColumnComparatorTest extends TestCase
     public function testCompareNoDifference()
     {
         $c1 = new Column('');
-        $c1->getDomain()->copy($this->platform->getDomainForType('DOUBLE'));
-        $c1->getDomain()->replaceScale(2);
-        $c1->getDomain()->replaceSize(3);
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c1->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c1->setNotNull(true);
-        $c1->getDomain()->createDefaultValue(123);
+        $c1->getTypeMapping()->createDefaultValue(123);
         $c2 = new Column('');
-        $c2->getDomain()->copy($this->platform->getDomainForType('DOUBLE'));
-        $c2->getDomain()->replaceScale(2);
-        $c2->getDomain()->replaceSize(3);
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c2->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c2->setNotNull(true);
-        $c2->getDomain()->createDefaultValue(123);
+        $c2->getTypeMapping()->createDefaultValue(123);
         $this->assertEquals([], ColumnComparator::compareColumns($c1, $c2));
     }
 
@@ -59,11 +60,11 @@ class ColumnComparatorTest extends TestCase
     public function testCompareType()
     {
         $c1 = new Column('');
-        $c1->getDomain()->copy($this->platform->getDomainForType('VARCHAR'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::VARCHAR));
         $c2 = new Column('');
-        $c2->getDomain()->copy($this->platform->getDomainForType('LONGVARCHAR'));
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $expectedChangedProperties = [
-            'type' => ['VARCHAR', 'LONGVARCHAR'],
+            'type' => [ColumnType::VARCHAR, ColumnType::LONGVARCHAR],
             'sqlType' => ['VARCHAR', 'TEXT'],
         ];
         $this->assertEquals($expectedChangedProperties, ColumnComparator::compareColumns($c1, $c2));
@@ -75,9 +76,9 @@ class ColumnComparatorTest extends TestCase
     public function testCompareScale()
     {
         $c1 = new Column('');
-        $c1->getDomain()->replaceScale(2);
+        $c1->getTypeMapping()->setScaleToValueIfNotNull(2);
         $c2 = new Column('');
-        $c2->getDomain()->replaceScale(3);
+        $c2->getTypeMapping()->setScaleToValueIfNotNull(3);
         $expectedChangedProperties = ['scale' => [2, 3]];
         $this->assertEquals($expectedChangedProperties, ColumnComparator::compareColumns($c1, $c2));
     }
@@ -88,9 +89,9 @@ class ColumnComparatorTest extends TestCase
     public function testCompareSize()
     {
         $c1 = new Column('');
-        $c1->getDomain()->replaceSize(2);
+        $c1->getTypeMapping()->setSizeToValueIfNotNull(2);
         $c2 = new Column('');
-        $c2->getDomain()->replaceSize(3);
+        $c2->getTypeMapping()->setSizeToValueIfNotNull(3);
         $expectedChangedProperties = ['size' => [2, 3]];
         $this->assertEquals($expectedChangedProperties, ColumnComparator::compareColumns($c1, $c2));
     }
@@ -101,10 +102,10 @@ class ColumnComparatorTest extends TestCase
     public function testCompareSqlType()
     {
         $c1 = new Column('');
-        $c1->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c2 = new Column('');
-        $c2->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
-        $c2->getDomain()->setSqlType('INTEGER(10) UNSIGNED');
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
+        $c2->getTypeMapping()->setSqlType('INTEGER(10) UNSIGNED');
         $expectedChangedProperties = ['sqlType' => ['INTEGER', 'INTEGER(10) UNSIGNED']];
         $this->assertEquals($expectedChangedProperties, ColumnComparator::compareColumns($c1, $c2));
     }
@@ -128,7 +129,7 @@ class ColumnComparatorTest extends TestCase
     public function testCompareDefaultValueToNull()
     {
         $c1 = new Column('');
-        $c1->getDomain()->createDefaultValue(123);
+        $c1->getTypeMapping()->createDefaultValue(123);
         $c2 = new Column('');
         $expectedChangedProperties = [
             'defaultValueType' => [ColumnDefaultValue::TYPE_VALUE, null],
@@ -144,7 +145,7 @@ class ColumnComparatorTest extends TestCase
     {
         $c1 = new Column('');
         $c2 = new Column('');
-        $c2->getDomain()->createDefaultValue(123);
+        $c2->getTypeMapping()->createDefaultValue(123);
         $expectedChangedProperties = [
             'defaultValueType' => [null, ColumnDefaultValue::TYPE_VALUE],
             'defaultValueValue' => [null, 123],
@@ -158,9 +159,9 @@ class ColumnComparatorTest extends TestCase
     public function testCompareDefaultValueValue()
     {
         $c1 = new Column('');
-        $c1->getDomain()->createDefaultValue(123);
+        $c1->getTypeMapping()->createDefaultValue(123);
         $c2 = new Column('');
-        $c2->getDomain()->createDefaultValue(456);
+        $c2->getTypeMapping()->createDefaultValue(456);
         $expectedChangedProperties = [
             'defaultValueValue' => [123, 456],
         ];
@@ -173,9 +174,9 @@ class ColumnComparatorTest extends TestCase
     public function testCompareDefaultValueType()
     {
         $c1 = new Column('');
-        $c1->getDomain()->createDefaultValue(123);
+        $c1->getTypeMapping()->createDefaultValue(123);
         $c2 = new Column('');
-        $c2->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_EXPR));
+        $c2->getTypeMapping()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_EXPR));
         $expectedChangedProperties = [
             'defaultValueType' => [ColumnDefaultValue::TYPE_VALUE, ColumnDefaultValue::TYPE_EXPR],
         ];
@@ -190,9 +191,9 @@ class ColumnComparatorTest extends TestCase
     public function testCompareDefaultExrpCurrentTimestamp()
     {
         $c1 = new Column('');
-        $c1->getDomain()->setDefaultValue(new ColumnDefaultValue('NOW()', ColumnDefaultValue::TYPE_EXPR));
+        $c1->getTypeMapping()->setDefaultValue(new ColumnDefaultValue('NOW()', ColumnDefaultValue::TYPE_EXPR));
         $c2 = new Column('');
-        $c2->getDomain()->setDefaultValue(new ColumnDefaultValue('CURRENT_TIMESTAMP', ColumnDefaultValue::TYPE_EXPR));
+        $c2->getTypeMapping()->setDefaultValue(new ColumnDefaultValue('CURRENT_TIMESTAMP', ColumnDefaultValue::TYPE_EXPR));
         $this->assertEquals([], ColumnComparator::compareColumns($c1, $c2));
     }
 
@@ -215,16 +216,16 @@ class ColumnComparatorTest extends TestCase
     public function testCompareMultipleDifferences()
     {
         $c1 = new Column('');
-        $c1->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+        $c1->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::INTEGER));
         $c1->setNotNull(false);
         $c2 = new Column('');
-        $c2->getDomain()->copy($this->platform->getDomainForType('DOUBLE'));
-        $c2->getDomain()->replaceScale(2);
-        $c2->getDomain()->replaceSize(3);
+        $c2->getTypeMapping()->copy($this->platform->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $c2->getTypeMapping()->setSizeToValueIfNotNull(3);
         $c2->setNotNull(true);
-        $c2->getDomain()->createDefaultValue(123);
+        $c2->getTypeMapping()->createDefaultValue(123);
         $expectedChangedProperties = [
-            'type' => ['INTEGER', 'DOUBLE'],
+            'type' => [ColumnType::INTEGER, ColumnType::DOUBLE],
             'sqlType' => ['INTEGER', 'DOUBLE'],
             'scale' => [null, 2],
             'size' => [null, 3],
@@ -241,17 +242,17 @@ class ColumnComparatorTest extends TestCase
     public function testIgnoreIntegerSizeOnMySQL()
     {
         $platform = new MysqlPlatform();
-        $domain = clone $platform->getDomainForType('INTEGER');
+        $domain = clone $platform->getColumnTypeMapping(ColumnType::INTEGER);
 
         $tableStub = $this->createStub(Table::class);
         $tableStub->method('getPlatform')->willReturn($platform);
 
         $fromColumn = new Column('foo');
         $fromColumn->setTable($tableStub);
-        $fromColumn->setDomain($domain);
+        $fromColumn->setTypeMapping($domain);
 
         $toColumn = clone $fromColumn;
-        $toColumn->getDomain()->setSize(5);
+        $toColumn->getTypeMapping()->setSize(5);
 
         $hasChange = ColumnComparator::computeDiff($fromColumn, $toColumn);
         $this->assertFalse($hasChange, 'Changing integer column size should not build diff on MySQL');

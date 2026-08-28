@@ -9,6 +9,7 @@
 namespace Propel\Tests\Runtime\Map;
 
 use Exception;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Map\ColumnMap;
 use Propel\Runtime\Map\DatabaseMap;
@@ -96,7 +97,7 @@ class TableMapTest extends TestCase
     public function testHasColumn()
     {
         $this->assertFalse($this->tmap->hasColumn('BAR'), 'hascolumn() returns false when the column is not in the table map');
-        $column = $this->tmap->addColumn('BAR', 'Bar', 'INTEGER');
+        $column = $this->tmap->addColumn('BAR', 'Bar', ColumnType::INTEGER);
         $this->assertTrue($this->tmap->hasColumn('BAR'), 'hascolumn() returns true when the column is in the table map');
         $this->assertTrue($this->tmap->hasColumn('foo.bar'), 'hascolumn() accepts a denormalized column name');
         $this->assertFalse($this->tmap->hasColumn('foo.bar', false), 'hascolumn() accepts a $normalize parameter to skip name normalization');
@@ -109,7 +110,7 @@ class TableMapTest extends TestCase
      */
     public function testGetColumn()
     {
-        $column = $this->tmap->addColumn('BAR', 'Bar', 'INTEGER');
+        $column = $this->tmap->addColumn('BAR', 'Bar', ColumnType::INTEGER);
         $this->assertEquals($column, $this->tmap->getColumn('BAR'), 'getColumn returns a ColumnMap according to a column name');
         try {
             $this->tmap->getColumn('FOO');
@@ -129,7 +130,7 @@ class TableMapTest extends TestCase
      */
     public function testGetColumnByPhpName()
     {
-        $column = $this->tmap->addColumn('BAR_BAZ', 'BarBaz', 'INTEGER');
+        $column = $this->tmap->addColumn('BAR_BAZ', 'BarBaz', ColumnType::INTEGER);
         $this->assertEquals($column, $this->tmap->getColumnByPhpName('BarBaz'), 'getColumnByPhpName() returns a ColumnMap according to a column phpName');
         try {
             $this->tmap->getColumn('Foo');
@@ -144,8 +145,8 @@ class TableMapTest extends TestCase
     public function testGetColumns()
     {
         $this->assertEquals([], $this->tmap->getColumns(), 'getColumns returns an empty array when no columns were added');
-        $column1 = $this->tmap->addColumn('BAR', 'Bar', 'INTEGER');
-        $column2 = $this->tmap->addColumn('BAZ', 'Baz', 'INTEGER');
+        $column1 = $this->tmap->addColumn('BAR', 'Bar', ColumnType::INTEGER);
+        $column2 = $this->tmap->addColumn('BAZ', 'Baz', ColumnType::INTEGER);
         $this->assertEquals(['BAR' => $column1, 'BAZ' => $column2], $this->tmap->getColumns(), 'getColumns returns the columns indexed by name');
     }
 
@@ -155,7 +156,7 @@ class TableMapTest extends TestCase
     public function testFindColumnsByName()
     {
         $this->assertNull($this->tmap->findColumnByName('LeName'), 'findColumnByName() should return null on empty map');
-        $column = $this->tmap->addColumn('BAR', 'Bar', 'INTEGER');
+        $column = $this->tmap->addColumn('BAR', 'Bar', ColumnType::INTEGER);
         $this->assertEquals($column, $this->tmap->findColumnByName('BAR'), 'findColumnByName() should find column if regular name matches');
         $this->assertEquals($column, $this->tmap->findColumnByName('Bar'), 'findColumnByName() should find column if phpName matches');
         $this->assertEquals($column, $this->tmap->findColumnByName('table.bar'), 'findColumnByName() should try normalizing input name');
@@ -166,15 +167,15 @@ class TableMapTest extends TestCase
      */
     public function testAddPrimaryKey()
     {
-        $column1 = $this->tmap->addPrimaryKey('BAR', 'Bar', 'INTEGER');
+        $column1 = $this->tmap->addPrimaryKey('BAR', 'Bar', ColumnType::INTEGER);
         $this->assertTrue($column1->isPrimaryKey(), 'Columns added by way of addPrimaryKey() are primary keys');
-        $column2 = $this->tmap->addColumn('BAZ', 'Baz', 'INTEGER');
+        $column2 = $this->tmap->addColumn('BAZ', 'Baz', ColumnType::INTEGER);
         $this->assertFalse($column2->isPrimaryKey(), 'Columns added by way of addColumn() are not primary keys by default');
-        $column3 = $this->tmap->addColumn('BAZZ', 'Bazz', 'INTEGER', false, null, null, true);
+        $column3 = $this->tmap->addColumn('BAZZ', 'Bazz', ColumnType::INTEGER, false, null, null, true);
         $this->assertTrue($column3->isPrimaryKey(), 'Columns added by way of addColumn() can be defined as primary keys');
-        $column4 = $this->tmap->addForeignKey('BAZZZ', 'Bazzz', 'INTEGER', 'Table1', 'column1');
+        $column4 = $this->tmap->addForeignKey('BAZZZ', 'Bazzz', ColumnType::INTEGER, 'Table1', 'column1');
         $this->assertFalse($column4->isPrimaryKey(), 'Columns added by way of addForeignKey() are not primary keys');
-        $column5 = $this->tmap->addForeignPrimaryKey('BAZZZZ', 'Bazzzz', 'INTEGER', 'table1', 'column1');
+        $column5 = $this->tmap->addForeignPrimaryKey('BAZZZZ', 'Bazzzz', ColumnType::INTEGER, 'table1', 'column1');
         $this->assertTrue($column5->isPrimaryKey(), 'Columns added by way of addForeignPrimaryKey() are primary keys');
     }
 
@@ -184,8 +185,8 @@ class TableMapTest extends TestCase
     public function testGetPrimaryKeys()
     {
         $this->assertEquals([], $this->tmap->getPrimaryKeys(), 'getPrimaryKeys() returns an empty array by default');
-        $column1 = $this->tmap->addPrimaryKey('BAR', 'Bar', 'INTEGER');
-        $column3 = $this->tmap->addColumn('BAZZ', 'Bazz', 'INTEGER', false, null, null, true);
+        $column1 = $this->tmap->addPrimaryKey('BAR', 'Bar', ColumnType::INTEGER);
+        $column3 = $this->tmap->addColumn('BAZZ', 'Bazz', ColumnType::INTEGER, false, null, null, true);
         $expected = ['BAR' => $column1, 'BAZZ' => $column3];
         $this->assertEquals($expected, $this->tmap->getPrimaryKeys(), 'getPrimaryKeys() returns an array of the table primary keys');
     }
@@ -195,15 +196,15 @@ class TableMapTest extends TestCase
      */
     public function testAddForeignKey()
     {
-        $column1 = $this->tmap->addForeignKey('BAR', 'Bar', 'INTEGER', 'Table1', 'column1');
+        $column1 = $this->tmap->addForeignKey('BAR', 'Bar', ColumnType::INTEGER, 'Table1', 'column1');
         $this->assertTrue($column1->isForeignKey(), 'Columns added by way of addForeignKey() are foreign keys');
-        $column2 = $this->tmap->addColumn('BAZ', 'Baz', 'INTEGER');
+        $column2 = $this->tmap->addColumn('BAZ', 'Baz', ColumnType::INTEGER);
         $this->assertFalse($column2->isForeignKey(), 'Columns added by way of addColumn() are not foreign keys by default');
-        $column3 = $this->tmap->addColumn('BAZZ', 'Bazz', 'INTEGER', false, null, null, false, 'Table1', 'column1');
+        $column3 = $this->tmap->addColumn('BAZZ', 'Bazz', ColumnType::INTEGER, false, null, null, false, 'Table1', 'column1');
         $this->assertTrue($column3->isForeignKey(), 'Columns added by way of addColumn() can be defined as foreign keys');
-        $column4 = $this->tmap->addPrimaryKey('BAZZZ', 'Bazzz', 'INTEGER');
+        $column4 = $this->tmap->addPrimaryKey('BAZZZ', 'Bazzz', ColumnType::INTEGER);
         $this->assertFalse($column4->isForeignKey(), 'Columns added by way of addPrimaryKey() are not foreign keys');
-        $column5 = $this->tmap->addForeignPrimaryKey('BAZZZZ', 'Bazzzz', 'INTEGER', 'table1', 'column1');
+        $column5 = $this->tmap->addForeignPrimaryKey('BAZZZZ', 'Bazzzz', ColumnType::INTEGER, 'table1', 'column1');
         $this->assertTrue($column5->isForeignKey(), 'Columns added by way of addForeignPrimaryKey() are foreign keys');
     }
 
@@ -213,8 +214,8 @@ class TableMapTest extends TestCase
     public function testGetForeignKeys()
     {
         $this->assertEquals([], $this->tmap->getForeignKeys(), 'getForeignKeys() returns an empty array by default');
-        $column1 = $this->tmap->addForeignKey('BAR', 'Bar', 'INTEGER', 'Table1', 'column1');
-        $column3 = $this->tmap->addColumn('BAZZ', 'Bazz', 'INTEGER', false, null, null, false, 'Table1', 'column1');
+        $column1 = $this->tmap->addForeignKey('BAR', 'Bar', ColumnType::INTEGER, 'Table1', 'column1');
+        $column3 = $this->tmap->addColumn('BAZZ', 'Bazz', ColumnType::INTEGER, false, null, null, false, 'Table1', 'column1');
         $expected = ['BAR' => $column1, 'BAZZ' => $column3];
         $this->assertEquals($expected, $this->tmap->getForeignKeys(), 'getForeignKeys() returns an array of the table foreign keys');
     }
@@ -278,11 +279,11 @@ class TableMapTest extends TestCase
         $this->assertFalse($this->tmap->hasPrimaryStringColumn(), 'hasPrimaryStringColumn() returns false while none set.');
         $this->assertNull($this->tmap->getPrimaryStringColumn(), 'getPrimaryStringColumn() returns null while none set.');
 
-        $column = $this->tmap->addColumn('FOO', 'Foo', 'VARCHAR');
+        $column = $this->tmap->addColumn('FOO', 'Foo', ColumnType::VARCHAR);
         $this->assertFalse($this->tmap->hasPrimaryStringColumn(), 'hasPrimaryStringColumn() returns false when no pkStr column is set.');
         $this->assertNull($this->tmap->getPrimaryStringColumn(), 'getPrimaryStringColumn() returns null when no pkStr column is set.');
 
-        $column = $this->tmap->addColumn('PKSTR', 'pkStr', 'VARCHAR');
+        $column = $this->tmap->addColumn('PKSTR', 'pkStr', ColumnType::VARCHAR);
         $column->setPrimaryString(true);
         $this->assertTrue($this->tmap->hasPrimaryStringColumn(), 'hasPrimaryStringColumn() returns true after adding pkStr column.');
         $this->assertEquals($column, $this->tmap->getPrimaryStringColumn(), 'getPrimaryStringColumn() returns correct column.');
@@ -295,7 +296,7 @@ class TableMapTest extends TestCase
     {
         $this->assertFalse($this->tmap->hasPrimaryStringColumn(), 'hasPrimaryStringColumn() returns false while none set.');
 
-        $column = new ColumnMap('BAR', $this->tmap, 'Bar', 'VARCHAR');
+        $column = new ColumnMap('BAR', $this->tmap, 'Bar', ColumnType::VARCHAR);
         $column->setPrimaryString(true);
         $this->tmap->addConfiguredColumn($column);
 

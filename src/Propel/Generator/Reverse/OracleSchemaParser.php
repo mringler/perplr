@@ -7,10 +7,10 @@ namespace Propel\Generator\Reverse;
 use PDO;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethodParameter;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use function count;
 use function str_replace;
@@ -24,50 +24,31 @@ use function substr;
 class OracleSchemaParser extends AbstractSchemaParser
 {
     /**
-     * Map Oracle native types to Propel types.
-     *
-     * There really aren't any Oracle native types, so we're just
-     * using the MySQL ones here.
-     *
-     * Left as unsupported:
-     *   BFILE,
-     *   RAW,
-     *   ROWID
-     *
-     * Supported but non existent as a specific type in Oracle:
-     *   DECIMAL (NUMBER with scale),
-     *   DOUBLE (FLOAT with precision = 126)
-     *
-     * @var array<string>
-     */
-    private static $oracleTypeMap = [
-        'BLOB' => PropelTypes::BLOB,
-        'CHAR' => PropelTypes::CHAR,
-        'CLOB' => PropelTypes::CLOB,
-        'DATE' => PropelTypes::TIMESTAMP,
-        'BIGINT' => PropelTypes::BIGINT,
-        'DECIMAL' => PropelTypes::DECIMAL,
-        'DOUBLE' => PropelTypes::DOUBLE,
-        'FLOAT' => PropelTypes::FLOAT,
-        'LONG' => PropelTypes::LONGVARCHAR,
-        'NCHAR' => PropelTypes::CHAR,
-        'NCLOB' => PropelTypes::CLOB,
-        'NUMBER' => PropelTypes::INTEGER,
-        'NVARCHAR2' => PropelTypes::VARCHAR,
-        'TIMESTAMP' => PropelTypes::TIMESTAMP,
-        'UUID' => PropelTypes::UUID,
-        'VARCHAR2' => PropelTypes::VARCHAR,
-    ];
-
-    /**
      * Gets a type mapping from native types to Propel types
      *
-     * @return array<string>
+     * @return array<\Propel\Generator\Model\Datatype\ColumnType>
      */
     #[\Override]
-    protected function getTypeMapping(): array
+    protected function buildTypeMapping(): array
     {
-        return self::$oracleTypeMap;
+        return [
+            'BLOB' => ColumnType::BLOB,
+            'CHAR' => ColumnType::CHAR,
+            'CLOB' => ColumnType::CLOB,
+            'DATE' => ColumnType::TIMESTAMP,
+            'BIGINT' => ColumnType::BIGINT,
+            'DECIMAL' => ColumnType::DECIMAL,
+            'DOUBLE' => ColumnType::DOUBLE,
+            'FLOAT' => ColumnType::FLOAT,
+            'LONG' => ColumnType::LONGVARCHAR,
+            'NCHAR' => ColumnType::CHAR,
+            'NCLOB' => ColumnType::CLOB,
+            'NUMBER' => ColumnType::INTEGER,
+            'NVARCHAR2' => ColumnType::VARCHAR,
+            'TIMESTAMP' => ColumnType::TIMESTAMP,
+            'UUID' => ColumnType::UUID,
+            'VARCHAR2' => ColumnType::VARCHAR,
+        ];
     }
 
     /**
@@ -183,11 +164,11 @@ class OracleSchemaParser extends AbstractSchemaParser
             $column = new Column($row['COLUMN_NAME']);
             $column->setPhpName(); // Prevent problems with strange col names
             $column->setTable($table);
-            $column->setDomainForType($propelType);
-            $column->getDomain()->replaceSize($size);
-            $column->getDomain()->replaceScale($scale);
+            $column->setUpTypeMapping($propelType);
+            $column->getTypeMapping()->setSizeToValueIfNotNull($size);
+            $column->getTypeMapping()->setScaleToValueIfNotNull($scale);
             if ($default !== null) {
-                $column->getDomain()->createDefaultValue($default);
+                $column->getTypeMapping()->createDefaultValue($default);
             }
             $column->setAutoIncrement(false); // This flag sets in self::parse()
             $column->setNotNull(!$isNullable);

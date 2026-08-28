@@ -10,8 +10,8 @@ use Propel\Generator\Builder\Util\EntityObjectClassNames;
 use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\CrossRelation;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\FilterExpression\FilterFactory;
@@ -703,9 +703,9 @@ class QueryBuilder extends AbstractOMBuilder
     {
         $this->addFilterByCol($script, $col);
         if ($col->isNamePlural()) {
-            if ($col->getType() === PropelTypes::PHP_ARRAY) {
+            if ($col->isPhpArrayType()) {
                 $this->addFilterByArrayCol($script, $col);
-            } elseif (in_array($col->getType(), [PropelTypes::SET_BINARY, PropelTypes::SET_NATIVE], true)) {
+            } elseif (in_array($col->getMappingType(), [ColumnType::SET_BINARY, ColumnType::SET_NATIVE], true)) {
                 $this->addFilterBySetCol($script, $col);
             }
         }
@@ -768,7 +768,7 @@ class QueryBuilder extends AbstractOMBuilder
      *              Use scalar values for equality.
      *              Use array values for in_array() equivalent.
      *              Use associative array('min' => \$minValue, 'max' => \$maxValue) for intervals.";
-        } elseif ($col->getType() == PropelTypes::PHP_ARRAY) {
+        } elseif ($col->isPhpArrayType()) {
             $script .= "
      * @param array|null \$$variableName The values to use as filter.";
         } elseif ($col->isPhpEnumType()) {
@@ -854,13 +854,13 @@ class QueryBuilder extends AbstractOMBuilder
                 \$comparison = Criteria::IN;
             }
         }";
-        } elseif ($col->getType() == PropelTypes::OBJECT) {
+        } elseif ($col->getMappingType() == ColumnType::OBJECT) {
             $this->declareGlobalFunction('is_object', 'serialize');
             $script .= "
         if (is_object(\$$variableName)) {
             \$$variableName = serialize(\$$variableName);
         }";
-        } elseif ($col->getType() == PropelTypes::PHP_ARRAY) {
+        } elseif ($col->isPhpArrayType()) {
             $this->declareGlobalFunction('in_array');
             $script .= "
         \$arrayOps = [null, Criteria::CONTAINS_ALL, Criteria::CONTAINS_SOME, Criteria::CONTAINS_NONE];
@@ -880,7 +880,7 @@ class QueryBuilder extends AbstractOMBuilder
 
             return \$this;
         }";
-        } elseif ($col->getType() === PropelTypes::SET_NATIVE) {
+        } elseif ($col->getMappingType() === ColumnType::SET_NATIVE) {
             $this->declareClasses(
                 '\Propel\Common\Util\SetColumnConverter',
             );

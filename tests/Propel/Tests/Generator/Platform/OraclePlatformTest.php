@@ -9,6 +9,7 @@
 namespace Propel\Tests\Generator\Platform;
 
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\IdMethodParameter;
 use Propel\Generator\Model\Table;
@@ -234,12 +235,12 @@ DROP SEQUENCE foo_sequence;
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('DOUBLE'));
-        $column->getDomain()->replaceScale(2);
-        $column->getDomain()->replaceSize(3);
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $column->getTypeMapping()->setSizeToValueIfNotNull(3);
         $column->setNotNull(true);
-        $column->getDomain()->createDefaultValue(123);
-        $column->getDomain()->replaceSqlType('DECIMAL(5,6)');
+        $column->getTypeMapping()->createDefaultValue(123);
+        $column->getTypeMapping()->setSqlType('DECIMAL(5,6)');
         $expected = 'foo DECIMAL(5,6) DEFAULT 123 NOT NULL';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
     }

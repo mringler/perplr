@@ -5,12 +5,12 @@
     <parameter name="Charset" value="utf8"/>
   </vendor>
   <table name="blog_post" package="Acme.Blog" namespace="\Acme\Model\Blog" baseClass="\Acme\Model\ActiveRecord" description="The list of posts">
-    <column name="id" type="integer" size="7" primaryKey="true" autoIncrement="true" required="true"/>
-    <column name="author_id" type="smallint" size="3" required="true"/>
-    <column name="category_id" type="tinyint" size="2" required="true"/>
-    <column name="title" type="varchar" size="100" required="true"/>
-    <column name="body" type="clob"/>
-    <column name="average_rating" type="float" size="2" scale="2" description="The post rating in percentage"/>
+    <column name="id" type="INTEGER" size="7" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="author_id" type="SMALLINT" size="3" required="true"/>
+    <column name="category_id" type="TINYINT" size="2" required="true"/>
+    <column name="title" type="VARCHAR" size="100" required="true"/>
+    <column name="body" type="CLOB"/>
+    <column name="average_rating" type="FLOAT" size="2" scale="2" description="The post rating in percentage"/>
     <column name="price_without_decimal_places" type="DECIMAL" size="10" scale="0" description="The Price without decimal places"/>
     <foreign-key foreignTable="blog_author" name="fk_post_has_author" phpName="Author" refPhpName="Posts" defaultJoin="Criteria::LEFT_JOIN" onDelete="CASCADE">
       <reference local="author_id" foreign="id"/>
@@ -36,24 +36,24 @@
     </behavior>
   </table>
   <table name="blog_author" package="Acme.Blog" namespace="\Acme\Model\Blog" baseClass="\Acme\Model\ActiveRecord" description="The list of authors">
-    <column name="id" type="smallint" size="3" primaryKey="true" autoIncrement="true" required="true"/>
-    <column name="username" type="varchar" size="15" required="true"/>
-    <column name="password" type="varchar" size="40" required="true"/>
+    <column name="id" type="SMALLINT" size="3" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="username" type="VARCHAR" size="15" required="true"/>
+    <column name="password" type="VARCHAR" size="40" required="true"/>
     <unique name="author_password_unique_idx">
       <unique-column name="username" size="8"/>
     </unique>
   </table>
   <table name="blog_category" package="Acme.Blog" namespace="\Acme\Model\Blog" baseClass="\Acme\Model\ActiveRecord" description="The list of categories">
-    <column name="id" type="tinyint" size="2" primaryKey="true" autoIncrement="true" required="true"/>
-    <column name="name" type="varchar" size="40" required="true"/>
+    <column name="id" type="TINYINT" size="2" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="name" type="VARCHAR" size="40" required="true"/>
   </table>
   <table name="blog_tag" package="Acme.Blog" namespace="\Acme\Model\Blog" baseClass="\Acme\Model\ActiveRecord" description="The list of tags">
-    <column name="id" type="integer" size="7" primaryKey="true" autoIncrement="true" required="true"/>
-    <column name="name" type="varchar" size="40" required="true"/>
+    <column name="id" type="INTEGER" size="7" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="name" type="VARCHAR" size="40" required="true"/>
   </table>
   <table name="blog_post_tag" package="Acme.Blog" namespace="\Acme\Model\Blog" isCrossRef="true" baseClass="\Acme\Model\ActiveRecord" description="This table was given with an absolute namespace">
-    <column name="post_id" type="integer" size="7" primaryKey="true" required="true"/>
-    <column name="tag_id" type="integer" size="7" primaryKey="true" required="true"/>
+    <column name="post_id" type="INTEGER" size="7" primaryKey="true" required="true"/>
+    <column name="tag_id" type="INTEGER" size="7" primaryKey="true" required="true"/>
     <foreign-key foreignTable="blog_post" name="fk_post_has_tags" phpName="Post" defaultJoin="Criteria::LEFT_JOIN" onDelete="CASCADE">
       <reference local="post_id" foreign="id"/>
     </foreign-key>
@@ -62,15 +62,15 @@
     </foreign-key>
   </table>
   <table name="cms_page" phpName="Page" package="Acme.Cms" namespace="\Acme\Model\Cms" baseClass="\Acme\Model\PublicationActiveRecord">
-    <column name="id" type="integer" size="5" primaryKey="true" autoIncrement="true" required="true"/>
-    <column name="title" type="varchar" size="150" required="true"/>
-    <column name="content" type="clob">
+    <column name="id" type="INTEGER" size="5" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="title" type="VARCHAR" size="150" required="true"/>
+    <column name="content" type="CLOB">
       <vendor type="mysql">
         <parameter name="Charset" value="latin1"/>
         <parameter name="Collate" value="latin1_general_ci"/>
       </vendor>
     </column>
-    <column name="is_published" type="boolean" required="true" defaultValue="false"/>
+    <column name="is_published" type="BOOLEAN" required="true" defaultValue="false"/>
     <index name="page_content_fulltext_idx">
       <index-column name="content"/>
       <vendor type="mysql">
@@ -82,9 +82,9 @@
     </vendor>
   </table>
   <table name="external_table" package="Acme" namespace="\External" baseClass="\Acme\Model\ActiveRecord" description="A table in the \External namespace">
-    <column name="id" type="integer" primaryKey="true" required="true"/>
+    <column name="id" type="INTEGER" primaryKey="true" required="true"/>
   </table>
   <table name="acme_base" package="Acme" baseClass="\Acme\Model\ActiveRecord" description="A table in the \Acme\Model namespace should not have a namespace declaration">
-    <column name="id" type="integer" primaryKey="true" required="true"/>
+    <column name="id" type="INTEGER" primaryKey="true" required="true"/>
   </table>
 </database>

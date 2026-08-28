@@ -8,7 +8,7 @@ use DateTime;
 use DateTimeInterface;
 use Exception;
 use Propel\Generator\Exception\EngineException;
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Platform\MysqlPlatform;
 use Propel\Runtime\Util\PropelDateTime;
 use function date_default_timezone_set;
@@ -60,9 +60,9 @@ class TemporalColumnCodeProducer extends AbstractDeserializableColumnCodeProduce
         $objectAttribute = $this->getDeserializedAttributeName();
 
         $mysqlInvalidDateString = !$this->getPlatform() instanceof MysqlPlatform ? null
-            : match ($this->column->getType()) {
-                PropelTypes::TIMESTAMP, PropelTypes::DATETIME => '0000-00-00 00:00:00',
-                PropelTypes::DATE => '0000-00-00',
+            : match ($this->column->getMappingType()) {
+                ColumnType::TIMESTAMP, ColumnType::DATETIME => '0000-00-00 00:00:00',
+                ColumnType::DATE => '0000-00-00',
                 default => null
             };
 
@@ -182,10 +182,10 @@ class TemporalColumnCodeProducer extends AbstractDeserializableColumnCodeProduce
         $handleMysqlDate = false;
         $mysqlInvalidDateString = '';
         if ($this->getPlatform() instanceof MysqlPlatform) {
-            if (in_array($column->getType(), [PropelTypes::TIMESTAMP, PropelTypes::DATETIME], true)) {
+            if (in_array($column->getMappingType(), [ColumnType::TIMESTAMP, ColumnType::DATETIME], true)) {
                 $handleMysqlDate = true;
                 $mysqlInvalidDateString = '0000-00-00 00:00:00';
-            } elseif ($column->getType() === PropelTypes::DATE) {
+            } elseif ($column->getMappingType() === ColumnType::DATE) {
                 $handleMysqlDate = true;
                 $mysqlInvalidDateString = '0000-00-00';
             }
@@ -230,10 +230,10 @@ class TemporalColumnCodeProducer extends AbstractDeserializableColumnCodeProduce
      */
     protected function getTemporalTypeDefaultFormatConfigKey(): ?string
     {
-        return match ($this->column->getType()) {
-            PropelTypes::DATE => 'generator.dateTime.defaultDateFormat',
-            PropelTypes::TIME => 'generator.dateTime.defaultTimeFormat',
-            PropelTypes::TIMESTAMP, PropelTypes::DATETIME => 'generator.dateTime.defaultTimeStampFormat',
+        return match ($this->column->getMappingType()) {
+            ColumnType::DATE => 'generator.dateTime.defaultDateFormat',
+            ColumnType::TIME => 'generator.dateTime.defaultTimeFormat',
+            ColumnType::TIMESTAMP, ColumnType::DATETIME => 'generator.dateTime.defaultTimeStampFormat',
             default => null,
         };
     }

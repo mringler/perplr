@@ -6,7 +6,7 @@ namespace Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes;
 
 use LogicException;
 use Propel\Generator\Config\AbstractGeneratorConfig;
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\SqlsrvPlatform;
 
@@ -297,7 +297,7 @@ class LazyLoadColumnCodeProducer extends ColumnCodeProducer
         try {
             \$dataFetcher = {$queryClassName}::create(null, \$c)->fetch(\$con);";
 
-        if (!$platform instanceof SqlsrvPlatform || $this->column->getType() !== PropelTypes::BLOB) {
+        if (!$platform instanceof SqlsrvPlatform || $this->column->getMappingType() !== ColumnType::BLOB) {
             $script .= "
             \$row = \$dataFetcher->fetch();";
         } else {

@@ -4,6 +4,7 @@ use Propel\Generator\Behavior\Sluggable\SluggableBehavior;
 use Propel\Generator\Behavior\Timestampable\TimestampableBehavior;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
@@ -12,74 +13,74 @@ use Propel\Generator\Model\VendorInfo;
 use Propel\Generator\Platform\MysqlPlatform;
 
 /* Columns */
-$column11 = new Column('id', 'integer', 7);
+$column11 = new Column('id', ColumnType::INTEGER, 7);
 $column11->setAutoIncrement(true);
 $column11->setNotNull(true);
 $column11->setPrimaryKey(true);
-$column12 = new Column('author_id', 'smallint', 3);
+$column12 = new Column('author_id', ColumnType::SMALLINT, 3);
 $column12->setNotNull(true);
-$column13 = new Column('category_id', 'tinyint', 2);
+$column13 = new Column('category_id', ColumnType::TINYINT, 2);
 $column13->setNotNull(true);
-$column14 = new Column('title', 'varchar', 100);
+$column14 = new Column('title', ColumnType::VARCHAR, 100);
 $column14->setNotNull(true);
-$column15 = new Column('body', 'clob');
-$column16 = new Column('average_rating', 'float', 2);
+$column15 = new Column('body', ColumnType::CLOB);
+$column16 = new Column('average_rating', ColumnType::FLOAT, 2);
 $column16->setScale(2);
 $column16->setDescription('The post rating in percentage');
-$column17 = new Column('price_without_decimal_places', 'DECIMAL', 10);
+$column17 = new Column('price_without_decimal_places', ColumnType::DECIMAL, 10);
 $column17->setScale(0);
 $column17->setDescription('The Price without decimal places');
 
-$column21 = new Column('id', 'smallint', 3);
+$column21 = new Column('id', ColumnType::SMALLINT, 3);
 $column21->setAutoIncrement(true);
 $column21->setNotNull(true);
 $column21->setPrimaryKey(true);
-$column22 = new Column('username', 'varchar', 15);
+$column22 = new Column('username', ColumnType::VARCHAR, 15);
 $column22->setNotNull(true);
-$column23 = new Column('password', 'varchar', 40);
+$column23 = new Column('password', ColumnType::VARCHAR, 40);
 $column23->setNotNull(true);
 
-$column31 = new Column('id', 'tinyint', 2);
+$column31 = new Column('id', ColumnType::TINYINT, 2);
 $column31->setAutoIncrement(true);
 $column31->setNotNull(true);
 $column31->setPrimaryKey(true);
-$column32 = new Column('name', 'varchar', 40);
+$column32 = new Column('name', ColumnType::VARCHAR, 40);
 $column32->setNotNull(true);
 
-$column41 = new Column('id', 'integer', 7);
+$column41 = new Column('id', ColumnType::INTEGER, 7);
 $column41->setAutoIncrement(true);
 $column41->setNotNull(true);
 $column41->setPrimaryKey(true);
-$column42 = new Column('name', 'varchar', 40);
+$column42 = new Column('name', ColumnType::VARCHAR, 40);
 $column42->setNotNull(true);
 
-$column51 = new Column('post_id', 'integer', 7);
+$column51 = new Column('post_id', ColumnType::INTEGER, 7);
 $column51->setNotNull(true);
 $column51->setPrimaryKey(true);
-$column52 = new Column('tag_id', 'integer', 7);
+$column52 = new Column('tag_id', ColumnType::INTEGER, 7);
 $column52->setNotNull(true);
 $column52->setPrimaryKey(true);
 
-$column61 = new Column('id', 'integer', 5);
+$column61 = new Column('id', ColumnType::INTEGER, 5);
 $column61->setNotNull(true);
 $column61->setAutoIncrement(true);
 $column61->setPrimaryKey(true);
-$column62 = new Column('title', 'varchar', 150);
+$column62 = new Column('title', ColumnType::VARCHAR, 150);
 $column62->setNotNull(true);
-$column63 = new Column('content', 'clob');
+$column63 = new Column('content', ColumnType::CLOB);
 $column63->addVendorInfo(new VendorInfo('mysql', [
     'Charset' => 'latin1',
     'Collate' => 'latin1_general_ci',
 ]));
-$column64 = new Column('is_published', 'boolean');
+$column64 = new Column('is_published', ColumnType::BOOLEAN);
 $column64->setNotNull(true);
 $column64->setDefaultValue('false');
 
-$column71 = new Column('id', 'integer');
+$column71 = new Column('id', ColumnType::INTEGER);
 $column71->setNotNull(true);
 $column71->setPrimaryKey(true);
 
-$column81 = new Column('id', 'integer');
+$column81 = new Column('id', ColumnType::INTEGER);
 $column81->setNotNull(true);
 $column81->setPrimaryKey(true);
 

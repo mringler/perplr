@@ -5,6 +5,7 @@ namespace Map;
 use Base\Collection\IdTableCollection;
 use IdTable;
 use IdTableQuery;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Runtime\ActiveQuery\ColumnResolver\ColumnExpression\LocalColumnExpression;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\InstancePoolTrait;
@@ -175,7 +176,7 @@ class IdTableTableMap extends TableMap
         $this->setPackage('');
         $this->setUseIdGenerator(true);
         // columns
-        $this->addPrimaryKey('id', 'Id', 'INTEGER', true, null, null);
+        $this->addPrimaryKey('id', 'Id', ColumnType::INTEGER, true, null, null);
     }
 
     /**

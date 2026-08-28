@@ -74,10 +74,7 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
     protected ColumnResolver $columnResolver;
 
     /**
-     * Creates a new instance with the default capacity which corresponds to
-     * the specified database.
-     *
-     * @param string|null $dbName The database name
+     * @param string|null $dbName
      * @param string|null $modelName The phpName of a model, e.g. 'Book'
      * @param string|null $modelAlias The alias for the model in this query, e.g. 'b'
      */
@@ -127,8 +124,8 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
     }
 
     /**
-     * Sets the formatter to use for the find() output
-     * Formatters must extend AbstractFormatter
+     * Sets the formatter to use for the find() output.
+     *
      * Use the ModelCriteria constants for class names:
      * <code>
      * $c->setFormatter(ModelCriteria::FORMAT_ARRAY);
@@ -549,7 +546,7 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *   ArticleQuery::create()->select(array('Id', 'Name'))->findOne();
      *   => array('Id' => 1, 'Name' => 'Foo')
      *
-     * @param mixed $columnArray A list of column names (e.g. array('Title', 'Category.Name', 'c.Content')) or a single column name (e.g. 'Name')
+     * @param \Propel\Runtime\ActiveQuery\ColumnResolver\ColumnExpression\AbstractColumnExpression|array<string|\Propel\Runtime\ActiveQuery\ColumnResolver\ColumnExpression\AbstractColumnExpression>|string $columnArray A list of column names (e.g. array('Title', 'Category.Name', 'c.Content')) or a single column name (e.g. 'Name')
      *
      * @throws \Propel\Runtime\Exception\PropelException
      *

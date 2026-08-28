@@ -13,13 +13,13 @@ use Propel\Generator\Config\GeneratorConfig;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\IdMethodParameter;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\VendorInfo;
 use Propel\Generator\Platform\MysqlPlatform;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Platform\PlatformInterface;
 
 class MysqlPlatformTest extends PlatformTestProvider
@@ -465,11 +465,11 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDL()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('DOUBLE'));
-        $column->getDomain()->replaceScale(2);
-        $column->getDomain()->replaceSize(3);
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $column->getTypeMapping()->setSizeToValueIfNotNull(3);
         $column->setNotNull(true);
-        $column->getDomain()->createDefaultValue(123);
+        $column->getTypeMapping()->createDefaultValue(123);
         $expected = '`foo` DOUBLE(3,2) DEFAULT 123 NOT NULL';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
     }
@@ -479,35 +479,35 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
      */
     public static function IntegerTypesDataProvider(): array
     {
-        $integerTypes = [PropelTypes::INTEGER, PropelTypes::BIGINT, PropelTypes::SMALLINT, PropelTypes::TINYINT];
+        $integerTypes = [ColumnType::INTEGER, ColumnType::BIGINT, ColumnType::SMALLINT, ColumnType::TINYINT];
 
         return array_merge([
-                [PropelTypes::DECIMAL, true, "`foo` DECIMAL(3)"],
-                [PropelTypes::DECIMAL, false, "`foo` DECIMAL(3)"],
+                [ColumnType::DECIMAL, true, "`foo` DECIMAL(3)"],
+                [ColumnType::DECIMAL, false, "`foo` DECIMAL(3)"],
             ],
-            array_map(fn($type) => [$type, true, "`foo` $type"], $integerTypes),
-            array_map(fn($type) => [$type, false, "`foo` {$type}(3)"], $integerTypes),
+            array_map(fn($type) => [$type, true, "`foo` $type->name"], $integerTypes),
+            array_map(fn($type) => [$type, false, "`foo` {$type->name}(3)"], $integerTypes),
             
         );
     }
 
     /**
      *
-     * @param string $integerType
+     * @param ColumnType $integerType
      * @param bool $ignoreSize
      * @param string $expectedDdl
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('IntegerTypesDataProvider')]
-    public function testGetColumnDDLIgnoresSizeOnInteger(string $integerType, bool $ignoreSize, string $expectedDdl)
+    public function testGetColumnDDLIgnoresSizeOnInteger(ColumnType $integerType, bool $ignoreSize, string $expectedDdl)
     {
         $platform = new MysqlPlatform();
         $this->setObjectPropertyValue($platform, 'ignoreSizeOnIntegerTypes', $ignoreSize);
-        $domain = clone $platform->getDomainForType($integerType);
-        $domain->replaceSize(3);
+        $domain = clone $platform->getColumnTypeMapping($integerType);
+        $domain->setSizeToValueIfNotNull(3);
 
         $column = new Column('foo');
-        $column->setDomain($domain);
+        $column->setTypeMapping($domain);
 
         $actual = $platform->getColumnDDL($column);
 
@@ -521,8 +521,8 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLTextDefaultValue(): void
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType(PropelTypes::LONGVARCHAR));
-        $column->getDomain()->setDefaultValue(new ColumnDefaultValue('hello', ColumnDefaultValue::TYPE_VALUE));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
+        $column->getTypeMapping()->setDefaultValue(new ColumnDefaultValue('hello', ColumnDefaultValue::TYPE_VALUE));
         $expected = '`foo` TEXT DEFAULT \'hello\'';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
     }
@@ -536,8 +536,8 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
         $this->expectExceptionMessage('BLOB columns cannot have DEFAULT values in MySQL.');
 
         $column = new Column('bar');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType(PropelTypes::BLOB));
-        $column->getDomain()->setDefaultValue(new ColumnDefaultValue('data', ColumnDefaultValue::TYPE_VALUE));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::BLOB));
+        $column->getTypeMapping()->setDefaultValue(new ColumnDefaultValue('data', ColumnDefaultValue::TYPE_VALUE));
         static::getPlatform()->getColumnDDL($column);
     }
 
@@ -547,7 +547,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetVendor()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Charset', 'greek');
         $column->addVendorInfo($vendor);
@@ -561,7 +561,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetCollation()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Collate', 'latin1_german2_ci');
         $column->addVendorInfo($vendor);
@@ -569,7 +569,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
 
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Collation', 'latin1_german2_ci');
         $column->addVendorInfo($vendor);
@@ -583,7 +583,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLComment()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('INTEGER'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::INTEGER));
         $column->setDescription('This is column Foo');
         $expected = '`foo` INTEGER COMMENT \'This is column Foo\'';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
@@ -595,7 +595,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCharsetNotNull()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $column->setNotNull(true);
         $vendor = new VendorInfo('mysql');
         $vendor->setParameter('Charset', 'greek');
@@ -610,12 +610,12 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     public function testGetColumnDDLCustomSqlType()
     {
         $column = new Column('foo');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('DOUBLE'));
-        $column->getDomain()->replaceScale(2);
-        $column->getDomain()->replaceSize(3);
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $column->getTypeMapping()->setScaleToValueIfNotNull(2);
+        $column->getTypeMapping()->setSizeToValueIfNotNull(3);
         $column->setNotNull(true);
-        $column->getDomain()->createDefaultValue(123);
-        $column->getDomain()->replaceSqlType('DECIMAL(5,6)');
+        $column->getTypeMapping()->createDefaultValue(123);
+        $column->getTypeMapping()->setSqlType('DECIMAL(5,6)');
         $expected = '`foo` DECIMAL(5,6) DEFAULT 123 NOT NULL';
         $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
     }
@@ -731,7 +731,7 @@ DROP INDEX `babar` ON `foo`;
         $table = new Table('foo');
         $table->setIdentifierQuoting(true);
         $column1 = new Column('bar1');
-        $column1->getDomain()->copy(static::getPlatform()->getDomainForType('VARCHAR'));
+        $column1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::VARCHAR));
         $column1->setSize(5);
         $table->addColumn($column1);
         $index = new Index('bar_index');
@@ -749,7 +749,7 @@ DROP INDEX `babar` ON `foo`;
         $table = new Table('foo');
         $table->setIdentifierQuoting(true);
         $column1 = new Column('bar1');
-        $column1->getDomain()->copy(static::getPlatform()->getDomainForType('LONGVARCHAR'));
+        $column1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::LONGVARCHAR));
         $table->addColumn($column1);
         $index = new Index('bar_index');
         $index->addColumn($column1);
@@ -992,8 +992,8 @@ CREATE TABLE `foo`
      */
     public function testNormalizeTable()
     {
-        $column = new Column('price', 'DECIMAL');
-        $column->getDomain()->copy(static::getPlatform()->getDomainForType('DECIMAL'));
+        $column = new Column('price', ColumnType::DECIMAL);
+        $column->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DECIMAL));
         $column->setSize(10);
         $column->setScale(3);
         $table = new Table('prices');
@@ -1005,14 +1005,14 @@ CREATE TABLE `foo`
     public static function typeMappingDataProvider()
     {
         return [
-            [PropelTypes::DATETIME, 'DATETIME'],
-            [PropelTypes::TIMESTAMP, 'TIMESTAMP'],
+            [ColumnType::DATETIME, 'DATETIME'],
+            [ColumnType::TIMESTAMP, 'TIMESTAMP'],
         ];
     }
     
     #[\PHPUnit\Framework\Attributes\DataProvider('typeMappingDataProvider')]
-    public function testTypeMapping(string $propelDataType, string $expectedMysqlDataType){
-        $actualMysqlDataType = static::getPlatform()->getDomainForType($propelDataType)->getSqlType();
+    public function testTypeMapping(ColumnType $propelDataType, string $expectedMysqlDataType){
+        $actualMysqlDataType = static::getPlatform()->getColumnTypeMapping($propelDataType)->getSqlType();
         $this->assertEquals($expectedMysqlDataType, $actualMysqlDataType);
     }
 
@@ -1059,8 +1059,8 @@ CREATE TABLE `foo`
     {
         $platform = new MysqlPlatform();
 
-        $uuidSqlType = $platform->getDomainForType(PropelTypes::UUID)->getSqlType();
-        $this->assertEquals(PropelTypes::BINARY, $uuidSqlType);
+        $uuidSqlType = $platform->getColumnTypeMapping(ColumnType::UUID)->getSqlType();
+        $this->assertEquals('BINARY', $uuidSqlType);
     }
 
     /**
@@ -1074,7 +1074,7 @@ CREATE TABLE `foo`
         $config = new GeneratorConfig(__DIR__ . '/../../../../Fixtures/bookstore', $configProp);
         $platform->setGeneratorConfig($config);
 
-        $uuidSqlType = $platform->getDomainForType(PropelTypes::UUID)->getSqlType();
-        $this->assertEquals(PropelTypes::UUID, $uuidSqlType);
+        $uuidSqlType = $platform->getColumnTypeMapping(ColumnType::UUID)->getSqlType();
+        $this->assertEquals('UUID', $uuidSqlType);
     }
 }

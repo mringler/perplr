@@ -10,6 +10,7 @@ namespace Propel\Tests\Generator\Platform;
 
 use Propel\Generator\Builder\Util\SchemaReader;
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnComparator;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PgsqlPlatform;
@@ -273,15 +274,15 @@ ALTER TABLE "foo" ALTER COLUMN "bar" TYPE DOUBLE PRECISION;
         $t1 = new Table('foo');
         $t1->setIdentifierQuoting(true);
         $c1 = new Column('bar');
-        $c1->getDomain()->copy(static::getPlatform()->getDomainForType('DOUBLE'));
-        $c1->getDomain()->replaceSize(2);
+        $c1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c1->getTypeMapping()->setSizeToValueIfNotNull(2);
         $t1->addColumn($c1);
         $t2 = new Table('foo');
         $t2->setIdentifierQuoting(true);
         $c2 = new Column('bar');
-        $c2->getDomain()->copy(static::getPlatform()->getDomainForType('DOUBLE'));
-        $c2->getDomain()->replaceSize(3);
-        $c2->getDomain()->createDefaultValue(-100);
+        $c2->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::DOUBLE));
+        $c2->getTypeMapping()->setSizeToValueIfNotNull(3);
+        $c2->getTypeMapping()->createDefaultValue(-100);
         $t2->addColumn($c2);
         $columnDiff = ColumnComparator::computeDiff($c1, $c2);
         $expected = <<<END
@@ -347,9 +348,9 @@ END;
         $t1->setIdentifierQuoting(true);
         $c1 = new Column('bar');
         $c1->setTable($t1);
-        $c1->getDomain()->copy(static::getPlatform()->getDomainForType('VARCHAR'));
-        $c1->getDomain()->replaceSize(null);
-        $c1->getDomain()->replaceScale(null);
+        $c1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::VARCHAR));
+        $c1->getTypeMapping()->setSizeToValueIfNotNull(null);
+        $c1->getTypeMapping()->setScaleToValueIfNotNull(null);
         $t1->addColumn($c1);
 
         $schema = <<<EOF
@@ -377,9 +378,9 @@ EOF;
         $t1->setIdentifierQuoting(true);
         $c1 = new Column('bar');
         $c1->setTable($t1);
-        $c1->getDomain()->copy(static::getPlatform()->getDomainForType('VARCHAR'));
-        $c1->getDomain()->replaceSize(null);
-        $c1->getDomain()->replaceScale(null);
+        $c1->getTypeMapping()->copy(static::getPlatform()->getColumnTypeMapping(ColumnType::VARCHAR));
+        $c1->getTypeMapping()->setSizeToValueIfNotNull(null);
+        $c1->getTypeMapping()->setScaleToValueIfNotNull(null);
         $t1->addColumn($c1);
 
         $schema = <<<EOF

@@ -9,8 +9,8 @@ use Propel\Generator\Builder\Om\AbstractOMBuilder;
 use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Exception\LogicException;
 use Propel\Generator\Exception\RuntimeException;
+use Propel\Generator\Model\Datatype\PhpDatatype;
 use Propel\Generator\Model\ForeignKey;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use function array_map;
 use function array_push;
@@ -485,7 +485,7 @@ class ReferencedClasses
         $docTypeWithoutGenerics = preg_replace('/<[^>]*>/', '', $docType);
         $types = explode('|', $docTypeWithoutGenerics);
         foreach ($types as $key => $typeName) {
-            if (!PropelTypes::isPhpObjectType($typeName)) {
+            if (!PhpDatatype::isPhpObjectType($typeName)) {
                 continue;
             }
             if (is_subclass_of($typeName, DateTimeInterface::class)) {

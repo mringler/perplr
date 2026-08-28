@@ -9,11 +9,11 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
-use Propel\Generator\Model\Domain;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
+use Propel\Generator\Model\TypeMapping;
 use Propel\Generator\Model\Unique;
 use Propel\Generator\Model\VendorInfo;
 use Propel\Generator\Platform\MysqlPlatform;
@@ -53,45 +53,6 @@ class MysqlSchemaParser extends AbstractSchemaParser
     private $addVendorInfo = false;
 
     /**
-     * Map MySQL native types to Propel types.
-     *
-     * @var array<string>
-     */
-    private static $mysqlTypeMap = [
-        'tinyint' => PropelTypes::TINYINT,
-        'smallint' => PropelTypes::SMALLINT,
-        'mediumint' => PropelTypes::SMALLINT,
-        'int' => PropelTypes::INTEGER,
-        'integer' => PropelTypes::INTEGER,
-        'bigint' => PropelTypes::BIGINT,
-        'int24' => PropelTypes::BIGINT,
-        'real' => PropelTypes::DOUBLE,
-        'float' => PropelTypes::FLOAT,
-        'decimal' => PropelTypes::DECIMAL,
-        'numeric' => PropelTypes::NUMERIC,
-        'double' => PropelTypes::DOUBLE,
-        'char' => PropelTypes::CHAR,
-        'varchar' => PropelTypes::VARCHAR,
-        'date' => PropelTypes::DATE,
-        'time' => PropelTypes::TIME,
-        'year' => PropelTypes::INTEGER,
-        'datetime' => PropelTypes::DATETIME,
-        'timestamp' => PropelTypes::TIMESTAMP,
-        'tinyblob' => PropelTypes::BINARY,
-        'blob' => PropelTypes::BLOB,
-        'mediumblob' => PropelTypes::VARBINARY,
-        'longblob' => PropelTypes::LONGVARBINARY,
-        'tinytext' => PropelTypes::VARCHAR,
-        'text' => PropelTypes::LONGVARCHAR,
-        'mediumtext' => PropelTypes::LONGVARCHAR,
-        'longtext' => PropelTypes::CLOB,
-        'enum' => PropelTypes::CHAR,
-        'set' => PropelTypes::CHAR,
-        'binary' => PropelTypes::BINARY,
-        'uuid' => PropelTypes::UUID, // for MariaDB
-    ];
-
-    /**
      * @var array<int>
      */
     protected static $defaultTypeSizes = [
@@ -106,12 +67,44 @@ class MysqlSchemaParser extends AbstractSchemaParser
     /**
      * Gets a type mapping from native types to Propel types
      *
-     * @return array<string>
+     * @return array<\Propel\Generator\Model\Datatype\ColumnType>
      */
     #[\Override]
-    protected function getTypeMapping(): array
+    protected function buildTypeMapping(): array
     {
-        return self::$mysqlTypeMap;
+        return [
+            'tinyint' => ColumnType::TINYINT,
+            'smallint' => ColumnType::SMALLINT,
+            'mediumint' => ColumnType::SMALLINT,
+            'int' => ColumnType::INTEGER,
+            'integer' => ColumnType::INTEGER,
+            'bigint' => ColumnType::BIGINT,
+            'int24' => ColumnType::BIGINT,
+            'real' => ColumnType::DOUBLE,
+            'float' => ColumnType::FLOAT,
+            'decimal' => ColumnType::DECIMAL,
+            'numeric' => ColumnType::NUMERIC,
+            'double' => ColumnType::DOUBLE,
+            'char' => ColumnType::CHAR,
+            'varchar' => ColumnType::VARCHAR,
+            'date' => ColumnType::DATE,
+            'time' => ColumnType::TIME,
+            'year' => ColumnType::INTEGER,
+            'datetime' => ColumnType::DATETIME,
+            'timestamp' => ColumnType::TIMESTAMP,
+            'tinyblob' => ColumnType::BINARY,
+            'blob' => ColumnType::BLOB,
+            'mediumblob' => ColumnType::VARBINARY,
+            'longblob' => ColumnType::LONGVARBINARY,
+            'tinytext' => ColumnType::VARCHAR,
+            'text' => ColumnType::LONGVARCHAR,
+            'mediumtext' => ColumnType::LONGVARCHAR,
+            'longtext' => ColumnType::CLOB,
+            'enum' => ColumnType::CHAR,
+            'set' => ColumnType::CHAR,
+            'binary' => ColumnType::BINARY,
+            'uuid' => ColumnType::UUID, // for MariaDB
+        ];
     }
 
     /**
@@ -257,8 +250,8 @@ class MysqlSchemaParser extends AbstractSchemaParser
         $column = new Column($columnName);
         $column->setTable($table);
 
-        $domain = $this->extractTypeDomain($type, $default, $column->getFullyQualifiedName(), $extra);
-        $column->setDomain($domain);
+        $typeMapping = $this->extractTypeMapping($type, $default, $column->getFullyQualifiedName(), $extra);
+        $column->setTypeMapping($typeMapping);
 
         $autoincrement = (strpos($extra, 'auto_increment') !== false);
         $column->setAutoIncrement($autoincrement);
@@ -279,9 +272,9 @@ class MysqlSchemaParser extends AbstractSchemaParser
      * @param string $columnName Used when printing warninga
      * @param string $extra Additional type specification (i.e. UNSIGNED)
      *
-     * @return \Propel\Generator\Model\Domain
+     * @return \Propel\Generator\Model\TypeMapping
      */
-    protected function extractTypeDomain(string $typeDeclaration, ?string $defaultValueLiteral, string $columnName, string $extra): Domain
+    protected function extractTypeMapping(string $typeDeclaration, ?string $defaultValueLiteral, string $columnName, string $extra): TypeMapping
     {
         [$nativeType, $sqlType, $size, $scale] = $this->parseType($typeDeclaration);
 
@@ -293,25 +286,25 @@ class MysqlSchemaParser extends AbstractSchemaParser
         }
 
         // Special case for TINYINT(1) which is a BOOLEAN
-        if ($propelType === PropelTypes::TINYINT && $size === 1) {
-            $propelType = PropelTypes::BOOLEAN;
+        if ($propelType === ColumnType::TINYINT && $size === 1) {
+            $propelType = ColumnType::BOOLEAN;
         }
 
-        $domain = clone $this->getPlatform()->getDomainForType($propelType);
+        $typeMapping = $this->getPlatform()->getColumnTypeMapping($propelType);
         if ($sqlType) {
-            $domain->replaceSqlType($sqlType);
+            $typeMapping->setSqlType($sqlType);
         } elseif (in_array(strtoupper($nativeType), ['TINYTEXT', 'MEDIUMTEXT', 'TINYBLOB'], true)) {
-            $domain->replaceSqlType(strtoupper($nativeType));
+            $typeMapping->setSqlType(strtoupper($nativeType));
         }
-        $domain->replaceSize($size);
-        $domain->replaceScale($scale);
+        $typeMapping->setSizeToValueIfNotNull($size);
+        $typeMapping->setScaleToValueIfNotNull($scale);
 
         $defaultValue = $this->extractDefaultValue($defaultValueLiteral, $propelType, $nativeType, $extra);
         if ($defaultValue) {
-            $domain->setDefaultValue($defaultValue);
+            $typeMapping->setDefaultValue($defaultValue);
         }
 
-        return $domain;
+        return $typeMapping;
     }
 
     /**
@@ -366,13 +359,13 @@ class MysqlSchemaParser extends AbstractSchemaParser
 
     /**
      * @param string|null $parsedValue Default value declaration
-     * @param string $propelType Column type indicator from \Propel\Generator\Model\PropelTypes
+     * @param \Propel\Generator\Model\Datatype\ColumnType $propelType
      * @param string $nativeType MySQL type name
      * @param string $extra Additional type specification (i.e. UNSIGNED)
      *
      * @return \Propel\Generator\Model\ColumnDefaultValue|null
      */
-    protected function extractDefaultValue(?string $parsedValue, string $propelType, string $nativeType, string $extra): ?ColumnDefaultValue
+    protected function extractDefaultValue(?string $parsedValue, ColumnType $propelType, string $nativeType, string $extra): ?ColumnDefaultValue
     {
         // BLOBs can't have any default values in MySQL
         $isBlob = preg_match('/blob/', $nativeType);
@@ -386,7 +379,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
             $default = $this->unwrapDefaultValueString($parsedValue);
         }
 
-        if ($propelType == PropelTypes::BOOLEAN) {
+        if ($propelType == ColumnType::BOOLEAN) {
             if ($parsedValue == '1') {
                 $default = 'true';
             }

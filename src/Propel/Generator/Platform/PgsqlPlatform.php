@@ -8,13 +8,12 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\TableDiff;
-use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Index;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use function filter_var;
@@ -33,41 +32,43 @@ use const FILTER_VALIDATE_BOOLEAN;
  */
 class PgsqlPlatform extends DefaultPlatform
 {
-    /**
-     * @var string
-     */
-    protected $createOrDropSequences = '';
+    protected string $createOrDropSequences = '';
 
     /**
-     * Initializes db specific domain mapping.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
-     * @return void
+     * @return string|null
      */
     #[\Override]
-    protected function initializeTypeMap(): void
+    protected function resolveSqlType(ColumnType $type): string|null
     {
-        parent::initializeTypeMap();
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BOOLEAN, 'BOOLEAN'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::TINYINT, 'INT2'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::SMALLINT, 'INT2'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BIGINT, 'INT8'));
-        //$this->setSchemaDomainMapping(new Domain(PropelTypes::REAL, 'FLOAT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DOUBLE, 'DOUBLE PRECISION'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::FLOAT, 'DOUBLE PRECISION'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARCHAR, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BINARY, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::VARBINARY, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARBINARY, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BLOB, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::CLOB, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::OBJECT, 'BYTEA'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::PHP_ARRAY, 'TEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DECIMAL, 'NUMERIC'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DATETIME, 'TIMESTAMP'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID, 'uuid'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID_BINARY, 'BYTEA'));
-
-        $this->setSetTypesMapping(false);
+        return match ($type) {
+            ColumnType::BOOLEAN => 'BOOLEAN',
+            ColumnType::TINYINT,
+            ColumnType::SMALLINT,
+            ColumnType::ENUM_BINARY,
+             => 'INT2',
+            ColumnType::BIGINT => 'INT8',
+            //ColumnType::REAL => 'FLOAT',
+            ColumnType::DOUBLE,
+            ColumnType::FLOAT,
+            => 'DOUBLE PRECISION',
+            ColumnType::BINARY,
+            ColumnType::VARBINARY,
+            ColumnType::LONGVARBINARY,
+            ColumnType::BLOB,
+            ColumnType::OBJECT,
+            ColumnType::UUID_BINARY,
+            => 'BYTEA',
+            ColumnType::LONGVARCHAR,
+            ColumnType::CLOB,
+            ColumnType::ARRAY
+            => 'TEXT',
+            ColumnType::DECIMAL => 'NUMERIC',
+            ColumnType::DATETIME => 'TIMESTAMP',
+            ColumnType::UUID => 'uuid',
+            default => parent::resolveSqlType($type)
+        };
     }
 
     /**
@@ -513,13 +514,13 @@ DROP TABLE IF EXISTS %s CASCADE;
     #[\Override]
     public function getColumnDDL(Column $col): string
     {
-        $domain = $col->getDomain();
+        $typeMapping = $col->getTypeMapping();
 
         $ddl = [$this->quoteIdentifier($col->getName())];
-        $sqlType = $domain->getSqlType();
+        $sqlType = $typeMapping->getSqlType();
         $table = $col->getTable();
         if ($col->isAutoIncrement() && $table && $table->getIdMethodParameters() == null) {
-            $sqlType = $col->getType() === PropelTypes::BIGINT ? 'bigserial' : 'serial';
+            $sqlType = $col->getMappingType() === ColumnType::BIGINT ? 'bigserial' : 'serial';
         }
         if ($this->hasSize($sqlType) && $col->isDefaultSqlType($this)) {
             if ($this->isNumber($sqlType)) {
@@ -726,7 +727,7 @@ DROP SEQUENCE %s CASCADE;
         }
 
         if (isset($changedProperties['size']) || isset($changedProperties['type']) || isset($changedProperties['sqlType']) || isset($changedProperties['scale'])) {
-            $sqlType = $toColumn->getDomain()->getSqlType();
+            $sqlType = $toColumn->getTypeMapping()->getSqlType();
 
             if ($this->hasSize($sqlType) && $toColumn->isDefaultSqlType($this)) {
                 if ($this->isNumber($sqlType)) {
@@ -815,8 +816,8 @@ DROP SEQUENCE %s CASCADE;
      */
     public function getUsingCast(Column $fromColumn, Column $toColumn): string
     {
-        $fromSqlType = strtoupper($fromColumn->getDomain()->getSqlType());
-        $toSqlType = strtoupper($toColumn->getDomain()->getSqlType());
+        $fromSqlType = strtoupper($fromColumn->getTypeMapping()->getSqlType());
+        $toSqlType = strtoupper($toColumn->getTypeMapping()->getSqlType());
         $name = $fromColumn->getName();
 
         if ($this->isString($fromSqlType) && $this->isNumber($toSqlType)) {

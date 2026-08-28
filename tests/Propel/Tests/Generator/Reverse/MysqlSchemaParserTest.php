@@ -118,9 +118,9 @@ EOT;
 
     public function testInvalidTypeBehavior(){
         $args = ['(nonsense)', null, 'leTable.leColumn', ''];
-        /** @var \Propel\Generator\Model\Domain */
-        $domain = $this->callMethod($this->parser, 'extractTypeDomain', $args);
-        $this->assertSame(Column::DEFAULT_TYPE, $domain->getType());
+        /** @var \Propel\Generator\Model\TypeMapping */
+        $domain = $this->callMethod($this->parser, 'extractTypeMapping', $args);
+        $this->assertSame(Column::DEFAULT_TYPE, $domain->getMappingType());
         $this->assertSame($args[0], $domain->getSqlType());
     }
 

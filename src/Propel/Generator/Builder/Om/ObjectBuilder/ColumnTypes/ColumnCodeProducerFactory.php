@@ -6,7 +6,7 @@ namespace Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes;
 
 use Propel\Generator\Builder\Om\ObjectBuilder;
 use Propel\Generator\Model\Column;
-use Propel\Generator\Model\PropelTypes;
+use Propel\Generator\Model\Datatype\ColumnType;
 
 class ColumnCodeProducerFactory
 {
@@ -18,17 +18,21 @@ class ColumnCodeProducerFactory
      */
     public static function create(Column $column, ObjectBuilder $builder): ColumnCodeProducer
     {
-        $producer = $column->isLobType() && $column->getType() !== PropelTypes::OBJECT
+        $producer = $column->isLobType() && $column->getMappingType() !== ColumnType::OBJECT
             ? new LobColumnCodeProducer($column, $builder)
-            : match ($column->getType()) {
-                PropelTypes::DATE, PropelTypes::DATETIME, PropelTypes::TIME, PropelTypes::TIMESTAMP => new TemporalColumnCodeProducer($column, $builder),
-                PropelTypes::OBJECT => new ObjectColumnCodeProducer($column, $builder),
-                PropelTypes::PHP_ARRAY => new ArrayColumnCodeProducer($column, $builder),
-                PropelTypes::JSON => new JsonColumnCodeProducer($column, $builder),
-                PropelTypes::ENUM_BINARY => new EnumBinaryColumnCodeProducer($column, $builder),
-                PropelTypes::SET_BINARY => new SetBinaryColumnCodeProducer($column, $builder),
-                PropelTypes::SET_NATIVE => new SetNativeColumnCodeProducer($column, $builder),
-                PropelTypes::BOOLEAN, PropelTypes::BOOLEAN_EMU => new BoolColumnCodeProducer($column, $builder),
+            : match ($column->getMappingType()) {
+                ColumnType::DATE,
+                ColumnType::DATETIME,
+                ColumnType::TIME,
+                ColumnType::TIMESTAMP => new TemporalColumnCodeProducer($column, $builder),
+                ColumnType::OBJECT => new ObjectColumnCodeProducer($column, $builder),
+                ColumnType::ARRAY => new ArrayColumnCodeProducer($column, $builder),
+                ColumnType::JSON => new JsonColumnCodeProducer($column, $builder),
+                ColumnType::ENUM_BINARY => new EnumBinaryColumnCodeProducer($column, $builder),
+                ColumnType::SET_BINARY => new SetBinaryColumnCodeProducer($column, $builder),
+                ColumnType::SET_NATIVE => new SetNativeColumnCodeProducer($column, $builder),
+                ColumnType::BOOLEAN,
+                ColumnType::BOOLEAN_EMU => new BoolColumnCodeProducer($column, $builder),
                 default => new ColumnCodeProducer($column, $builder),
             };
 

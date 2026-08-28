@@ -6,8 +6,9 @@ namespace Propel\Generator\Platform;
 
 use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Model\Column;
-use Propel\Generator\Model\Domain;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Table;
+use Propel\Generator\Model\TypeMapping;
 use Propel\Runtime\Connection\ConnectionInterface;
 
 /**
@@ -79,18 +80,18 @@ interface PlatformInterface
     /**
      * Returns the max column length supported by the db.
      *
-     * @return int The max column length
+     * @return int
      */
     public function getMaxColumnNameLength(): int;
 
     /**
-     * Returns the db specific domain for a propelType.
+     * Returns the db specific type mapping for a column type.
      *
-     * @param string $propelType the Propel type name.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
-     * @return \Propel\Generator\Model\Domain The db specific domain.
+     * @return \Propel\Generator\Model\TypeMapping
      */
-    public function getDomainForType(string $propelType): Domain;
+    public function getColumnTypeMapping(ColumnType $type): TypeMapping;
 
     /**
      * Returns the RDBMS-specific SQL fragment for <code>NULL</code>

@@ -15,9 +15,9 @@ use Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer\FkRelationCod
 use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\MssqlPlatform;
 use Propel\Generator\Platform\PlatformInterface;
@@ -462,7 +462,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements $interf
 
         $this->addCreateFromFilter($script);
 
-        if (array_any($table->getColumns(), fn (Column $column) => $column->getType() === PropelTypes::PHP_ARRAY)) {
+        if (array_any($table->getColumns(), fn (Column $column) => $column->getMappingType() === ColumnType::ARRAY)) {
             $this->addArraySerializationMethods($script);
         }
 
@@ -1000,7 +1000,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements $interf
         \$query = " . $this->getQueryClassName() . '::create();';
         foreach ($this->getTable()->getPrimaryKey() as $column) {
             $dataAccessExpression = '$this->' . $column->getLowercasedName();
-            if ($column->getType() === PropelTypes::UUID_BINARY) {
+            if ($column->getMappingType() === ColumnType::UUID_BINARY) {
                 $uuidSwapFlag = $this->getUuidSwapFlagLiteral();
                 $dataAccessExpression = "UuidConverter::uuidToBin($dataAccessExpression, $uuidSwapFlag)";
             }
@@ -1910,9 +1910,9 @@ $indent};";
         $pkeys = $this->getTable()->getPrimaryKey();
         $col = $pkeys[0];
         // HACK: monkey-patch ENUM_/SET_BINARY type
-        $ctype = match ($col->getType()) {
-            PropelTypes::ENUM_BINARY => 'string',
-            PropelTypes::SET_BINARY => 'array',
+        $ctype = match ($col->getMappingType()) {
+            ColumnType::ENUM_BINARY => 'string',
+            ColumnType::SET_BINARY => 'array',
             default => $col->getPhpType(),
         };
         $clo = $col->getLowercasedName();

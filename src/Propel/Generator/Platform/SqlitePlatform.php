@@ -9,11 +9,10 @@ use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\TableDiff;
-use Propel\Generator\Model\Domain;
 use Propel\Generator\Model\ForeignKey;
-use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use Propel\Runtime\Connection\PdoConnection;
@@ -38,21 +37,13 @@ use const FILTER_VALIDATE_BOOLEAN;
  */
 class SqlitePlatform extends DefaultPlatform
 {
-    /**
-     * If we should generate FOREIGN KEY statements.
-     * This is since SQLite version 3.6.19 possible.
-     *
-     * @var bool|null
-     */
-    protected $foreignKeySupport;
+    protected bool $foreignKeySupport;
 
     /**
      * If we should alter the table through creating a temporarily created table,
      * moving all items to the new one and finally rename the temp table.
-     *
-     * @var bool
      */
-    protected $tableAlteringWorkaround = true;
+    protected bool $tableAlteringWorkaround = true;
 
     /**
      * @return void
@@ -68,32 +59,32 @@ class SqlitePlatform extends DefaultPlatform
     }
 
     /**
-     * Initializes db specific domain mapping.
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
-     * @return void
+     * @return string|null
      */
     #[\Override]
-    protected function initializeTypeMap(): void
+    protected function resolveSqlType(ColumnType $type): string|null
     {
-        parent::initializeTypeMap();
-
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::NUMERIC, 'DECIMAL'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARCHAR, 'MEDIUMTEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DATE, 'DATETIME'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::DATETIME, 'DATETIME'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BINARY, 'BLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::VARBINARY, 'MEDIUMBLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARBINARY, 'LONGBLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::BLOB, 'BLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::CLOB, 'LONGTEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::OBJECT, 'BLOB'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::PHP_ARRAY, 'MEDIUMTEXT'));
-        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID_BINARY, 'BLOB'));
-
-        // no native UUID type, use UUID_BINARY
-        $this->schemaDomainMap[PropelTypes::UUID] = $this->schemaDomainMap[PropelTypes::UUID_BINARY];
-
-        $this->setSetTypesMapping(false);
+        return match ($type) {
+            ColumnType::NUMERIC => 'DECIMAL',
+            ColumnType::LONGVARCHAR,
+            ColumnType::ARRAY,
+            => 'MEDIUMTEXT',
+            ColumnType::DATE,
+            ColumnType::DATETIME,
+            => 'DATETIME',
+            ColumnType::VARBINARY => 'MEDIUMBLOB',
+            ColumnType::LONGVARBINARY => 'LONGBLOB',
+            ColumnType::CLOB => 'LONGTEXT',
+            ColumnType::BINARY,
+            ColumnType::BLOB,
+            ColumnType::OBJECT,
+            ColumnType::UUID,
+            ColumnType::UUID_BINARY,
+             => 'BLOB',
+            default => parent::resolveSqlType($type)
+        };
     }
 
     /**
@@ -516,8 +507,8 @@ PRAGMA foreign_keys = ON;
     public function getColumnDDL(Column $col): string
     {
         if ($col->isAutoIncrement()) {
-            $col->setType('INTEGER');
-            $col->setDomainForType('INTEGER');
+            $col->setType(ColumnType::INTEGER);
+            $col->setUpTypeMapping(ColumnType::INTEGER);
         }
 
         if (

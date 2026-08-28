@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Propel\Generator\Exception\DiffException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\TableDiff;
 use Propel\Generator\Model\ForeignKey;
@@ -54,7 +55,7 @@ class TableDiffTest extends TestCase
      */
     public function testSetAddedColumns()
     {
-        $column = new Column('is_published', 'boolean');
+        $column = new Column('is_published', ColumnType::BOOLEAN);
 
         $diff = $this->createTableDiff();
         $diff->setAddedColumns([ $column ]);
@@ -127,8 +128,8 @@ class TableDiffTest extends TestCase
      */
     public function testAddRenamedColumn()
     {
-        $fromColumn = new Column('is_published', 'boolean');
-        $toColumn = new Column('is_active', 'boolean');
+        $fromColumn = new Column('is_published', ColumnType::BOOLEAN);
+        $toColumn = new Column('is_active', ColumnType::BOOLEAN);
 
         $diff = $this->createTableDiff();
         $diff->setRenamedColumns([ [ $fromColumn, $toColumn ] ]);
@@ -142,7 +143,7 @@ class TableDiffTest extends TestCase
      */
     public function testSetAddedPkColumns()
     {
-        $column = new Column('id', 'integer', 7);
+        $column = new Column('id', ColumnType::INTEGER, 7);
         $column->setPrimaryKey(true);
 
         $diff = $this->createTableDiff();
@@ -158,7 +159,7 @@ class TableDiffTest extends TestCase
      */
     public function testRemoveAddedPkColumn()
     {
-        $column = new Column('id', 'integer', 7);
+        $column = new Column('id', ColumnType::INTEGER, 7);
         $column->setPrimaryKey(true);
 
         $diff = $this->createTableDiff();
@@ -177,7 +178,7 @@ class TableDiffTest extends TestCase
         $this->expectException(DiffException::class);
 
         $diff = $this->createTableDiff();
-        $diff->addAddedPkColumn('id', new Column('id', 'integer'));
+        $diff->addAddedPkColumn('id', new Column('id', ColumnType::INTEGER));
     }
 
     /**
@@ -185,7 +186,7 @@ class TableDiffTest extends TestCase
      */
     public function testSetRemovedPkColumns()
     {
-        $column = new Column('id', 'integer');
+        $column = new Column('id', ColumnType::INTEGER);
         $column->setPrimaryKey(true);
 
         $diff = $this->createTableDiff();
@@ -201,7 +202,7 @@ class TableDiffTest extends TestCase
     public function testRemoveRemovedPkColumn()
     {
         $diff = $this->createTableDiff();
-        $diff->addRemovedPkColumn('id', new Column('id', 'integer'));
+        $diff->addRemovedPkColumn('id', new Column('id', ColumnType::INTEGER));
         $diff->removeRemovedPkColumn('id');
 
         $this->assertEmpty($diff->getRemovedPkColumns());
@@ -213,7 +214,7 @@ class TableDiffTest extends TestCase
     public function testSetRenamedPkColumns()
     {
         $diff = $this->createTableDiff();
-        $diff->setRenamedPkColumns([ [ new Column('id', 'integer'), new Column('post_id', 'integer') ] ]);
+        $diff->setRenamedPkColumns([ [ new Column('id', ColumnType::INTEGER), new Column('post_id', ColumnType::INTEGER) ] ]);
 
         $this->assertCount(1, $diff->getRenamedPkColumns());
         $this->assertTrue($diff->hasModifiedPk());
@@ -363,8 +364,8 @@ class TableDiffTest extends TestCase
      */
     public function testReverseDiffHasModifiedColumns()
     {
-        $c1 = new Column('title', 'varchar', 50);
-        $c2 = new Column('title', 'varchar', 100);
+        $c1 = new Column('title', ColumnType::VARCHAR, 50);
+        $c2 = new Column('title', ColumnType::VARCHAR, 100);
 
         $columnDiff = new ColumnDiff($c1, $c2);
         $reverseColumnDiff = $columnDiff->getReverseDiff();
@@ -382,7 +383,7 @@ class TableDiffTest extends TestCase
      */
     public function testReverseDiffHasRemovedColumns()
     {
-        $column = new Column('slug', 'varchar', 100);
+        $column = new Column('slug', ColumnType::VARCHAR, 100);
 
         $diff = $this->createTableDiff();
         $diff->addAddedColumn('slug', $column);
@@ -397,7 +398,7 @@ class TableDiffTest extends TestCase
      */
     public function testReverseDiffHasAddedColumns()
     {
-        $column = new Column('slug', 'varchar', 100);
+        $column = new Column('slug', ColumnType::VARCHAR, 100);
 
         $diff = $this->createTableDiff();
         $diff->addRemovedColumn('slug', $column);
@@ -412,8 +413,8 @@ class TableDiffTest extends TestCase
      */
     public function testReverseDiffHasRenamedColumns()
     {
-        $columnA = new Column('login', 'varchar', 15);
-        $columnB = new Column('username', 'varchar', 15);
+        $columnA = new Column('login', ColumnType::VARCHAR, 15);
+        $columnB = new Column('username', ColumnType::VARCHAR, 15);
 
         $diff = $this->createTableDiff();
         $diff->addRenamedColumn($columnA, $columnB);
@@ -427,7 +428,7 @@ class TableDiffTest extends TestCase
      */
     public function testReverseDiffHasAddedPkColumns()
     {
-        $column = new Column('client_id', 'integer');
+        $column = new Column('client_id', ColumnType::INTEGER);
         $column->setPrimaryKey(true);
 
         $diff = $this->createTableDiff();
@@ -443,7 +444,7 @@ class TableDiffTest extends TestCase
      */
     public function testReverseDiffHasRemovedPkColumns()
     {
-        $column = new Column('client_id', 'integer');
+        $column = new Column('client_id', ColumnType::INTEGER);
         $column->setPrimaryKey(true);
 
         $diff = $this->createTableDiff();
@@ -459,10 +460,10 @@ class TableDiffTest extends TestCase
      */
     public function testReverseDiffHasRenamedPkColumn()
     {
-        $fromColumn = new Column('post_id', 'integer');
+        $fromColumn = new Column('post_id', ColumnType::INTEGER);
         $fromColumn->setPrimaryKey(true);
 
-        $toColumn = new Column('id', 'integer');
+        $toColumn = new Column('id', ColumnType::INTEGER);
         $toColumn->setPrimaryKey(true);
 
         $diff = $this->createTableDiff();
@@ -598,11 +599,11 @@ class TableDiffTest extends TestCase
         $tableB = new Table('B');
 
         $diff = new TableDiff($tableA, $tableB);
-        $diff->addAddedColumn('id', new Column('id', 'integer'));
-        $diff->addRemovedColumn('category_id', new Column('category_id', 'integer'));
+        $diff->addAddedColumn('id', new Column('id', ColumnType::INTEGER));
+        $diff->addRemovedColumn('category_id', new Column('category_id', ColumnType::INTEGER));
 
-        $colFoo = new Column('foo', 'integer');
-        $colBar = new Column('bar', 'integer');
+        $colFoo = new Column('foo', ColumnType::INTEGER);
+        $colBar = new Column('bar', ColumnType::INTEGER);
         $tableA->addColumn($colFoo);
         $tableA->addColumn($colBar);
 
