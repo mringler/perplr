@@ -106,6 +106,18 @@ class PgsqlPlatform extends DefaultPlatform
     }
 
     /**
+     * @param \Propel\Generator\Model\Datatype\ColumnType $columnType
+     *
+     * @return bool
+     */
+    public static function columnTypeRequiresTransaction(ColumnType $columnType)
+    {
+        $pgRequiresTransactionTypes = [ColumnType::VARBINARY, ColumnType::LONGVARBINARY, ColumnType::BLOB];
+
+        return in_array($columnType, $pgRequiresTransactionTypes, true);
+    }
+
+    /**
      * @return int
      */
     #[\Override]

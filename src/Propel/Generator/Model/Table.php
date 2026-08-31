@@ -140,8 +140,6 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     private array $columnsByPhpName = [];
 
-    private bool $needsTransactionInPostgres = false;
-
     private bool $heavyIndexing = false;
 
     /**
@@ -600,10 +598,6 @@ class Table extends ScopedMappingModel implements IdMethod
         $this->columnsByPhpName[(string)$col->getPhpName()] = $col;
         $col->setPosition(count($this->columns));
 
-        if ($col->requiresTransactionInPostgres()) {
-            $this->needsTransactionInPostgres = true;
-        }
-
         return $col;
     }
 
@@ -999,13 +993,15 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Return true if the column requires a transaction in Postgres.
+     * @deprecated Doesn't seem to be used
+     *
+     * Return true if any column requires a transaction in Postgres.
      *
      * @return bool
      */
     public function requiresTransactionInPostgres(): bool
     {
-        return $this->needsTransactionInPostgres;
+        return array_any($this->columns, fn (Column $c) => $c->requiresTransactionInPostgres());
     }
 
     /**

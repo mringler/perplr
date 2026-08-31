@@ -129,11 +129,6 @@ class Column extends MappingModel
      */
     private array|null $inheritanceList = null;
 
-    /**
-     * maybe this can be retrieved from vendor specific information
-     */
-    private bool $needsTransactionInPostgres = false;
-
     protected array $valueSet = [];
 
     /**
@@ -1066,13 +1061,13 @@ class Column extends MappingModel
     }
 
     /**
-     * Returns true if the column requires a transaction in PostGreSQL.
+     * @deprecated Doesn't seem to be used.
      *
      * @return bool
      */
     public function requiresTransactionInPostgres(): bool
     {
-        return $this->needsTransactionInPostgres;
+        return PgsqlPlatform::columnTypeRequiresTransaction($this->typeMapping->getColumnType());
     }
 
     /**
@@ -1209,9 +1204,6 @@ class Column extends MappingModel
     public function setType(ColumnType $mappingType): void
     {
         $this->typeMapping->setColumnType($mappingType);
-
-        $pgRequiresTransactionTypes = [ColumnType::VARBINARY, ColumnType::LONGVARBINARY, ColumnType::BLOB];
-        $this->needsTransactionInPostgres = in_array($mappingType, $pgRequiresTransactionTypes, true);
     }
 
     /**
