@@ -18,9 +18,9 @@ class ColumnCodeProducerFactory
      */
     public static function create(Column $column, ObjectBuilder $builder): ColumnCodeProducer
     {
-        $producer = $column->isLobType() && $column->getMappingType() !== ColumnType::OBJECT
+        $producer = $column->isLobType() && $column->getColumnType() !== ColumnType::OBJECT
             ? new LobColumnCodeProducer($column, $builder)
-            : match ($column->getMappingType()) {
+            : match ($column->getColumnType()) {
                 ColumnType::DATE,
                 ColumnType::DATETIME,
                 ColumnType::TIME,

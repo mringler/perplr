@@ -107,7 +107,7 @@ class TimestampableBehavior extends Behavior
                 ? $builder->resolveColumnDateTimeClass($updateColumn)
                 : DateTime::class;
 
-            $valueSource = $updateColumn->getMappingType() === ColumnType::INTEGER
+            $valueSource = $updateColumn->getColumnType() === ColumnType::INTEGER
                 ? 'time()'
                 : "PropelDateTime::createHighPrecision(null, '$dateTimeClass')";
 
@@ -137,7 +137,7 @@ class TimestampableBehavior extends Behavior
                 ? $builder->resolveColumnDateTimeClass($createColumn)
                 : DateTime::class;
 
-            $valueSource = $createColumn->getMappingType() === ColumnType::INTEGER
+            $valueSource = $createColumn->getColumnType() === ColumnType::INTEGER
                 ? '(int)$mtime'
                 : "PropelDateTime::createHighPrecision(PropelDateTime::formatMicrotime(\$mtime), '$dateTimeClass')";
 
@@ -154,7 +154,7 @@ if (!\$this->isColumnModified(" . $this->getColumnConstant('create_column', $bui
                 ? $builder->resolveColumnDateTimeClass($updateColumn)
                 : DateTime::class;
 
-            $valueSource = $updateColumn->getMappingType() === ColumnType::INTEGER
+            $valueSource = $updateColumn->getColumnType() === ColumnType::INTEGER
                 ? '(int)$mtime'
                 : "PropelDateTime::createHighPrecision(PropelDateTime::formatMicrotime(\$mtime), '$dateTimeClass')";
 

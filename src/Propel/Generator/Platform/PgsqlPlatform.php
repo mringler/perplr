@@ -520,7 +520,7 @@ DROP TABLE IF EXISTS %s CASCADE;
         $sqlType = $typeMapping->getSqlType();
         $table = $col->getTable();
         if ($col->isAutoIncrement() && $table && $table->getIdMethodParameters() == null) {
-            $sqlType = $col->getMappingType() === ColumnType::BIGINT ? 'bigserial' : 'serial';
+            $sqlType = $col->getColumnType() === ColumnType::BIGINT ? 'bigserial' : 'serial';
         }
         if ($this->hasSize($sqlType) && $col->isDefaultSqlType($this)) {
             if ($this->isNumber($sqlType)) {

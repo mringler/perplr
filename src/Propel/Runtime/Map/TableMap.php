@@ -454,17 +454,17 @@ class TableMap
     /**
      * Add a column to the table.
      *
-     * @param string $name A String with the column name.
-     * @param string $phpName A string representing the PHP name.
-     * @param \Propel\Generator\Model\Datatype\ColumnType $type A string specifying the Propel type.
-     * @param bool $isNotNull Whether column does not allow NULL values.
-     * @param int|null $size An int specifying the size.
+     * @param string $name
+     * @param string $phpName
+     * @param \Propel\Generator\Model\Datatype\ColumnType $type
+     * @param bool $isNotNull
+     * @param int|null $size
      * @param scalar|null $defaultValue
-     * @param bool $pk True if column is a primary key.
-     * @param string|null $fkTable A String with the foreign key table name.
-     * @param string|null $fkColumn A String with the foreign key column name.
+     * @param bool $isPk
+     * @param string|null $fkTable
+     * @param string|null $fkColumn
      *
-     * @return \Propel\Runtime\Map\ColumnMap The newly created column.
+     * @return \Propel\Runtime\Map\ColumnMap
      */
     public function addColumn(
         string $name,
@@ -473,7 +473,7 @@ class TableMap
         bool $isNotNull = false,
         ?int $size = null,
         $defaultValue = null,
-        bool $pk = false,
+        bool $isPk = false,
         ?string $fkTable = null,
         ?string $fkColumn = null
     ): ColumnMap {
@@ -482,7 +482,7 @@ class TableMap
         $col->setNotNull($isNotNull);
         $col->setDefaultValue($defaultValue);
 
-        if ($pk) {
+        if ($isPk) {
             $col->setPrimaryKey(true);
             $this->primaryKeys[$name] = $col;
         }

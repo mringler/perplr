@@ -530,14 +530,14 @@ CREATE %sINDEX %s ON %s (%s)%s;
     #[\Override]
     public function getColumnBindingPHP(Column $column, string $identifier, string $columnValueAccessor, string $tab = '            '): string
     {
-        if ($column->getMappingType() === ColumnType::CLOB_EMU) {
+        if ($column->getColumnType() === ColumnType::CLOB_EMU) {
             return sprintf(
                 "%s\$stmt->bindParam(%s, %s, %d, strlen(%s));
 ",
                 $tab,
                 $identifier,
                 $columnValueAccessor,
-                $column->getMappingType()->toPdoConstantName(),
+                $column->getColumnType()->toPdoConstantName(),
                 $columnValueAccessor,
             );
         }

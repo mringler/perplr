@@ -2284,7 +2284,7 @@ class Table extends ScopedMappingModel implements IdMethod
     public function containsColumnsOfType(ColumnType $type): bool
     {
         foreach ($this->columns as $column) {
-            if ($column->getMappingType() === $type) {
+            if ($column->getColumnType() === $type) {
                 return true;
             }
         }

@@ -297,7 +297,7 @@ class LazyLoadColumnCodeProducer extends ColumnCodeProducer
         try {
             \$dataFetcher = {$queryClassName}::create(null, \$c)->fetch(\$con);";
 
-        if (!$platform instanceof SqlsrvPlatform || $this->column->getMappingType() !== ColumnType::BLOB) {
+        if (!$platform instanceof SqlsrvPlatform || $this->column->getColumnType() !== ColumnType::BLOB) {
             $script .= "
             \$row = \$dataFetcher->fetch();";
         } else {

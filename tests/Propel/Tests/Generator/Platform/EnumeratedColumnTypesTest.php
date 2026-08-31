@@ -72,7 +72,7 @@ class EnumeratedColumnTypesTest extends TestCase
     {
         $columnXml = '<column name="column" type="' . $columnType->name . '" valueSet="A,B"/>';
         $column = $this->buildColumnForPlatform(new $platformClass, $defaultToNative, $columnXml);
-        $actualColumnType = $column->getMappingType();
+        $actualColumnType = $column->getColumnType();
 
         $this->assertSame($expectedColumnType, $actualColumnType);
     }

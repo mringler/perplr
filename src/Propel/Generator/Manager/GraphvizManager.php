@@ -32,7 +32,7 @@ class GraphvizManager extends AbstractManager
                 $dotSyntax .= 'node' . $tbl->getName() . ' [label="{<table>' . $tbl->getName() . '|<cols>';
 
                 foreach ($tbl->getColumns() as $col) {
-                    $dotSyntax .= $col->getName() . ' (' . $col->getMappingType()->name . ')';
+                    $dotSyntax .= $col->getName() . ' (' . $col->getColumnType()->name . ')';
                     if (count($col->getForeignKeys()) > 0) {
                         $dotSyntax .= ' [FK]';
                     } elseif ($col->isPrimaryKey()) {

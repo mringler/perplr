@@ -507,7 +507,6 @@ PRAGMA foreign_keys = ON;
     public function getColumnDDL(Column $col): string
     {
         if ($col->isAutoIncrement()) {
-            $col->setType(ColumnType::INTEGER);
             $col->setUpTypeMapping(ColumnType::INTEGER);
         }
 

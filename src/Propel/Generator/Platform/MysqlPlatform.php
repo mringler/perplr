@@ -924,7 +924,7 @@ ALTER TABLE %s DROP %s;
         }
 
         // binary column from database does not know it is a UUID column
-        $fromBinaryColumn = in_array($fromColumn->getMappingType(), [ColumnType::BINARY, ColumnType::UUID_BINARY], true);
+        $fromBinaryColumn = in_array($fromColumn->getColumnType(), [ColumnType::BINARY, ColumnType::UUID_BINARY], true);
         if ($fromBinaryColumn && $toColumn->isTextType() && $toColumn->isContent('UUID')) {
             return $this->getChangeColumnFromUuidBinaryType($fromColumn, $toColumn);
         }

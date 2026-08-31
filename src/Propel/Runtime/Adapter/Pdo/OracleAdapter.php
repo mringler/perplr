@@ -251,7 +251,7 @@ class OracleAdapter extends PdoAdapter implements SqlAdapterInterface
     #[\Override]
     public function bindValue(StatementInterface $stmt, string $parameter, $value, ColumnMap $cMap, ?int $position = null): bool
     {
-        if ($cMap->getTypeMapping() === ColumnType::CLOB_EMU) {
+        if ($cMap->getColumnType() === ColumnType::CLOB_EMU) {
             return $stmt->bindParam(':p' . $position, $value, $cMap->getPdoType(), strlen($value));
         }
 

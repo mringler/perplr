@@ -385,7 +385,7 @@ abstract class PdoAdapter
         }
         /** @var \DateTimeInterface $dt */
         $dt = $value instanceof DateTimeInterface ? $value : PropelDateTime::newInstance($value);
-        $format = match ($cMap->getTypeMapping()) {
+        $format = match ($cMap->getColumnType()) {
             ColumnType::DATE,
             ColumnType::BU_DATE
                 => $this->getDateFormatter(),

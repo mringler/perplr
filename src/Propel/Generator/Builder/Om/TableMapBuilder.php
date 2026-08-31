@@ -450,7 +450,7 @@ class $className extends TableMap
         }
 
         $classKeyColumnName = $col->getName();
-        $isNumericKey = $col->isNumericType() && $col->getMappingType() !== ColumnType::DECIMAL;
+        $isNumericKey = $col->isNumericType() && $col->getColumnType() !== ColumnType::DECIMAL;
         $type = $isNumericKey ? 'int' : 'string';
         $keyToClassName = [];
 
@@ -682,7 +682,7 @@ class $className extends TableMap
             $phpName = $col->getPhpName();
             $size = $col->getSize() ?: 'null';
             $default = $col->getDefaultValueString();
-            $columnType = 'ColumnType::' . $col->getMappingType()->name;
+            $columnType = 'ColumnType::' . $col->getColumnType()->name;
             $isNotNull = $col->isNotNull() ? 'true' : 'false';
 
             if (!$col->isForeignKey()) {
@@ -979,8 +979,8 @@ class $className extends TableMap
         $varName = \$row[\$indexType === TableMap::TYPE_NUM ? $index + \$offset : static::translateFieldName('$phpName', TableMap::TYPE_PHPNAME, \$indexType)];";
 
             if (
-                $column->getMappingType() === ColumnType::OBJECT
-                || ($this->getPlatform() instanceof PgsqlPlatform && $column->getMappingType() === ColumnType::UUID_BINARY )
+                $column->getColumnType() === ColumnType::OBJECT
+                || ($this->getPlatform() instanceof PgsqlPlatform && $column->getColumnType() === ColumnType::UUID_BINARY )
             ) {
                 $this->declareGlobalFunction('is_resource', 'stream_get_contents', 'is_callable');
                 $script .= "

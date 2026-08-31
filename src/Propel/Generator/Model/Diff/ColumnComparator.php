@@ -66,8 +66,8 @@ class ColumnComparator
         if ($fromSqlType !== $toSqlType) {
             $changedProperties['sqlType'] = [$fromType->getSqlType(), $toType->getSqlType()];
 
-            if ($fromType->getMappingType() !== $toType->getMappingType()) {
-                $changedProperties['type'] = [$fromType->getMappingType(), $toType->getMappingType()];
+            if ($fromType->getColumnType() !== $toType->getColumnType()) {
+                $changedProperties['type'] = [$fromType->getColumnType(), $toType->getColumnType()];
             }
         }
 

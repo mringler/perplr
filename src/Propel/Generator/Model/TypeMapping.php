@@ -68,7 +68,7 @@ class TypeMapping extends MappingModel
         $this->scale = $mapping->getScale();
         $this->size = $mapping->getSize();
         $this->sqlType = $mapping->getSqlType();
-        $this->columnType = $mapping->getMappingType();
+        $this->columnType = $mapping->getColumnType();
     }
 
     /**
@@ -251,23 +251,23 @@ class TypeMapping extends MappingModel
      *
      * @return \Propel\Generator\Model\Datatype\ColumnType
      */
-    public function getMappingType(): ColumnType
+    public function getColumnType(): ColumnType
     {
         if (!$this->columnType) {
-            throw new LogicException('Mapping type not set');
+            throw new LogicException('Column type not set');
         }
 
         return $this->columnType;
     }
 
     /**
-     * @param \Propel\Generator\Model\Datatype\ColumnType|null $mappingType
+     * @param \Propel\Generator\Model\Datatype\ColumnType $columnType
      *
      * @return void
      */
-    public function setMappingType(?ColumnType $mappingType): void
+    public function setColumnType(ColumnType $columnType): void
     {
-        $this->columnType = $mappingType;
+        $this->columnType = $columnType;
     }
 
     /**
@@ -398,7 +398,7 @@ class TypeMapping extends MappingModel
     public function cloneAs(ColumnType $type): static
     {
         $clonedMapping = clone $this;
-        $clonedMapping->setMappingType($type);
+        $clonedMapping->setColumnType($type);
 
         return $clonedMapping;
     }

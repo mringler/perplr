@@ -462,7 +462,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements $interf
 
         $this->addCreateFromFilter($script);
 
-        if (array_any($table->getColumns(), fn (Column $column) => $column->getMappingType() === ColumnType::ARRAY)) {
+        if (array_any($table->getColumns(), fn (Column $column) => $column->getColumnType() === ColumnType::ARRAY)) {
             $this->addArraySerializationMethods($script);
         }
 
@@ -1000,7 +1000,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements $interf
         \$query = " . $this->getQueryClassName() . '::create();';
         foreach ($this->getTable()->getPrimaryKey() as $column) {
             $dataAccessExpression = '$this->' . $column->getLowercasedName();
-            if ($column->getMappingType() === ColumnType::UUID_BINARY) {
+            if ($column->getColumnType() === ColumnType::UUID_BINARY) {
                 $uuidSwapFlag = $this->getUuidSwapFlagLiteral();
                 $dataAccessExpression = "UuidConverter::uuidToBin($dataAccessExpression, $uuidSwapFlag)";
             }
@@ -1910,7 +1910,7 @@ $indent};";
         $pkeys = $this->getTable()->getPrimaryKey();
         $col = $pkeys[0];
         // HACK: monkey-patch ENUM_/SET_BINARY type
-        $ctype = match ($col->getMappingType()) {
+        $ctype = match ($col->getColumnType()) {
             ColumnType::ENUM_BINARY => 'string',
             ColumnType::SET_BINARY => 'array',
             default => $col->getPhpType(),

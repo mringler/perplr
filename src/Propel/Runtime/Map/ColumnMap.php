@@ -34,7 +34,7 @@ class ColumnMap
 
     protected TableMap $table;
 
-    protected ColumnType $typeMapping;
+    protected ColumnType $columnType;
 
     protected int $size = 0;
 
@@ -69,7 +69,7 @@ class ColumnMap
         $this->columnName = $name;
         $this->table = $containingTable;
         $this->phpName = $phpName;
-        $this->typeMapping = $type;
+        $this->columnType = $type;
     }
 
     /**
@@ -151,15 +151,15 @@ class ColumnMap
      */
     public function setType(ColumnType $type): void
     {
-        $this->typeMapping = $type;
+        $this->columnType = $type;
     }
 
     /**
      * @return \Propel\Generator\Model\Datatype\ColumnType
      */
-    public function getTypeMapping(): ColumnType
+    public function getColumnType(): ColumnType
     {
-        return $this->typeMapping;
+        return $this->columnType;
     }
 
     /**
@@ -167,7 +167,7 @@ class ColumnMap
      */
     public function getPdoType(): int
     {
-        return $this->typeMapping->toPdoType();
+        return $this->columnType->toPdoType();
     }
 
     /**
@@ -177,7 +177,7 @@ class ColumnMap
      */
     public function isLob(): bool
     {
-        return in_array($this->typeMapping, [
+        return in_array($this->columnType, [
             ColumnType::BLOB,
             ColumnType::VARBINARY,
             ColumnType::LONGVARBINARY,
@@ -191,7 +191,7 @@ class ColumnMap
      */
     public function isTemporal(): bool
     {
-        return $this->typeMapping->isTemporalType();
+        return $this->columnType->isTemporalType();
     }
 
     /**
@@ -201,7 +201,7 @@ class ColumnMap
      */
     public function isNumeric(): bool
     {
-        return $this->typeMapping->isNumericType();
+        return $this->columnType->isNumericType();
     }
 
     /**
@@ -209,7 +209,7 @@ class ColumnMap
      */
     public function isSetType(): bool
     {
-        return $this->typeMapping === ColumnType::SET_BINARY;
+        return $this->columnType === ColumnType::SET_BINARY;
     }
 
     /**
@@ -219,7 +219,7 @@ class ColumnMap
      */
     public function isText(): bool
     {
-        return in_array($this->typeMapping, [
+        return in_array($this->columnType, [
             ColumnType::VARCHAR,
             ColumnType::LONGVARCHAR,
             ColumnType::CHAR,
@@ -233,7 +233,7 @@ class ColumnMap
      */
     public function isUuid(): bool
     {
-        return $this->typeMapping->isUuidType();
+        return $this->columnType->isUuidType();
     }
 
     /**

@@ -73,7 +73,7 @@ class ColumnTest extends ModelTestCase
         $column->loadMapping(['name' => 'title']);
 
         $this->assertSame('title', $column->getName());
-        $this->assertSame(ColumnType::VARCHAR, $column->getTypeMapping()->getMappingType());
+        $this->assertSame(ColumnType::VARCHAR, $column->getTypeMapping()->getColumnType());
     }
 
     /**
@@ -93,7 +93,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock('VARCHAR');
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue(ColumnType::VARCHAR));
 
         $column = new Column('');
@@ -120,7 +120,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock('VARCHAR');
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue(ColumnType::DATE));
 
         $column = new Column('');
@@ -246,7 +246,7 @@ class ColumnTest extends ModelTestCase
             ->method('setDefaultValue');
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -409,7 +409,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -466,7 +466,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue(ColumnType::ENUM_BINARY));
 
         $column = new Column('');
@@ -489,7 +489,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue(ColumnType::SET_BINARY));
 
         $column = new Column('');
@@ -525,7 +525,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue(ColumnType::OBJECT));
 
         $column = new Column('');
@@ -550,7 +550,7 @@ class ColumnTest extends ModelTestCase
 
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -587,7 +587,7 @@ class ColumnTest extends ModelTestCase
 
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -622,7 +622,7 @@ class ColumnTest extends ModelTestCase
 
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -656,7 +656,7 @@ class ColumnTest extends ModelTestCase
 
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -698,7 +698,7 @@ class ColumnTest extends ModelTestCase
 
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($columnType));
 
         $column = new Column('');
@@ -734,7 +734,7 @@ class ColumnTest extends ModelTestCase
 
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
