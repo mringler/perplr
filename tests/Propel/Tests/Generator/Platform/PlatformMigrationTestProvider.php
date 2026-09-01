@@ -398,7 +398,7 @@ EOF;
         $t1 = new Table('foo');
         $t1->setIdentifierQuoting(true);
         $c1 = new Column('bar1');
-        $c1->getTypeMapping()->setMappingType(ColumnType::DOUBLE);
+        $c1->getTypeMapping()->setColumnType(ColumnType::DOUBLE);
         $c1->getTypeMapping()->setSqlType('DOUBLE');
         $c1->getTypeMapping()->setSizeToValueIfNotNull(2);
         $t1->addColumn($c1);

@@ -352,6 +352,7 @@ class BaseTest extends MigrationTestCase
         $this->applyXmlAndTest($target4Xml);
         $this->applyXmlAndTest($target5Xml);
     }
+
     /**
      * @return void
      */

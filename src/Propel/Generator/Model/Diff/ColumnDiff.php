@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Propel\Generator\Model\Diff;
 
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\Datatype\ColumnType;
 use function array_reverse;
 use function json_encode;
 use function sprintf;
@@ -153,6 +154,9 @@ class ColumnDiff
         $ret = sprintf("      %s:\n", $this->fromColumn->getFullyQualifiedName());
         $ret .= "        modifiedProperties:\n";
         foreach ($this->changedProperties as $key => $value) {
+            if ($key === 'type' && $value instanceof ColumnType) {
+                $value = $value->name;
+            }
             $ret .= sprintf("          %s: %s\n", $key, json_encode($value));
         }
 

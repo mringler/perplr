@@ -471,15 +471,12 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     #[\Override]
     public function getColumnDDL(Column $col): string
     {
-        $typeMapping = $col->getTypeMapping();
-
         $ddl = [$this->quoteIdentifier($col->getName())];
-        $sqlType = $typeMapping->getSqlType();
-        if ($this->hasSize($sqlType) && $col->isDefaultSqlType($this)) {
-            $ddl[] = $sqlType . $col->getSizeDefinition();
-        } else {
-            $ddl[] = $sqlType;
+        $typeDeclaration = $col->resolveSqlTypeName();
+        if ($this->hasSize($typeDeclaration) && $col->isDefaultSqlType($this)) {
+            $typeDeclaration .= $col->getSizeDefinition();
         }
+        $ddl[] = $typeDeclaration;
 
         $default = $this->getColumnDefaultValueDDL($col);
 
@@ -1698,25 +1695,22 @@ if (is_resource($columnValueAccessor)) {
     }
 
     /**
-     * @param \Propel\Generator\Model\Column $column
+     * @param \Propel\Generator\Model\Datatype\ColumnType $columnType
+     * @param array<string> $valueSet
      *
      * @throws \Propel\Generator\Exception\EngineException
      *
      * @return string
      */
     #[\Override]
-    public function buildNativeEnumeratedColumnSqlType(Column $column): string
+    public function buildNativeEnumeratedColumnSqlType(ColumnType $columnType, array $valueSet): string
     {
-        if (!in_array($column->getColumnType(), [ColumnType::ENUM_NATIVE, ColumnType::SET_NATIVE])) {
-            throw new EngineException("Only native ENUM or SET type columns can be turned to sql type, but column '{$column->getConstantName()}' is {$column->getColumnType()->name}");
+        if (!in_array($columnType, [ColumnType::ENUM_NATIVE, ColumnType::SET_NATIVE])) {
+            throw new EngineException("Only native ENUM or SET type columns can be turned to sql type, but type is {$columnType->name}");
         }
 
-        if (!$column->getValueSet()) {
-            throw new EngineException("No values provided for enumerated column '{$column->getConstantName()}'");
-        }
-
-        $typeLiteral = $column->getColumnType() === ColumnType::ENUM_NATIVE ? 'ENUM' : 'SET';
-        $valuesCsv = "'" . implode("','", $column->getValueSet()) . "'";
+        $typeLiteral = $columnType === ColumnType::ENUM_NATIVE ? 'ENUM' : 'SET';
+        $valuesCsv = "'" . implode("','", $valueSet) . "'";
 
         return "$typeLiteral($valuesCsv)";
     }

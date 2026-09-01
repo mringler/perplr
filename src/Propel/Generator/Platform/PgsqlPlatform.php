@@ -526,10 +526,8 @@ DROP TABLE IF EXISTS %s CASCADE;
     #[\Override]
     public function getColumnDDL(Column $col): string
     {
-        $typeMapping = $col->getTypeMapping();
-
         $ddl = [$this->quoteIdentifier($col->getName())];
-        $sqlType = $typeMapping->getSqlType();
+        $sqlType = $col->resolveSqlTypeName();
         $table = $col->getTable();
         if ($col->isAutoIncrement() && $table && $table->getIdMethodParameters() == null) {
             $sqlType = $col->getColumnType() === ColumnType::BIGINT ? 'bigserial' : 'serial';
@@ -739,7 +737,7 @@ DROP SEQUENCE %s CASCADE;
         }
 
         if (isset($changedProperties['size']) || isset($changedProperties['type']) || isset($changedProperties['sqlType']) || isset($changedProperties['scale'])) {
-            $sqlType = $toColumn->getTypeMapping()->getSqlType();
+            $sqlType = $toColumn->resolveSqlTypeName();
 
             if ($this->hasSize($sqlType) && $toColumn->isDefaultSqlType($this)) {
                 if ($this->isNumber($sqlType)) {
@@ -828,8 +826,8 @@ DROP SEQUENCE %s CASCADE;
      */
     public function getUsingCast(Column $fromColumn, Column $toColumn): string
     {
-        $fromSqlType = strtoupper($fromColumn->getTypeMapping()->getSqlType());
-        $toSqlType = strtoupper($toColumn->getTypeMapping()->getSqlType());
+        $fromSqlType = strtoupper($fromColumn->resolveSqlTypeName());
+        $toSqlType = strtoupper($toColumn->resolveSqlTypeName());
         $name = $fromColumn->getName();
 
         if ($this->isString($fromSqlType) && $this->isNumber($toSqlType)) {

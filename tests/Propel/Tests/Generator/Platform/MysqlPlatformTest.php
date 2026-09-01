@@ -1012,7 +1012,7 @@ CREATE TABLE `foo`
     
     #[\PHPUnit\Framework\Attributes\DataProvider('typeMappingDataProvider')]
     public function testTypeMapping(ColumnType $propelDataType, string $expectedMysqlDataType){
-        $actualMysqlDataType = static::getPlatform()->getColumnTypeMapping($propelDataType)->getSqlType();
+        $actualMysqlDataType = static::getPlatform()->getColumnTypeMapping($propelDataType)->resolveSqlTypeName();
         $this->assertEquals($expectedMysqlDataType, $actualMysqlDataType);
     }
 

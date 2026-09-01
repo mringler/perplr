@@ -100,7 +100,7 @@ class ForeignKeyComparator
         usort($columns1, $byNameSorter);
         usort($columns2, $byNameSorter);
 
-        $toSqlTypeNameMapper = fn (Column $column) => $column->getSqlType();
+        $toSqlTypeNameMapper = fn (Column $column) => $column->resolveSqlTypeName();
         $columnTypes1 = array_map($toSqlTypeNameMapper, $columns1);
         $columnTypes2 = array_map($toSqlTypeNameMapper, $columns2);
 

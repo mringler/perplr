@@ -103,7 +103,7 @@ class EnumeratedColumnTypesTest extends TestCase
         $columnXml = '<column name="enumerated_column" type="' . $columnType->name . '" valueSet="' . $valueSetCsv . '"/>';
         $column = $this->buildColumnForPlatform(new MysqlPlatform(), false, $columnXml);
 
-        $this->assertSame($column->getSqlType(), $expectedSqlType);
+        $this->assertSame($column->resolveSqlTypeName(), $expectedSqlType);
     }
 
     /**
