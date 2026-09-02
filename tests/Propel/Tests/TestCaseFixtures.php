@@ -138,7 +138,7 @@ class TestCaseFixtures extends TestCase
     {
         $options = [
             'command' => 'test:prepare',
-            '--vendor' => static::loadDatabaseDriverName(),
+            '--vendor' => static::getVendorName(),
             '--dsn' => $dsn,
             '--verbose' => true,
         ];
@@ -290,29 +290,5 @@ class TestCaseFixtures extends TestCase
         $dbName = getenv('DB_NAME') ?: 'test';
 
         return "$db:host=$host;dbname=$dbName";
-    }
-
-    /**
-     * Returns current database driver.
-     *
-     * @param \Propel\Runtime\Connection\ConnectionInterface|null $con
-     *
-     * @return string
-     */
-    protected static function loadDatabaseDriverName(?ConnectionInterface $con = null)
-    {
-        $db = strtolower(getenv('DB'));
-
-        return !$db || 'agnostic' === $db ?  'mysql' : $db;
-    }
-
-    /**
-     * Returns current database driver.
-     *
-     * @return string
-     */
-    protected static function getDriver(): string
-    {
-        return static::loadDatabaseDriverName();
     }
 }

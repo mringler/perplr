@@ -687,8 +687,9 @@ class $className extends TableMap
 
             if (!$col->isForeignKey()) {
                 $method = $col->isPrimaryKey() ? 'addPrimaryKey' : 'addColumn';
+                $customPhpType = '';
                 $script .= "
-        \$this->$method('$columnName', '$phpName', $columnType, $isNotNull, $size, $default);";
+        \$this->$method('$columnName', '$phpName', $columnType, $isNotNull, $size, $default{$customPhpType});";
             } else {
                 $method = $col->isPrimaryKey() ? 'addForeignPrimaryKey' : 'addForeignKey';
                 foreach ($col->getForeignKeys() as $fk) {

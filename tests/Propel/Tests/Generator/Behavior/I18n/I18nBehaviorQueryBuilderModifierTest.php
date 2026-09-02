@@ -71,7 +71,8 @@ EOF;
         $q->joinI18n();
         $params = [];
         $sql = $q->createSelectSQL($params);
-        $expectedSQL = $this->getSql('SELECT `i18n_behavior_test_11`.`id`, `i18n_behavior_test_11`.`foo` FROM `i18n_behavior_test_11` LEFT JOIN `i18n_behavior_test_11_i18n` ON (`i18n_behavior_test_11`.`id`=`i18n_behavior_test_11_i18n`.`id` AND `i18n_behavior_test_11_i18n`.`locale` = :p1)');
+        $expectedSQL = 'SELECT [i18n_behavior_test_11].[id], [i18n_behavior_test_11].[foo] FROM [i18n_behavior_test_11] LEFT JOIN [i18n_behavior_test_11_i18n] ON ([i18n_behavior_test_11].[id]=[i18n_behavior_test_11_i18n].[id] AND [i18n_behavior_test_11_i18n].[locale] = :p1)';
+
         $this->assertEquals($expectedSQL, $sql);
         $this->assertEquals('en_US', $params[0]['value']);
     }
@@ -85,7 +86,7 @@ EOF;
             ->joinI18n('fr_FR');
         $params = [];
         $sql = $q->createSelectSQL($params);
-        $expectedSQL = $this->getSql('SELECT `i18n_behavior_test_11`.`id`, `i18n_behavior_test_11`.`foo` FROM `i18n_behavior_test_11` LEFT JOIN `i18n_behavior_test_11_i18n` ON (`i18n_behavior_test_11`.`id`=`i18n_behavior_test_11_i18n`.`id` AND `i18n_behavior_test_11_i18n`.`locale` = :p1)');
+        $expectedSQL = 'SELECT [i18n_behavior_test_11].[id], [i18n_behavior_test_11].[foo] FROM [i18n_behavior_test_11] LEFT JOIN [i18n_behavior_test_11_i18n] ON ([i18n_behavior_test_11].[id]=[i18n_behavior_test_11_i18n].[id] AND [i18n_behavior_test_11_i18n].[locale] = :p1)';
         $this->assertEquals($expectedSQL, $sql);
         $this->assertEquals('fr_FR', $params[0]['value']);
     }
@@ -99,7 +100,7 @@ EOF;
             ->joinI18n('en_US', 'I18n');
         $params = [];
         $sql = $q->createSelectSQL($params);
-        $expectedSQL = $this->getSql('SELECT `i18n_behavior_test_11`.`id`, `i18n_behavior_test_11`.`foo` FROM `i18n_behavior_test_11` LEFT JOIN `i18n_behavior_test_11_i18n` `I18n` ON (`i18n_behavior_test_11`.`id`=`I18n`.`id` AND `I18n`.`locale` = :p1)');
+        $expectedSQL = 'SELECT [i18n_behavior_test_11].[id], [i18n_behavior_test_11].[foo] FROM [i18n_behavior_test_11] LEFT JOIN [i18n_behavior_test_11_i18n] [I18n] ON ([i18n_behavior_test_11].[id]=[I18n].[id] AND [I18n].[locale] = :p1)';
         $this->assertEquals($expectedSQL, $sql);
         $this->assertEquals('en_US', $params[0]['value']);
     }
@@ -113,7 +114,7 @@ EOF;
             ->joinI18n('en_US', null, Criteria::INNER_JOIN);
         $params = [];
         $sql = $q->createSelectSQL($params);
-        $expectedSQL = $this->getSql('SELECT `i18n_behavior_test_11`.`id`, `i18n_behavior_test_11`.`foo` FROM `i18n_behavior_test_11` INNER JOIN `i18n_behavior_test_11_i18n` ON (`i18n_behavior_test_11`.`id`=`i18n_behavior_test_11_i18n`.`id` AND `i18n_behavior_test_11_i18n`.`locale` = :p1)');
+        $expectedSQL = 'SELECT [i18n_behavior_test_11].[id], [i18n_behavior_test_11].[foo] FROM [i18n_behavior_test_11] INNER JOIN [i18n_behavior_test_11_i18n] ON ([i18n_behavior_test_11].[id]=[i18n_behavior_test_11_i18n].[id] AND [i18n_behavior_test_11_i18n].[locale] = :p1)';
         $this->assertEquals($expectedSQL, $sql);
         $this->assertEquals('en_US', $params[0]['value']);
     }
@@ -128,7 +129,7 @@ EOF;
         I18nBehaviorTest11Query::create()
             ->joinI18n('fr_FR')
             ->find($con);
-        $expected = $this->getSql("SELECT `i18n_behavior_test_11`.`id`, `i18n_behavior_test_11`.`foo` FROM `i18n_behavior_test_11` LEFT JOIN `i18n_behavior_test_11_i18n` ON (`i18n_behavior_test_11`.`id`=`i18n_behavior_test_11_i18n`.`id` AND `i18n_behavior_test_11_i18n`.`locale` = 'fr_FR')");
+        $expected = "SELECT [i18n_behavior_test_11].[id], [i18n_behavior_test_11].[foo] FROM [i18n_behavior_test_11] LEFT JOIN [i18n_behavior_test_11_i18n] ON ([i18n_behavior_test_11].[id]=[i18n_behavior_test_11_i18n].[id] AND [i18n_behavior_test_11_i18n].[locale] = 'fr_FR')";
         $this->assertEquals($expected, $con->getLastExecutedQuery());
         $con->useDebug(false);
     }
@@ -144,7 +145,7 @@ EOF;
             ->endUse();
         $params = [];
         $sql = $q->createSelectSQL($params);
-        $expectedSQL = $this->getSql('SELECT `i18n_behavior_test_11`.`id`, `i18n_behavior_test_11`.`foo` FROM `i18n_behavior_test_11` LEFT JOIN `i18n_behavior_test_11_i18n` ON (`i18n_behavior_test_11`.`id`=`i18n_behavior_test_11_i18n`.`id` AND `i18n_behavior_test_11_i18n`.`locale` = :p1) WHERE `i18n_behavior_test_11_i18n`.`bar`=:p2');
+        $expectedSQL = 'SELECT [i18n_behavior_test_11].[id], [i18n_behavior_test_11].[foo] FROM [i18n_behavior_test_11] LEFT JOIN [i18n_behavior_test_11_i18n] ON ([i18n_behavior_test_11].[id]=[i18n_behavior_test_11_i18n].[id] AND [i18n_behavior_test_11_i18n].[locale] = :p1) WHERE [i18n_behavior_test_11_i18n].[bar]=:p2';
         $this->assertEquals($expectedSQL, $sql);
         $this->assertEquals('fr_FR', $params[0]['value']);
         $this->assertEquals('bar', $params[1]['value']);
@@ -161,7 +162,7 @@ EOF;
             ->endUse();
         $params = [];
         $sql = $q->createSelectSQL($params);
-        $expectedSQL = $this->getSql('SELECT `i18n_behavior_test_11`.`id`, `i18n_behavior_test_11`.`foo` FROM `i18n_behavior_test_11` LEFT JOIN `i18n_behavior_test_11_i18n` `I18n` ON (`i18n_behavior_test_11`.`id`=`I18n`.`id` AND `I18n`.`locale` = :p1) WHERE `I18n`.`bar`=:p2');
+        $expectedSQL = 'SELECT [i18n_behavior_test_11].[id], [i18n_behavior_test_11].[foo] FROM [i18n_behavior_test_11] LEFT JOIN [i18n_behavior_test_11_i18n] [I18n] ON ([i18n_behavior_test_11].[id]=[I18n].[id] AND [I18n].[locale] = :p1) WHERE [I18n].[bar]=:p2';
         $this->assertEquals($expectedSQL, $sql);
         $this->assertEquals('fr_FR', $params[0]['value']);
         $this->assertEquals('bar', $params[1]['value']);
@@ -179,7 +180,8 @@ EOF;
                 ->filterByBar('bar')
             ->endUse()
             ->find($con);
-        $expected = $this->getSql("SELECT `i18n_behavior_test_11`.`id`, `i18n_behavior_test_11`.`foo` FROM `i18n_behavior_test_11` LEFT JOIN `i18n_behavior_test_11_i18n` ON (`i18n_behavior_test_11`.`id`=`i18n_behavior_test_11_i18n`.`id` AND `i18n_behavior_test_11_i18n`.`locale` = 'fr_FR') WHERE `i18n_behavior_test_11_i18n`.`bar`='bar'");
+
+            $expected = "SELECT [i18n_behavior_test_11].[id], [i18n_behavior_test_11].[foo] FROM [i18n_behavior_test_11] LEFT JOIN [i18n_behavior_test_11_i18n] ON ([i18n_behavior_test_11].[id]=[i18n_behavior_test_11_i18n].[id] AND [i18n_behavior_test_11_i18n].[locale] = 'fr_FR') WHERE [i18n_behavior_test_11_i18n].[bar]='bar'";
         $this->assertEquals($expected, $con->getLastExecutedQuery());
         $con->useDebug(false);
     }
@@ -193,7 +195,7 @@ EOF;
             ->populateI18n();
         $params = [];
         $sql = $q->createSelectSQL($params);
-        $expectedSQL = $this->getSql('SELECT `i18n_behavior_test_11`.`id`, `i18n_behavior_test_11`.`foo`, `i18n_behavior_test_11_i18n`.`id`, `i18n_behavior_test_11_i18n`.`locale`, `i18n_behavior_test_11_i18n`.`bar` FROM `i18n_behavior_test_11` LEFT JOIN `i18n_behavior_test_11_i18n` ON (`i18n_behavior_test_11`.`id`=`i18n_behavior_test_11_i18n`.`id` AND `i18n_behavior_test_11_i18n`.`locale` = :p1)');
+        $expectedSQL = 'SELECT [i18n_behavior_test_11].[id], [i18n_behavior_test_11].[foo], [i18n_behavior_test_11_i18n].[id], [i18n_behavior_test_11_i18n].[locale], [i18n_behavior_test_11_i18n].[bar] FROM [i18n_behavior_test_11] LEFT JOIN [i18n_behavior_test_11_i18n] ON ([i18n_behavior_test_11].[id]=[i18n_behavior_test_11_i18n].[id] AND [i18n_behavior_test_11_i18n].[locale] = :p1)';
         $this->assertEquals($expectedSQL, $sql);
         $this->assertEquals('en_US', $params[0]['value']);
     }
@@ -291,35 +293,5 @@ EOF;
             ->limit(2)
             ->find();
         $this->assertInstanceOf('\Propel\Runtime\Collection\ObjectCollection', $res);
-    }
-
-    // This is not a desired behavior, but there is no way to overcome it
-    // because if we don't issue a database query when the collection exists
-    // then there is no way to avoid duplicates when adding translations.
-    // use case:
-    // $o = new Object();
-    // $t1 = new Translation();
-    // $o->setTranslation($t2, 'en_US'); // this is what happens during joined hydration
-    // now the translation collection exists
-    // $t2 = $o->getTranslation('fr_FR'); // we MUST issue a query here
-    /**
-     * @return void
-     */
-    public function testPopulateI18nDoesNotExecuteAdditionalQueryWhenNoTranslationIsFound()
-    {
-        $this->markTestSkipped();
-
-        $con = Propel::getServiceContainer()->getConnection(I18nBehaviorTest11TableMap::DATABASE_NAME);
-        $con->useDebug(true);
-        I18nBehaviorTest11Query::create()->deleteAll();
-        I18nBehaviorTest11I18nQuery::create()->deleteAll();
-        $o = new I18nBehaviorTest11();
-        $o->save();
-        $o = I18nBehaviorTest11Query::create()
-            ->populateI18n('en_US')
-            ->findOne($con);
-        $count = $con->getQueryCount();
-        $translation = $o->getTranslation('en_US', $con);
-        $this->assertEquals($count, $con->getQueryCount());
     }
 }

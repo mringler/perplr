@@ -503,7 +503,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     {
         $platform = new MysqlPlatform();
         $this->setObjectPropertyValue($platform, 'ignoreSizeOnIntegerTypes', $ignoreSize);
-        $domain = clone $platform->getColumnTypeMapping($integerType);
+        $domain = $platform->getColumnTypeMapping($integerType);
         $domain->setSizeToValueIfNotNull(3);
 
         $column = new Column('foo');

@@ -8,6 +8,7 @@
 
 namespace Propel\Tests\Runtime\Formatter;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Propel\Runtime\Formatter\SimpleArrayFormatter;
 use Propel\Runtime\Propel;
@@ -63,41 +64,30 @@ class SimpleArrayFormatterTest extends BookstoreEmptyTestBase
         $this->assertSame(0, $books[0] + 0);
     }
 
-    /**
-     * @return void
-     */
-    public function testFormatOneWithOneRowAndValueIsNotZero()
+    public static function SelectValueDataProvider(): array
     {
-        $con = Propel::getServiceContainer()->getConnection(BookTableMap::DATABASE_NAME);
-        if ($this->isDb('mysql')) {
-            $stmt = $con->query('SELECT 1 FROM book LIMIT 0, 1');
-        } else {
-            $stmt = $con->query('SELECT 1 FROM book LIMIT 1');
-        }
-
-        $formatter = new SimpleArrayFormatter();
-        $formatter->init(new ModelCriteria('bookstore', '\Propel\Tests\Bookstore\Book'));
-
-        $book = $formatter->formatOne($stmt);
-        $this->assertSame(1, $book + 0);
+        return [
+            [0], [1]
+        ];
     }
 
     /**
      * @return void
      */
-    public function testFormatOneWithOneRowAndValueEqualsZero()
+    #[DataProvider('SelectValueDataProvider')]
+    public function testFormatOneWithOneRowAndValueEqualsZero(int $selectValue)
     {
         $con = Propel::getServiceContainer()->getConnection(BookTableMap::DATABASE_NAME);
-        if ($this->isDb('mysql')) {
-            $stmt = $con->query('SELECT 0 FROM book LIMIT 0, 1');
-        } else {
-            $stmt = $con->query('SELECT 0 FROM book LIMIT 1');
-        }
+        $sql = $this->runningOnMySQL()
+            ? "SELECT $selectValue FROM book LIMIT 0, 1"
+            : "SELECT $selectValue FROM book LIMIT 1";
+
+        $stmt = $con->query($sql);
 
         $formatter = new SimpleArrayFormatter();
         $formatter->init(new ModelCriteria('bookstore', '\Propel\Tests\Bookstore\Book'));
 
         $book = $formatter->formatOne($stmt);
-        $this->assertSame(0, $book + 0);
+        $this->assertSame($selectValue, $book + 0);
     }
 }

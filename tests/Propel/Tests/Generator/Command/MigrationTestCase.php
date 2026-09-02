@@ -208,7 +208,7 @@ abstract class MigrationTestCase extends TestCaseFixturesDatabase
         $defaultAppArguments = [
             '--config-dir' => self::CONNECTION_CONFIG_DIR,
             '--output-dir' => self::OUTPUT_DIR,
-            '--platform' => ucfirst(static::getDriver()) . 'Platform',
+            '--platform' => ucfirst(static::getVendorName()) . 'Platform',
             '--connection' => $connectionOption,
             '--verbose' => true,
         ];
