@@ -14,6 +14,7 @@ use function implode;
 use function in_array;
 use function sort;
 use function strtoupper;
+use const PHP_INT_SIZE;
 
 enum ColumnType
 {
@@ -143,11 +144,11 @@ enum ColumnType
             self::TINYINT,
             self::SMALLINT,
             self::INTEGER,
-            self::BIGINT,
             self::BOOLEAN_EMU,
             self::ENUM_BINARY,
             self::SET_BINARY
             => PDO::PARAM_INT,
+            self::BIGINT => PHP_INT_SIZE < 8 ? PDO::PARAM_STR : PDO::PARAM_INT,
             self::VARBINARY,
             self::LONGVARBINARY,
             self::BLOB,

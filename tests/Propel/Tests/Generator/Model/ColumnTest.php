@@ -21,6 +21,7 @@ use Propel\Generator\Platform\MysqlPlatform;
 use Propel\Tests\Helpers\ColorsBackedEnum;
 use Propel\Tests\Helpers\ColorsUnitEnum;
 use Propel\Tests\TestCase;
+use const PHP_INT_SIZE;
 
 /**
  * Tests for package handling.
