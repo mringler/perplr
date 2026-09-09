@@ -73,7 +73,7 @@ class FilterClauseLiteralWithColumns extends AbstractFilterClauseLiteral
             $this->clause = $this->isNotInOperator() ? '1=1' : '1<>1'; // see InColumnFilter::buildFilterClause()
         }
 
-        if ($columnMap->getTypeMapping() === ColumnType::SET_BINARY && $this->isInOperator()) { // see old ModelCriteria::buildFilterForClause()
+        if ($columnMap->getColumnType() === ColumnType::SET_BINARY && $this->isInOperator()) { // see old ModelCriteria::buildFilterForClause()
             $this->clause = $this->isNotInOperator()
                 ? substr($this->clause, 0, -8) . '& ? = 0'
                 : substr($this->clause, 0, -4) . '& ?';
@@ -136,15 +136,15 @@ class FilterClauseLiteralWithColumns extends AbstractFilterClauseLiteral
      */
     public static function convertValueForColumn($value, ColumnMap $colMap)
     {
-        if ($colMap->getTypeMapping() === ColumnType::OBJECT && is_object($value)) {
+        if ($colMap->getColumnType() === ColumnType::OBJECT && is_object($value)) {
             $value = serialize($value);
-        } elseif ($colMap->getTypeMapping() === ColumnType::ARRAY && is_array($value)) {
+        } elseif ($colMap->getColumnType() === ColumnType::ARRAY && is_array($value)) {
             $value = '| ' . implode(' | ', $value) . ' |';
-        } elseif ($colMap->getTypeMapping() === ColumnType::ENUM_BINARY && $value !== null) {
+        } elseif ($colMap->getColumnType() === ColumnType::ENUM_BINARY && $value !== null) {
             $value = is_array($value)
                 ? array_map([$colMap, 'getValueSetKey'], $value)
                 : $colMap->getValueSetKey($value);
-        } elseif ($colMap->getTypeMapping() === ColumnType::SET_BINARY && $value !== null) {
+        } elseif ($colMap->getColumnType() === ColumnType::SET_BINARY && $value !== null) {
             try {
                 $value = SetColumnConverter::convertToBitmask($value, $colMap->getValueSet());
             } catch (SetColumnConverterException $e) {

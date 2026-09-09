@@ -143,16 +143,12 @@ class SqlitePlatform extends DefaultPlatform
     public function getAddColumnsDDL(array $columns): string
     {
         $ret = '';
-        $pattern = "
-ALTER TABLE %s ADD %s;
-";
         foreach ($columns as $column) {
-            $tableName = $column->getTable()->getName();
-            $ret .= sprintf(
-                $pattern,
-                $this->quoteIdentifier($tableName),
-                $this->getColumnDDL($column),
-            );
+            $tableName = $this->quoteIdentifier($column->getTableName());
+            $columnDll = $this->getColumnDDL($column);
+            $ret .= "
+ALTER TABLE $tableName ADD $columnDll;
+";
         }
 
         return $ret;
@@ -507,7 +503,6 @@ PRAGMA foreign_keys = ON;
     public function getColumnDDL(Column $col): string
     {
         if ($col->isAutoIncrement()) {
-            $col->setType(ColumnType::INTEGER);
             $col->setUpTypeMapping(ColumnType::INTEGER);
         }
 

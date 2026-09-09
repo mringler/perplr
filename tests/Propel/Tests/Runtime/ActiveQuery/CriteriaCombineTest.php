@@ -9,7 +9,6 @@
 namespace Propel\Tests\Runtime\ActiveQuery;
 
 use Propel\Runtime\ActiveQuery\Criteria;
-use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Propel\Runtime\Adapter\Pdo\SqliteAdapter;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Propel;
@@ -23,13 +22,6 @@ use Propel\Tests\Helpers\BaseTestCase;
  */
 class CriteriaCombineTest extends BaseTestCase
 {
-    /**
-     * The criteria to use in the test.
-     *
-     * @var \Propel\Runtime\ActiveQuery\Criteria
-     */
-    private $c;
-
     /**
      * DB adapter saved for later.
      *
@@ -47,14 +39,6 @@ class CriteriaCombineTest extends BaseTestCase
         $defaultDatasource = Propel::getServiceContainer()->getDefaultDatasource();
         $this->savedAdapter = Propel::getServiceContainer()->getAdapter($defaultDatasource);
         Propel::getServiceContainer()->setAdapter($defaultDatasource, new SqliteAdapter());
-    }
-
-    /**
-     * @return string
-     */
-    protected static function getDriver(): string
-    {
-        return 'sqlite';
     }
 
     /**

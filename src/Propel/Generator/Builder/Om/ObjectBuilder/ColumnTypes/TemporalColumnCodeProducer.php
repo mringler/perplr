@@ -60,7 +60,7 @@ class TemporalColumnCodeProducer extends AbstractDeserializableColumnCodeProduce
         $objectAttribute = $this->getDeserializedAttributeName();
 
         $mysqlInvalidDateString = !$this->getPlatform() instanceof MysqlPlatform ? null
-            : match ($this->column->getMappingType()) {
+            : match ($this->column->getColumnType()) {
                 ColumnType::TIMESTAMP, ColumnType::DATETIME => '0000-00-00 00:00:00',
                 ColumnType::DATE => '0000-00-00',
                 default => null
@@ -182,10 +182,10 @@ class TemporalColumnCodeProducer extends AbstractDeserializableColumnCodeProduce
         $handleMysqlDate = false;
         $mysqlInvalidDateString = '';
         if ($this->getPlatform() instanceof MysqlPlatform) {
-            if (in_array($column->getMappingType(), [ColumnType::TIMESTAMP, ColumnType::DATETIME], true)) {
+            if (in_array($column->getColumnType(), [ColumnType::TIMESTAMP, ColumnType::DATETIME], true)) {
                 $handleMysqlDate = true;
                 $mysqlInvalidDateString = '0000-00-00 00:00:00';
-            } elseif ($column->getMappingType() === ColumnType::DATE) {
+            } elseif ($column->getColumnType() === ColumnType::DATE) {
                 $handleMysqlDate = true;
                 $mysqlInvalidDateString = '0000-00-00';
             }
@@ -230,7 +230,7 @@ class TemporalColumnCodeProducer extends AbstractDeserializableColumnCodeProduce
      */
     protected function getTemporalTypeDefaultFormatConfigKey(): ?string
     {
-        return match ($this->column->getMappingType()) {
+        return match ($this->column->getColumnType()) {
             ColumnType::DATE => 'generator.dateTime.defaultDateFormat',
             ColumnType::TIME => 'generator.dateTime.defaultTimeFormat',
             ColumnType::TIMESTAMP, ColumnType::DATETIME => 'generator.dateTime.defaultTimeStampFormat',

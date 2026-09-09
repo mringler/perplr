@@ -66,7 +66,7 @@ class MssqlAdapterTest extends TestCase
     /**
      * @return string
      */
-    protected static function getDriver(): string
+    protected static function getVendorName(): string
     {
         return 'mssql';
     }

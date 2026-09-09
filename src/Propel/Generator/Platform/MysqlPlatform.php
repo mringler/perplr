@@ -484,7 +484,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     public function getColumnDDL(Column $col): string
     {
         $typeMapping = $col->getTypeMapping();
-        $sqlType = $typeMapping->getSqlType();
+        $sqlType = $col->resolveSqlTypeName();
         $notNullString = $this->getNullString($col->isNotNull());
         $defaultSetting = $this->getColumnDefaultValueDDL($col);
 
@@ -577,7 +577,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      */
     public function getSqlTypeExpression(Column $column): string
     {
-        $sqlType = $column->getSqlType();
+        $sqlType = $column->resolveSqlTypeName();
         $hasSize = $this->hasSize($sqlType) && $column->isDefaultSqlType($this);
 
         return (!$hasSize) ? $sqlType : $sqlType . $column->getSizeDefinition();
@@ -924,7 +924,7 @@ ALTER TABLE %s DROP %s;
         }
 
         // binary column from database does not know it is a UUID column
-        $fromBinaryColumn = in_array($fromColumn->getMappingType(), [ColumnType::BINARY, ColumnType::UUID_BINARY], true);
+        $fromBinaryColumn = in_array($fromColumn->getColumnType(), [ColumnType::BINARY, ColumnType::UUID_BINARY], true);
         if ($fromBinaryColumn && $toColumn->isTextType() && $toColumn->isContent('UUID')) {
             return $this->getChangeColumnFromUuidBinaryType($fromColumn, $toColumn);
         }
@@ -945,9 +945,8 @@ ALTER TABLE %s DROP %s;
         $tableName = $this->quoteIdentifier($fromColumn->getTable()->getName());
         $columnName = $this->quoteIdentifier($fromColumn->getName());
         $columnDefinition = $this->getColumnDDL($toColumn);
-        $pattern = "\nALTER TABLE %s CHANGE %s %s;\n";
 
-        return sprintf($pattern, $tableName, $columnName, $columnDefinition);
+        return "\nALTER TABLE $tableName CHANGE $columnName $columnDefinition;\n";
     }
 
     /**
@@ -975,31 +974,14 @@ ALTER TABLE %s DROP %s;
     #[\Override]
     public function getAddColumnDDL(Column $column): string
     {
-        $pattern = "
-ALTER TABLE %s ADD %s %s;
-";
         $tableColumns = $column->getTable()->getColumns();
+        $index = $column->getPosition(); // 1-based position
+        $insertPositionDDL = $index > 1 ? 'AFTER ' . $this->quoteIdentifier($tableColumns[$index - 2]->getName()) : 'FIRST';
 
-        // Default to add first if no column is found before the current one
-        $insertPositionDDL = 'FIRST';
-        foreach ($tableColumns as $i => $tableColumn) {
-            // We found the column, use the one before it if it's not the first
-            if ($tableColumn->getName() == $column->getName()) {
-                // We have a column that is not the first one
-                if ($i > 0) {
-                    $insertPositionDDL = 'AFTER ' . $this->quoteIdentifier($tableColumns[$i - 1]->getName());
-                }
+        $tableName = $this->quoteIdentifier($column->getTableName());
+        $columnDdl = $this->getColumnDDL($column);
 
-                break;
-            }
-        }
-
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($column->getTable()->getName()),
-            $this->getColumnDDL($column),
-            $insertPositionDDL,
-        );
+        return "\nALTER TABLE $tableName ADD $columnDdl $insertPositionDDL;\n";
     }
 
     /**

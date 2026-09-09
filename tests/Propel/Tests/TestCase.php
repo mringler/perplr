@@ -30,24 +30,23 @@ class TestCase extends PHPUnitTestCase
     /**
      * @return string
      */
-    protected static function getDriver(): string
+    protected static function getVendorName()
     {
-        return 'sqlite';
+        $db = strtolower(getenv('DB')); // set in ./tests/<vendor>.phpunit.xml
+
+        return !$db || $db === 'agnostic' ?  'mysql' : $db;
     }
 
     /**
      * @deprecated Use aptly named {@see static::toVendorSql}
      *
-     * Makes the sql compatible with the current database.
-     * Means: replaces ` etc.
-     *
      * @param string $sql
      * @param string $source
      * @param string|null $target
      *
-     * @return mixed
+     * @return string
      */
-    protected static function getSql($sql, $source = 'mysql', $target = null)
+    protected static function getSql($sql, $source = 'mysql', $target = null): string
     {
         return static::toVendorSql($sql, $source, $target);
     }
@@ -60,11 +59,11 @@ class TestCase extends PHPUnitTestCase
      * @param string $source
      * @param string|null $target
      *
-     * @return mixed
+     * @return string
      */
-    public static function toVendorSql($sql, $source = 'mysql', $target = null)
+    public static function toVendorSql($sql, $source = 'mysql', $target = null): string
     {
-        $target ??= static::getDriver();
+        $target ??= static::getVendorName();
 
         if ($target === 'sqlite' && $source === 'mysql') {
             return preg_replace('/`([^`]*)`/', '[$1]', $sql);
@@ -94,7 +93,7 @@ class TestCase extends PHPUnitTestCase
      */
     protected static function isDb($db = 'mysql')
     {
-        return static::getDriver() == $db;
+        return static::getVendorName() == $db;
     }
 
     /**
@@ -142,7 +141,7 @@ class TestCase extends PHPUnitTestCase
      */
     protected static function getPlatform(): PlatformInterface
     {
-        $className = sprintf('\\Propel\\Generator\\Platform\\%sPlatform', ucfirst(static::getDriver()));
+        $className = sprintf('\\Propel\\Generator\\Platform\\%sPlatform', ucfirst(static::getVendorName()));
 
         return new $className();
     }
@@ -154,7 +153,7 @@ class TestCase extends PHPUnitTestCase
      */
     protected static function getParser($con)
     {
-        $className = sprintf('\\Propel\\Generator\\Reverse\\%sSchemaParser', ucfirst(static::getDriver()));
+        $className = sprintf('\\Propel\\Generator\\Reverse\\%sSchemaParser', ucfirst(static::getVendorName()));
 
         return new $className($con);
     }

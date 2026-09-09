@@ -25,7 +25,7 @@ class TypeMappingTest extends ModelTestCase
     {
         $domain = new TypeMapping(ColumnType::FLOAT, 'DOUBLE', 10, 2);
 
-        $this->assertSame(ColumnType::FLOAT, $domain->getMappingType());
+        $this->assertSame(ColumnType::FLOAT, $domain->getColumnType());
         $this->assertSame('DOUBLE', $domain->getSqlType());
         $this->assertSame(10, $domain->getSize());
         $this->assertSame(2, $domain->getScale());
@@ -53,7 +53,7 @@ class TypeMappingTest extends ModelTestCase
             'description' => 'Some description',
         ]);
 
-        $this->assertSame(ColumnType::BOOLEAN, $domain->getMappingType());
+        $this->assertSame(ColumnType::BOOLEAN, $domain->getColumnType());
         $this->assertSame('foo', $domain->getName());
         $this->assertInstanceOf('Propel\Generator\Model\ColumnDefaultValue', $domain->getDefaultValue());
         $this->assertSame(10, $domain->getSize());
@@ -189,7 +189,7 @@ class TypeMappingTest extends ModelTestCase
         $value = $this->getColumnDefaultValueMock();
 
         $domain = new TypeMapping();
-        $domain->setMappingType(ColumnType::FLOAT);
+        $domain->setColumnType(ColumnType::FLOAT);
         $domain->setSqlType('DOUBLE');
         $domain->setSize(10);
         $domain->setScale(2);
@@ -200,7 +200,7 @@ class TypeMappingTest extends ModelTestCase
         $newDomain = new TypeMapping();
         $newDomain->copy($domain);
 
-        $this->assertSame(ColumnType::FLOAT, $newDomain->getMappingType());
+        $this->assertSame(ColumnType::FLOAT, $newDomain->getColumnType());
         $this->assertSame('DOUBLE', $newDomain->getSqlType());
         $this->assertSame(10, $newDomain->getSize());
         $this->assertSame(2, $newDomain->getScale());

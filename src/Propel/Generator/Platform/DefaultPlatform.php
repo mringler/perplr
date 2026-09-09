@@ -471,15 +471,12 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     #[\Override]
     public function getColumnDDL(Column $col): string
     {
-        $typeMapping = $col->getTypeMapping();
-
         $ddl = [$this->quoteIdentifier($col->getName())];
-        $sqlType = $typeMapping->getSqlType();
-        if ($this->hasSize($sqlType) && $col->isDefaultSqlType($this)) {
-            $ddl[] = $sqlType . $col->getSizeDefinition();
-        } else {
-            $ddl[] = $sqlType;
+        $typeDeclaration = $col->resolveSqlTypeName();
+        if ($this->hasSize($typeDeclaration) && $col->isDefaultSqlType($this)) {
+            $typeDeclaration .= $col->getSizeDefinition();
         }
+        $ddl[] = $typeDeclaration;
 
         $default = $this->getColumnDefaultValueDDL($col);
 
@@ -524,14 +521,14 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
 
         if ($col->isTextType()) {
             $value = $this->quote((string)$value);
-        } elseif (in_array($col->getMappingType(), [ColumnType::BOOLEAN, ColumnType::BOOLEAN_EMU], true)) {
+        } elseif (in_array($col->getColumnType(), [ColumnType::BOOLEAN, ColumnType::BOOLEAN_EMU], true)) {
             $value = $this->getBooleanString($value);
         } elseif ($col->isBinaryEnumType()) {
             $value = array_search($value, $col->getValueSet());
         } elseif ($col->isBinarySetType()) {
             $items = SetColumnConverter::itemsCsvToArray($value);
             $value = SetColumnConverter::convertToBitmask($items, $col->getValueSet());
-        } elseif ($col->getMappingType() === ColumnType::SET_NATIVE) {
+        } elseif ($col->getColumnType() === ColumnType::SET_NATIVE) {
             if (str_contains($value, ',')) {
                 return ''; // MySQL does not allow multiple values as default
             }
@@ -1534,7 +1531,7 @@ ALTER TABLE %s ADD
     {
         $withMilliseconds = (bool)$column->getTypeMapping()->getSize();
 
-        return match ($column->getMappingType()) {
+        return match ($column->getColumnType()) {
             ColumnType::DATE => $this->getDateFormatter(),
             ColumnType::TIME => $this->getTimeFormatter($withMilliseconds),
             ColumnType::TIMESTAMP,
@@ -1590,7 +1587,7 @@ if (is_resource($columnValueAccessor)) {
 }";
         }
 
-        $pdoType = $column->getMappingType()->toPdoConstantName();
+        $pdoType = $column->getColumnType()->toPdoConstantName();
         $script .= "\n\$stmt->bindValue($identifier, $columnValueAccessor, $pdoType);";
 
         return preg_replace('/^(.+)/m', $tab . '$1', $script);
@@ -1687,7 +1684,7 @@ if (is_resource($columnValueAccessor)) {
         }
 
         foreach ($table->getColumns() as $column) {
-            $defaultSize = $this->getDefaultTypeSize($column->getMappingType());
+            $defaultSize = $this->getDefaultTypeSize($column->getColumnType());
 
             if ($column->getSize() && $defaultSize) {
                 if ($column->getScale() === null && (int)$column->getSize() === $defaultSize) {
@@ -1698,25 +1695,22 @@ if (is_resource($columnValueAccessor)) {
     }
 
     /**
-     * @param \Propel\Generator\Model\Column $column
+     * @param \Propel\Generator\Model\Datatype\ColumnType $columnType
+     * @param array<string> $valueSet
      *
      * @throws \Propel\Generator\Exception\EngineException
      *
      * @return string
      */
     #[\Override]
-    public function buildNativeEnumeratedColumnSqlType(Column $column): string
+    public function buildNativeEnumeratedColumnSqlType(ColumnType $columnType, array $valueSet): string
     {
-        if (!in_array($column->getMappingType(), [ColumnType::ENUM_NATIVE, ColumnType::SET_NATIVE])) {
-            throw new EngineException("Only native ENUM or SET type columns can be turned to sql type, but column '{$column->getConstantName()}' is {$column->getMappingType()->name}");
+        if (!in_array($columnType, [ColumnType::ENUM_NATIVE, ColumnType::SET_NATIVE])) {
+            throw new EngineException("Only native ENUM or SET type columns can be turned to sql type, but type is {$columnType->name}");
         }
 
-        if (!$column->getValueSet()) {
-            throw new EngineException("No values provided for enumerated column '{$column->getConstantName()}'");
-        }
-
-        $typeLiteral = $column->getMappingType() === ColumnType::ENUM_NATIVE ? 'ENUM' : 'SET';
-        $valuesCsv = "'" . implode("','", $column->getValueSet()) . "'";
+        $typeLiteral = $columnType === ColumnType::ENUM_NATIVE ? 'ENUM' : 'SET';
+        $valuesCsv = "'" . implode("','", $valueSet) . "'";
 
         return "$typeLiteral($valuesCsv)";
     }

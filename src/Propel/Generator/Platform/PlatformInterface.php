@@ -364,11 +364,10 @@ interface PlatformInterface
     /**
      * Build ENUM or SET SQL declaration, i.e. "SET('foo', 'bar')"
      *
-     * @param \Propel\Generator\Model\Column $column
-     *
-     * @throws \Propel\Generator\Exception\EngineException
+     * @param \Propel\Generator\Model\Datatype\ColumnType $columnType
+     * @param array<string> $valueSet
      *
      * @return string
      */
-    public function buildNativeEnumeratedColumnSqlType(Column $column): string;
+    public function buildNativeEnumeratedColumnSqlType(ColumnType $columnType, array $valueSet): string;
 }

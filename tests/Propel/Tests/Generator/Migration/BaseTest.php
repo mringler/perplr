@@ -352,12 +352,13 @@ class BaseTest extends MigrationTestCase
         $this->applyXmlAndTest($target4Xml);
         $this->applyXmlAndTest($target5Xml);
     }
+
     /**
      * @return void
      */
     public function testNativeEnum()
     {
-        if ($this->getPlatform()->getColumnTypeMapping(ColumnType::ENUM_NATIVE)->getMappingType() === ColumnType::ENUM_BINARY) {
+        if ($this->getPlatform()->getColumnTypeMapping(ColumnType::ENUM_NATIVE)->getColumnType() === ColumnType::ENUM_BINARY) {
             return $this->markTestSkipped('Test requires native SET/ENUM type.');
         }
 

@@ -60,14 +60,15 @@ class ColumnComparator
             $changedProperties['size'] = [$fromType->getSize(), $toType->getSize()];
         }
 
-        $fromSqlType = $fromType->getSqlType() === null ?: strtoupper($fromType->getSqlType());
-        $toSqlType = $toType->getSqlType() === null ?: strtoupper($toType->getSqlType());
+        $fromSqlType = strtoupper($fromType->resolveSqlTypeName());
+        $toSqlType = strtoupper($toType->resolveSqlTypeName());
 
         if ($fromSqlType !== $toSqlType) {
-            $changedProperties['sqlType'] = [$fromType->getSqlType(), $toType->getSqlType()];
-
-            if ($fromType->getMappingType() !== $toType->getMappingType()) {
-                $changedProperties['type'] = [$fromType->getMappingType(), $toType->getMappingType()];
+            if ($fromType->getSqlType() !== $toType->getSqlType()) {
+                $changedProperties['sqlType'] = [$fromType->getSqlType(), $toType->getSqlType()];
+            }
+            if ($fromType->getColumnType() !== $toType->getColumnType()) {
+                $changedProperties['type'] = [$fromType->getColumnType(), $toType->getColumnType()];
             }
         }
 

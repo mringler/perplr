@@ -201,7 +201,7 @@ class MigrationTestCase extends TestCaseFixturesDatabase
     {
         $this->readDatabase();
         $diff = DatabaseComparator::computeDiff($this->database, $database);
-        if ($diff !== false) {
+        if ($diff) {
             $sql = $this->database->getPlatform()->getModifyDatabaseDDL($diff);
 
             throw new BuildException(sprintf(

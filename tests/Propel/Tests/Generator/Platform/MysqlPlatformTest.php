@@ -503,7 +503,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
     {
         $platform = new MysqlPlatform();
         $this->setObjectPropertyValue($platform, 'ignoreSizeOnIntegerTypes', $ignoreSize);
-        $domain = clone $platform->getColumnTypeMapping($integerType);
+        $domain = $platform->getColumnTypeMapping($integerType);
         $domain->setSizeToValueIfNotNull(3);
 
         $column = new Column('foo');
@@ -1012,7 +1012,7 @@ CREATE TABLE `foo`
     
     #[\PHPUnit\Framework\Attributes\DataProvider('typeMappingDataProvider')]
     public function testTypeMapping(ColumnType $propelDataType, string $expectedMysqlDataType){
-        $actualMysqlDataType = static::getPlatform()->getColumnTypeMapping($propelDataType)->getSqlType();
+        $actualMysqlDataType = static::getPlatform()->getColumnTypeMapping($propelDataType)->resolveSqlTypeName();
         $this->assertEquals($expectedMysqlDataType, $actualMysqlDataType);
     }
 

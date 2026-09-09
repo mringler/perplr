@@ -92,7 +92,7 @@ class PgsqlSchemaParserTest extends TestCaseFixturesDatabase
 
         // check out our rev-eng column info
         $this->assertEquals($expectedPhpName, $column->getPhpName());
-        $this->assertEquals($expectedType, $column->getMappingType());
+        $this->assertEquals($expectedType, $column->getColumnType());
 
         $defaultValue = $column->getDefaultValue();
         if($expectedDefaultType === null){

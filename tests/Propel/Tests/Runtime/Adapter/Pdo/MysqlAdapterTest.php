@@ -41,7 +41,7 @@ class MysqlAdapterTest extends TestCaseFixtures
     /**
      * @return string
      */
-    protected static function getDriver(): string
+    protected static function getVendorName(): string
     {
         return 'mysql';
     }

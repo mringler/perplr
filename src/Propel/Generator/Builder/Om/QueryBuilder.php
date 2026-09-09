@@ -705,7 +705,7 @@ class QueryBuilder extends AbstractOMBuilder
         if ($col->isNamePlural()) {
             if ($col->isPhpArrayType()) {
                 $this->addFilterByArrayCol($script, $col);
-            } elseif (in_array($col->getMappingType(), [ColumnType::SET_BINARY, ColumnType::SET_NATIVE], true)) {
+            } elseif (in_array($col->getColumnType(), [ColumnType::SET_BINARY, ColumnType::SET_NATIVE], true)) {
                 $this->addFilterBySetCol($script, $col);
             }
         }
@@ -773,7 +773,7 @@ class QueryBuilder extends AbstractOMBuilder
      * @param array|null \$$variableName The values to use as filter.";
         } elseif ($col->isPhpEnumType()) {
             $enumClass = $col->getPhpType();
-            $nativePhpType = $col->getPhpNative();
+            $nativePhpType = $col->getColumnType()->toPhpTypeName();
             $script .= "
      * @param $enumClass|array<$enumClass|$nativePhpType>|$nativePhpType|null \$$variableName Enum case, DB value or array of those.";
         } elseif ($col->isTextType()) {
@@ -854,7 +854,7 @@ class QueryBuilder extends AbstractOMBuilder
                 \$comparison = Criteria::IN;
             }
         }";
-        } elseif ($col->getMappingType() == ColumnType::OBJECT) {
+        } elseif ($col->getColumnType() == ColumnType::OBJECT) {
             $this->declareGlobalFunction('is_object', 'serialize');
             $script .= "
         if (is_object(\$$variableName)) {
@@ -880,7 +880,7 @@ class QueryBuilder extends AbstractOMBuilder
 
             return \$this;
         }";
-        } elseif ($col->getMappingType() === ColumnType::SET_NATIVE) {
+        } elseif ($col->getColumnType() === ColumnType::SET_NATIVE) {
             $this->declareClasses(
                 '\Propel\Common\Util\SetColumnConverter',
             );

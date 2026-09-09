@@ -8,15 +8,14 @@ use Exception;
 use LogicException;
 use Propel\Common\Util\SetColumnConverter;
 use Propel\Generator\Exception\EngineException;
-use Propel\Generator\Exception\LogicException as ExceptionLogicException;
 use Propel\Generator\Exception\SchemaException;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Datatype\PhpDatatype;
+use Propel\Generator\Platform\PgsqlPlatform;
 use Propel\Generator\Platform\PlatformInterface;
 use function addcslashes;
 use function count;
 use function in_array;
-use function is_string;
 use function lcfirst;
 use function rtrim;
 use function sprintf;
@@ -78,14 +77,7 @@ class Column extends MappingModel
      */
     private string|null $tableMapName = null;
 
-    /**
-     * Native PHP type (scalar or class name)
-     *
-     * @var string "string", "boolean", "int", "double"
-     */
-    private $phpType;
-
-    private TypeMapping|null $typeMapping = null;
+    private TypeMapping $typeMapping;
 
     private Table|null $parentTable = null;
 
@@ -130,31 +122,15 @@ class Column extends MappingModel
     private array|null $inheritanceList = null;
 
     /**
-     * maybe this can be retrieved from vendor specific information
-     */
-    private bool $needsTransactionInPostgres = false;
-
-    protected array $valueSet = [];
-
-    /**
      * @param string $name
      * @param \Propel\Generator\Model\Datatype\ColumnType|null $type
-     * @param string|int|null $size
-     *
-     * @throws \LogicException
+     * @param int|null $size
      */
-    public function __construct(string $name, ColumnType|null $type = null, $size = null)
+    public function __construct(string $name, ColumnType|null $type = null, int|null $size = null)
     {
-        $this->setName($name);
+        $this->typeMapping = new TypeMapping($type ?? self::DEFAULT_TYPE, null, $size);
 
-        if ($type !== null) {
-            $this->setType($type);
-            if ($size !== null) {
-                $this->setSize((int)$size);
-            }
-        } elseif ($size !== null) {
-            throw new ExceptionLogicException('Cannot set column size without type');
-        }
+        $this->setName($name);
     }
 
     /**
@@ -184,25 +160,89 @@ class Column extends MappingModel
      */
     protected function buildTypeMappingFromAttributes(?PlatformInterface $platform): TypeMapping
     {
-        $domainName = $this->getAttribute('domain');
-        if ($domainName) {
-            $mapping = $this->getDatabase()->getTypeMapping($domainName);
-            if (!$mapping) {
-                throw new LogicException("Unknown domain '$domainName'");
-            }
-
-            return $mapping;
-        }
-
         $typeInput = $this->getAttribute('type', static::DEFAULT_TYPE);
         $type = $typeInput instanceof ColumnType ? $typeInput : ColumnType::fromLiteral($typeInput);
 
-        if ($platform) {
-            return $platform->getColumnTypeMapping($type);
+        $domainName = $this->getAttribute('domain');
+        if ($domainName) {
+            $typeMapping = $this->getDatabase()->getTypeMapping($domainName);
+            if (!$typeMapping) {
+                throw new LogicException("Custom domain '$domainName' not registered in database");
+            }
+        } else {
+            $typeMapping = $platform
+                ? $platform->getColumnTypeMapping($type)
+                : new TypeMapping($type); // no platform - probably during tests
         }
 
-        // no platform - probably during tests
-        return new TypeMapping($type);
+        $phpType = $this->getAttribute('phpType');
+        $typeMapping->setCustomPhpType($phpType);
+
+        $valueSet = $this->resolveValueSetFromAttributes($typeMapping);
+        if ($valueSet) {
+            $typeMapping->setValueSet($valueSet);
+        }
+
+        $sqlType = $this->getAttribute('sqlType');
+        if ($sqlType) {
+            $typeMapping->setSqlType($sqlType);
+        } elseif ($platform && in_array($type, [ColumnType::SET_NATIVE, ColumnType::ENUM_NATIVE], true)) {
+            $sqlDeclaration = $platform->buildNativeEnumeratedColumnSqlType($type, $valueSet);
+            $typeMapping->setSqlType($sqlDeclaration);
+        }
+
+        $requiresSize = $type === ColumnType::VARCHAR
+            && !$sqlType
+            && $platform
+            && !$platform->supportsVarcharWithoutSize();
+
+        $defaultSize = $requiresSize ? 255 : null;
+        $size = $this->getAttribute('size', $defaultSize);
+        if ($size !== null) {
+            $typeMapping->setSize((int)$size);
+        }
+
+        $scale = $this->getAttribute('scale');
+        if ($scale !== null) {
+            $typeMapping->setScale((int)$scale);
+        }
+
+        foreach (['defaultValue', 'default', 'defaultExpr'] as $key) {
+            $defaultValue = $this->getAttribute($key);
+            if ($defaultValue === null || strtolower((string)$defaultValue) === 'null') {
+                continue;
+            }
+            $typeMapping->createDefaultValue($defaultValue, $key === 'defaultExpr');
+
+            break;
+        }
+
+        return $typeMapping;
+    }
+
+    /**
+     * @return array<string>|null
+     */
+    protected function resolveValueSetFromAttributes(TypeMapping $typeMapping): array|null
+    {
+        if ($this->getAttribute('valueSet')) {
+            $valueSet = $this->getAttribute('valueSet');
+
+            return SetColumnConverter::itemsCsvToArray($valueSet);
+        }
+        if ($this->getAttribute('valueEnum')) {
+            $valueEnumClass = $this->getAttribute('valueEnum');
+
+            return SetColumnConverter::getItemsFromEnum($valueEnumClass);
+        }
+        if ($typeMapping->isPhpEnumType()) {
+            /** @var class-string<\UnitEnum> $enumClass */
+            $enumClass = $typeMapping->getCustomPhpType();
+
+            return SetColumnConverter::getItemsFromEnum($enumClass);
+        }
+
+        return null;
     }
 
     /**
@@ -218,14 +258,11 @@ class Column extends MappingModel
             $database = $this->getDatabase();
             $platform = ($this->hasPlatform()) ? $this->getPlatform() : null;
 
-            $typeMapping = $this->getTypeMapping();
-            $typeMappingInAttributes = $this->buildTypeMappingFromAttributes($platform);
-            $typeMapping->copy($typeMappingInAttributes);
+            $this->typeMapping = $this->buildTypeMappingFromAttributes($platform);
 
             $this->name = $this->getAttribute('name');
             $this->phpName = $this->getAttribute('phpName');
             $this->phpSingularName = $this->getAttribute('phpSingularName');
-            $this->phpType = $this->getAttribute('phpType');
             $this->typeHint = $this->getAttribute('typeHint');
             $this->tableMapName = $this->getAttribute('tableMapName');
             $this->description = $this->getAttribute('description');
@@ -262,52 +299,6 @@ class Column extends MappingModel
             // AutoIncrement/Sequences
             $this->isAutoIncrement = $this->booleanValue($this->getAttribute('autoIncrement'));
             $this->isLazyLoad = $this->booleanValue($this->getAttribute('lazyLoad'));
-
-            if ($this->getAttribute('valueSet')) {
-                $this->setValueSet($this->getAttribute('valueSet'));
-            } elseif ($this->getAttribute('valueEnum')) {
-                $valueEnumClass = $this->getAttribute('valueEnum');
-                $valueSet = SetColumnConverter::getItemsFromEnum($valueEnumClass);
-                $this->setValueSet($valueSet);
-            } elseif ($this->phpType && ($this->isPhpUnitEnumType() || $this->isPhpBackedEnumType())) {
-                /** @var class-string<\UnitEnum> $enumClass */
-                $enumClass = $this->phpType;
-                $valueSet = SetColumnConverter::getItemsFromEnum($enumClass);
-                $this->setValueSet($valueSet);
-            }
-
-            // Add type, size information to associated type mapping
-            if ($this->getAttribute('sqlType')) {
-                $typeMapping->setSqlType($this->getAttribute('sqlType'));
-            } elseif ($this->getPlatform() && in_array($this->getMappingType(), [ColumnType::SET_NATIVE, ColumnType::ENUM_NATIVE], true)) {
-                $typeMapping->setSqlType($this->getPlatform()->buildNativeEnumeratedColumnSqlType($this));
-            }
-
-            if (
-                !$this->getAttribute('size')
-                && $typeMapping->getMappingType() === ColumnType::VARCHAR
-                && !$this->getAttribute('sqlType')
-                && $platform
-                && !$platform->supportsVarcharWithoutSize()
-            ) {
-                $size = 255;
-            } else {
-                $size = $this->getAttribute('size') ? (int)$this->getAttribute('size') : null;
-            }
-            $typeMapping->setSizeToValueIfNotNull($size);
-
-            $scale = $this->getAttribute('scale') ? (int)$this->getAttribute('scale') : null;
-            $typeMapping->setScaleToValueIfNotNull($scale);
-
-            foreach (['defaultValue', 'default', 'defaultExpr'] as $key) {
-                $defaultValue = $this->getAttribute($key);
-                if ($defaultValue === null || strtolower((string)$defaultValue) === 'null') {
-                    continue;
-                }
-                $typeMapping->createDefaultValue($defaultValue, $key === 'defaultExpr');
-
-                break;
-            }
 
             $this->inheritanceType = $this->getAttribute('inheritance');
 
@@ -368,16 +359,10 @@ class Column extends MappingModel
     }
 
     /**
-     * Gets type mapping for this column, creating a new empty object if none is set.
-     *
      * @return \Propel\Generator\Model\TypeMapping
      */
     public function getTypeMapping(): TypeMapping
     {
-        if ($this->typeMapping === null) {
-            $this->typeMapping = new TypeMapping();
-        }
-
         return $this->typeMapping;
     }
 
@@ -725,19 +710,15 @@ class Column extends MappingModel
     }
 
     /**
-     * Returns the type to use in PHP sources.
-     *
-     * If no types has been specified, then use result of getPhpNative().
-     *
      * @return string
      */
     public function getPhpType(): string
     {
-        return $this->phpType ?: $this->getPhpNative();
+        return $this->typeMapping->resolvePhpType();
     }
 
     /**
-     * Returns the location of this column within the table (one-based).
+     * Get column index in table (one-based).
      *
      * @return int|null
      */
@@ -747,7 +728,7 @@ class Column extends MappingModel
     }
 
     /**
-     * Returns the location of this column within the table (one-based).
+     * Set column index in table (one-based).
      *
      * @param int $position
      *
@@ -759,8 +740,6 @@ class Column extends MappingModel
     }
 
     /**
-     * Sets the parent table.
-     *
      * @param \Propel\Generator\Model\Table $table
      *
      * @return void
@@ -771,8 +750,6 @@ class Column extends MappingModel
     }
 
     /**
-     * Returns the parent table.
-     *
      * @return \Propel\Generator\Model\Table|null
      */
     public function getTable(): ?Table
@@ -781,8 +758,6 @@ class Column extends MappingModel
     }
 
     /**
-     * Returns the parent table name.
-     *
      * @return string
      */
     public function getTableName(): string
@@ -1070,13 +1045,13 @@ class Column extends MappingModel
     }
 
     /**
-     * Returns true if the column requires a transaction in PostGreSQL.
+     * @deprecated Doesn't seem to be used.
      *
      * @return bool
      */
     public function requiresTransactionInPostgres(): bool
     {
-        return $this->needsTransactionInPostgres;
+        return PgsqlPlatform::columnTypeRequiresTransaction($this->typeMapping->getColumnType());
     }
 
     /**
@@ -1212,32 +1187,35 @@ class Column extends MappingModel
      */
     public function setType(ColumnType $mappingType): void
     {
-        $this->getTypeMapping()->setMappingType($mappingType);
-
-        $pgRequiresTransactionTypes = [ColumnType::VARBINARY, ColumnType::LONGVARBINARY, ColumnType::BLOB];
-        $this->needsTransactionInPostgres = in_array($mappingType, $pgRequiresTransactionTypes, true);
+        $this->typeMapping->setColumnType($mappingType);
     }
 
     /**
-     * @see TypeMapping::getMappingType()
+     * @see TypeMapping::getColumnType()
      *
      * @return \Propel\Generator\Model\Datatype\ColumnType
      */
-    public function getMappingType(): ColumnType
+    public function getColumnType(): ColumnType
     {
-        return $this->getTypeMapping()->getMappingType();
+        return $this->typeMapping->getColumnType();
     }
 
     /**
-     * Returns the SQL type as a string.
-     *
-     * @see TypeMapping::getSqlType()
-     *
-     * @return string|null
+     * @return string
      */
-    public function getSqlType(): string|null
+    public function resolveSqlTypeName(): string
     {
-        return $this->getTypeMapping()->getSqlType();
+        return $this->typeMapping->resolveSqlTypeName();
+    }
+
+    /**
+     * @deprecated Use aptly named {@see static::resolveSqlTypeName()}
+     *
+     * @return string
+     */
+    public function getSqlType(): string
+    {
+        return $this->resolveQualifiedType();
     }
 
     /**
@@ -1247,27 +1225,27 @@ class Column extends MappingModel
      */
     public function getPdoType(): int
     {
-        return $this->getMappingType()->toPdoType();
+        return $this->getColumnType()->toPdoType();
     }
 
     /**
+     * Used to check if SQL column type requires size/scale.
+     *
      * @param \Propel\Generator\Platform\PlatformInterface|null $platform
      *
      * @return bool
      */
     public function isDefaultSqlType(?PlatformInterface $platform = null): bool
     {
-        if (
-            $this->typeMapping === null
-            || $this->typeMapping->getSqlType() === null
-            || $platform === null
-        ) {
+        $sqlType = $this->typeMapping->getSqlType();
+        if (!$platform || !$sqlType) {
             return true;
         }
 
-        $defaultSqlType = $platform->getColumnTypeMapping($this->getMappingType())->getSqlType();
+        $columnType = $this->typeMapping->getColumnType();
+        $defaultSqlType = $platform->getColumnTypeMapping($columnType)->resolveSqlTypeName();
 
-        return $defaultSqlType === $this->getTypeMapping()->getSqlType();
+        return $defaultSqlType === $sqlType;
     }
 
     /**
@@ -1275,7 +1253,7 @@ class Column extends MappingModel
      */
     public function isLobType(): bool
     {
-        return $this->getMappingType()->isLobType();
+        return $this->getColumnType()->isLobType();
     }
 
     /**
@@ -1283,7 +1261,7 @@ class Column extends MappingModel
      */
     public function isTextType(): bool
     {
-        return $this->getMappingType()->isTextType();
+        return $this->getColumnType()->isTextType();
     }
 
     /**
@@ -1291,7 +1269,7 @@ class Column extends MappingModel
      */
     public function isNumericType(): bool
     {
-        return $this->getMappingType()->isNumericType();
+        return $this->getColumnType()->isNumericType();
     }
 
     /**
@@ -1299,7 +1277,7 @@ class Column extends MappingModel
      */
     public function isBooleanType(): bool
     {
-        return $this->getMappingType()->isBooleanType();
+        return $this->getColumnType()->isBooleanType();
     }
 
     /**
@@ -1309,7 +1287,7 @@ class Column extends MappingModel
      */
     public function isTemporalType(): bool
     {
-        return $this->getMappingType()->isTemporalType();
+        return $this->getColumnType()->isTemporalType();
     }
 
     /**
@@ -1319,7 +1297,7 @@ class Column extends MappingModel
      */
     public function isUuidType(): bool
     {
-        return $this->getMappingType()->isUuidType();
+        return $this->getColumnType()->isUuidType();
     }
 
     /**
@@ -1329,7 +1307,7 @@ class Column extends MappingModel
      */
     public function isUuidBinaryType(): bool
     {
-        return $this->getMappingType() === ColumnType::UUID_BINARY;
+        return $this->getColumnType() === ColumnType::UUID_BINARY;
     }
 
     /**
@@ -1339,7 +1317,7 @@ class Column extends MappingModel
      */
     public function isPhpArrayType(): bool
     {
-        return $this->getMappingType()->isPhpArrayType();
+        return $this->getColumnType()->isPhpArrayType();
     }
 
     /**
@@ -1349,7 +1327,7 @@ class Column extends MappingModel
      */
     public function isValueSetType(): bool
     {
-        return in_array($this->getMappingType(), [
+        return in_array($this->getColumnType(), [
             ColumnType::ENUM_BINARY,
             ColumnType::ENUM_NATIVE,
             ColumnType::SET_BINARY,
@@ -1384,7 +1362,7 @@ class Column extends MappingModel
      */
     public function isBinaryEnumType(): bool
     {
-        return $this->getMappingType() === ColumnType::ENUM_BINARY;
+        return $this->getColumnType() === ColumnType::ENUM_BINARY;
     }
 
     /**
@@ -1394,7 +1372,7 @@ class Column extends MappingModel
      */
     public function isBinarySetType(): bool
     {
-        return $this->getMappingType() === ColumnType::SET_BINARY;
+        return $this->getColumnType() === ColumnType::SET_BINARY;
     }
 
     /**
@@ -1406,9 +1384,7 @@ class Column extends MappingModel
      */
     public function setValueSet($valueSet): void
     {
-        $this->valueSet = is_string($valueSet)
-            ? SetColumnConverter::itemsCsvToArray($valueSet)
-            : $valueSet;
+        $this->typeMapping->setValueSet($valueSet);
     }
 
     /**
@@ -1418,7 +1394,7 @@ class Column extends MappingModel
      */
     public function getValueSet(): array
     {
-        return $this->valueSet;
+        return $this->typeMapping->getValueSet();
     }
 
     /**
@@ -1428,7 +1404,7 @@ class Column extends MappingModel
      */
     public function getSize(): ?int
     {
-        return $this->typeMapping ? $this->typeMapping->getSize() : null;
+        return $this->typeMapping->getSize();
     }
 
     /**
@@ -1530,7 +1506,7 @@ class Column extends MappingModel
             return "'" . addcslashes((string)$value, "'") . "'";
         }
 
-        if ($this->getMappingType() === ColumnType::BOOLEAN) {
+        if ($this->getColumnType() === ColumnType::BOOLEAN) {
             return $this->booleanValue($value) ? 'true' : 'false';
         }
 
@@ -1641,18 +1617,6 @@ class Column extends MappingModel
     }
 
     /**
-     * Returns a string representation of the native PHP type which corresponds
-     * to the Propel type of this column. Used in the generation of Base
-     * objects.
-     *
-     * @return string
-     */
-    public function getPhpNative(): string
-    {
-        return $this->getMappingType()->toPhpTypeName();
-    }
-
-    /**
      * Returns whether the column PHP native type is primitive type (aka
      * a boolean, an integer, a long, a float, a double or a string).
      *
@@ -1689,7 +1653,7 @@ class Column extends MappingModel
      */
     public function isPhpEnumType(): bool
     {
-        return $this->isPhpUnitEnumType() || $this->isPhpBackedEnumType();
+        return $this->typeMapping->isPhpEnumType();
     }
 
     /**
@@ -1697,7 +1661,7 @@ class Column extends MappingModel
      */
     public function isPhpBackedEnumType(): bool
     {
-        return $this->phpType && PhpDatatype::isPhpBackedEnumType($this->phpType);
+        return $this->typeMapping->isPhpBackedEnumType();
     }
 
     /**
@@ -1707,7 +1671,7 @@ class Column extends MappingModel
      */
     public function isPhpUnitEnumType(): bool
     {
-        return $this->phpType && PhpDatatype::isPhpUnitEnumType($this->phpType);
+        return $this->typeMapping->isPhpUnitEnumType();
     }
 
     /**
@@ -1742,9 +1706,7 @@ class Column extends MappingModel
     public function __clone()
     {
         $this->referrers = [];
-        if ($this->typeMapping) {
-            $this->typeMapping = clone $this->typeMapping;
-        }
+        $this->typeMapping = clone $this->typeMapping;
     }
 
     /**
@@ -1799,7 +1761,7 @@ class Column extends MappingModel
         $typeHint = $this->getTypeHint();
         if ($typeHint) {
             return $typeHint;
-        } elseif ($this->getMappingType() === ColumnType::OBJECT) {
+        } elseif ($this->getColumnType() === ColumnType::OBJECT) {
             return 'mixed';
         } elseif ($this->isPhpArrayType()) {
             return 'string';

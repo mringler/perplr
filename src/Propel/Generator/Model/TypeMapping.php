@@ -4,9 +4,11 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Model;
 
-use LogicException;
+use Propel\Common\Util\SetColumnConverter;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Datatype\ColumnType;
+use Propel\Generator\Model\Datatype\PhpDatatype;
+use function is_string;
 use function strtoupper;
 
 /**
@@ -22,13 +24,20 @@ class TypeMapping extends MappingModel
 
     private int|null $scale = null;
 
-    private ColumnType|null $columnType = null;
+    private ColumnType $columnType;
 
-    private string|null $sqlType;
+    private string|null $sqlType = null;
+
+    private string|null $customPhpType = null;
 
     private ColumnDefaultValue|null $defaultValue = null;
 
     private Database|null $database = null;
+
+    /**
+     * @var array<string>
+     */
+    protected array $valueSet = [];
 
     /**
      * @param \Propel\Generator\Model\Datatype\ColumnType|null $type Propel type.
@@ -38,9 +47,7 @@ class TypeMapping extends MappingModel
      */
     public function __construct(ColumnType|null $type = null, ?string $sqlType = null, ?int $size = null, ?int $scale = null)
     {
-        if ($type !== null) {
-            $this->setMappingType($type);
-        }
+        $this->columnType = $type ?? ColumnType::VARCHAR;
 
         if ($size !== null) {
             $this->setSize($size);
@@ -50,7 +57,9 @@ class TypeMapping extends MappingModel
             $this->setScale($scale);
         }
 
-        $this->setSqlType($sqlType ?? $type?->name);
+        if ($sqlType) {
+            $this->setSqlType($sqlType);
+        }
     }
 
     /**
@@ -68,7 +77,7 @@ class TypeMapping extends MappingModel
         $this->scale = $mapping->getScale();
         $this->size = $mapping->getSize();
         $this->sqlType = $mapping->getSqlType();
-        $this->columnType = $mapping->getMappingType();
+        $this->columnType = $mapping->getColumnType();
     }
 
     /**
@@ -247,27 +256,21 @@ class TypeMapping extends MappingModel
     }
 
     /**
-     * @throws \LogicException
-     *
      * @return \Propel\Generator\Model\Datatype\ColumnType
      */
-    public function getMappingType(): ColumnType
+    public function getColumnType(): ColumnType
     {
-        if (!$this->columnType) {
-            throw new LogicException('Mapping type not set');
-        }
-
         return $this->columnType;
     }
 
     /**
-     * @param \Propel\Generator\Model\Datatype\ColumnType|null $mappingType
+     * @param \Propel\Generator\Model\Datatype\ColumnType $columnType
      *
      * @return void
      */
-    public function setMappingType(?ColumnType $mappingType): void
+    public function setColumnType(ColumnType $columnType): void
     {
-        $this->columnType = $mappingType;
+        $this->columnType = $columnType;
     }
 
     /**
@@ -333,8 +336,14 @@ class TypeMapping extends MappingModel
     }
 
     /**
-     * Returns the SQL type.
-     *
+     * @return string
+     */
+    public function resolveSqlTypeName(): string
+    {
+        return $this->getSqlType() ?? $this->columnType->name;
+    }
+
+    /**
      * @return string|null
      */
     public function getSqlType(): ?string
@@ -367,6 +376,33 @@ class TypeMapping extends MappingModel
     }
 
     /**
+     * @return string|null
+     */
+    public function getCustomPhpType(): string|null
+    {
+        return $this->customPhpType;
+    }
+
+    /**
+     * @param string|null $customPhpType
+     *
+     * @return void
+     */
+    public function setCustomPhpType(string|null $customPhpType): void
+    {
+        $this->customPhpType = $customPhpType;
+    }
+
+    /**
+     * @return string
+     */
+    public function resolvePhpType(): string
+    {
+        return $this->customPhpType
+            ?: $this->columnType->toPhpTypeName();
+    }
+
+    /**
      * Returns the size and scale in brackets for use in an sql schema.
      *
      * @return string
@@ -378,6 +414,26 @@ class TypeMapping extends MappingModel
             $this->scale !== null => "($this->size,$this->scale)",
             default => "($this->size)",
         };
+    }
+
+    /**
+     * @param array<string>|string $valueSet
+     *
+     * @return void
+     */
+    public function setValueSet($valueSet): void
+    {
+        $this->valueSet = is_string($valueSet)
+            ? SetColumnConverter::itemsCsvToArray($valueSet)
+            : $valueSet;
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getValueSet(): array
+    {
+        return $this->valueSet;
     }
 
     /**
@@ -398,8 +454,34 @@ class TypeMapping extends MappingModel
     public function cloneAs(ColumnType $type): static
     {
         $clonedMapping = clone $this;
-        $clonedMapping->setMappingType($type);
+        $clonedMapping->setColumnType($type);
 
         return $clonedMapping;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPhpEnumType(): bool
+    {
+        return $this->isPhpUnitEnumType() || $this->isPhpBackedEnumType();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPhpBackedEnumType(): bool
+    {
+        return $this->customPhpType && PhpDatatype::isPhpBackedEnumType($this->customPhpType);
+    }
+
+    /**
+     * Returns whether this column's phpType is a UnitEnum (non-backed).
+     *
+     * @return bool
+     */
+    public function isPhpUnitEnumType(): bool
+    {
+        return $this->customPhpType && PhpDatatype::isPhpUnitEnumType($this->customPhpType);
     }
 }

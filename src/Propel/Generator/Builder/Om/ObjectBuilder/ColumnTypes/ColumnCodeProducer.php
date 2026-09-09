@@ -192,7 +192,7 @@ class ColumnCodeProducer extends AbstractSubsectionCodeProducer
         $col = $this->column;
         $attribute = $this->getAttributeName();
 
-        if ($col->getMappingType() === ColumnType::CLOB_EMU && $this->getPlatform() instanceof OraclePlatform) {
+        if ($col->getColumnType() === ColumnType::CLOB_EMU && $this->getPlatform() instanceof OraclePlatform) {
             // PDO_OCI returns a stream for CLOB objects, while other PDO adapters return a string...
             $this->declareGlobalFunction('stream_get_contents');
 

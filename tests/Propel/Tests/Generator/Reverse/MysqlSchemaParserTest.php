@@ -120,7 +120,7 @@ EOT;
         $args = ['(nonsense)', null, 'leTable.leColumn', ''];
         /** @var \Propel\Generator\Model\TypeMapping */
         $domain = $this->callMethod($this->parser, 'extractTypeMapping', $args);
-        $this->assertSame(Column::DEFAULT_TYPE, $domain->getMappingType());
+        $this->assertSame(Column::DEFAULT_TYPE, $domain->getColumnType());
         $this->assertSame($args[0], $domain->getSqlType());
     }
 

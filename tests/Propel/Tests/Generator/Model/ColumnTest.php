@@ -56,7 +56,6 @@ class ColumnTest extends ModelTestCase
         $this->assertFalse($column->isPrimaryString());
         $this->assertFalse($column->isTreeScopeKey());
         $this->assertFalse($column->isUnique());
-        $this->assertFalse($column->requiresTransactionInPostgres());
     }
 
     /**
@@ -73,7 +72,7 @@ class ColumnTest extends ModelTestCase
         $column->loadMapping(['name' => 'title']);
 
         $this->assertSame('title', $column->getName());
-        $this->assertSame(ColumnType::VARCHAR, $column->getTypeMapping()->getMappingType());
+        $this->assertSame(ColumnType::VARCHAR, $column->getTypeMapping()->getColumnType());
     }
 
     /**
@@ -93,7 +92,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock('VARCHAR');
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue(ColumnType::VARCHAR));
 
         $column = new Column('');
@@ -120,7 +119,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock('VARCHAR');
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue(ColumnType::DATE));
 
         $column = new Column('');
@@ -145,13 +144,12 @@ class ColumnTest extends ModelTestCase
             ->expects($this->once())
             ->method('getTypeMapping')
             ->with($this->equalTo('BOOLEAN'))
-            ->will($this->returnValue($this->getDomainMock('INTEGER')));
+            ->will($this->returnValue(new TypeMapping(ColumnType::INTEGER)));
 
         $table = $this->getTableMock('books', ['database' => $database]);
 
         $column = new Column('');
         $column->setTable($table);
-        $column->setTypeMapping($this->getDomainMock('BOOLEAN'));
         $column->loadMapping([
             'domain' => 'BOOLEAN',
             'name' => 'is_published',
@@ -246,7 +244,7 @@ class ColumnTest extends ModelTestCase
             ->method('setDefaultValue');
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -409,7 +407,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue($mappingType));
 
         $column = new Column('');
@@ -463,12 +461,7 @@ class ColumnTest extends ModelTestCase
      */
     public function testBinaryEnumType()
     {
-        $domain = $this->getDomainMock();
-        $domain
-            ->expects($this->any())
-            ->method('getMappingType')
-            ->will($this->returnValue(ColumnType::ENUM_BINARY));
-
+        $domain = new TypeMapping(ColumnType::ENUM_BINARY);
         $column = new Column('');
         $column->setTypeMapping($domain);
         $column->setType(ColumnType::ENUM_BINARY);
@@ -486,11 +479,7 @@ class ColumnTest extends ModelTestCase
      */
     public function testBinarySetType()
     {
-        $domain = $this->getDomainMock();
-        $domain
-            ->expects($this->any())
-            ->method('getMappingType')
-            ->will($this->returnValue(ColumnType::SET_BINARY));
+        $domain = new TypeMapping(ColumnType::SET_BINARY);
 
         $column = new Column('');
         $column->setTypeMapping($domain);
@@ -525,7 +514,7 @@ class ColumnTest extends ModelTestCase
         $domain = $this->getDomainMock();
         $domain
             ->expects($this->any())
-            ->method('getMappingType')
+            ->method('getColumnType')
             ->will($this->returnValue(ColumnType::OBJECT));
 
         $column = new Column('');
@@ -540,22 +529,11 @@ class ColumnTest extends ModelTestCase
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('provideMappingTemporalTypes')]
-    public function testTemporalType($mappingType)
+    public function testTemporalType($columnType)
     {
-        $domain = $this->getDomainMock();
-        $domain
-            ->expects($this->once())
-            ->method('setMappingType')
-            ->with($this->equalTo($mappingType));
-
-        $domain
-            ->expects($this->any())
-            ->method('getMappingType')
-            ->will($this->returnValue($mappingType));
-
+        $domain = new TypeMapping($columnType);
         $column = new Column('');
         $column->setTypeMapping($domain);
-        $column->setType($mappingType);
 
         $this->assertSame('string', $column->getPhpType());
         $this->assertTrue($column->isPhpPrimitiveType());
@@ -577,22 +555,11 @@ class ColumnTest extends ModelTestCase
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('provideMappingLobTypes')]
-    public function testLobType($mappingType, $phpType, $isPhpPrimitiveType)
+    public function testLobType($columnType, $phpType, $isPhpPrimitiveType)
     {
-        $domain = $this->getDomainMock();
-        $domain
-            ->expects($this->once())
-            ->method('setMappingType')
-            ->with($this->equalTo($mappingType));
-
-        $domain
-            ->expects($this->any())
-            ->method('getMappingType')
-            ->will($this->returnValue($mappingType));
-
+        $domain = new TypeMapping($columnType);
         $column = new Column('');
         $column->setTypeMapping($domain);
-        $column->setType($mappingType);
 
         $this->assertSame($phpType, $column->getPhpType());
         $this->assertSame($isPhpPrimitiveType, $column->isPhpPrimitiveType());
@@ -612,22 +579,12 @@ class ColumnTest extends ModelTestCase
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('provideMappingBooleanTypes')]
-    public function testBooleanType($mappingType)
+    public function testBooleanType($columnType)
     {
-        $domain = $this->getDomainMock();
-        $domain
-            ->expects($this->once())
-            ->method('setMappingType')
-            ->with($this->equalTo($mappingType));
-
-        $domain
-            ->expects($this->any())
-            ->method('getMappingType')
-            ->will($this->returnValue($mappingType));
+        $domain = new TypeMapping($columnType);
 
         $column = new Column('');
         $column->setTypeMapping($domain);
-        $column->setType($mappingType);
 
         $this->assertSame('bool', $column->getPhpType());
         $this->assertTrue($column->isPhpPrimitiveType());
@@ -646,22 +603,11 @@ class ColumnTest extends ModelTestCase
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('provideMappingNumericTypes')]
-    public function testNumericType($mappingType, $phpType, $isPrimitiveNumericType)
+    public function testNumericType($columnType, $phpType, $isPrimitiveNumericType)
     {
-        $domain = $this->getDomainMock();
-        $domain
-            ->expects($this->once())
-            ->method('setMappingType')
-            ->with($this->equalTo($mappingType));
-
-        $domain
-            ->expects($this->any())
-            ->method('getMappingType')
-            ->will($this->returnValue($mappingType));
-
+        $domain = new TypeMapping($columnType);
         $column = new Column('');
         $column->setTypeMapping($domain);
-        $column->setType($mappingType);
 
         $this->assertSame($phpType, $column->getPhpType());
         $this->assertTrue($column->isPhpPrimitiveType());
@@ -690,17 +636,7 @@ class ColumnTest extends ModelTestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('provideMappingUuidTypes')]
     public function testUuidType(ColumnType $columnType, string $phpType)
     {
-        $domain = $this->getDomainMock();
-        $domain
-            ->expects($this->once())
-            ->method('setMappingType')
-            ->with($this->equalTo($columnType));
-
-        $domain
-            ->expects($this->any())
-            ->method('getMappingType')
-            ->will($this->returnValue($columnType));
-
+        $domain = new TypeMapping($columnType);
         $column = new Column('');
         $column->setTypeMapping($domain);
         $column->setType($columnType);
@@ -724,22 +660,13 @@ class ColumnTest extends ModelTestCase
      * @return void
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('provideMappingTextTypes')]
-    public function testTextType($mappingType)
+    public function testTextType(ColumnType $columnType)
     {
-        $domain = $this->getDomainMock();
-        $domain
-            ->expects($this->once())
-            ->method('setMappingType')
-            ->with($this->equalTo($mappingType));
-
-        $domain
-            ->expects($this->any())
-            ->method('getMappingType')
-            ->will($this->returnValue($mappingType));
+        $domain = new TypeMapping($columnType);
 
         $column = new Column('');
         $column->setTypeMapping($domain);
-        $column->setType($mappingType);
+        $column->setType($columnType);
 
         $this->assertSame('string', $column->getPhpType());
         $this->assertTrue($column->isPhpPrimitiveType());
