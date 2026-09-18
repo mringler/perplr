@@ -929,26 +929,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns all required(notNull && no defaultValue) primary keys which are not in $primaryKeys.
-     *
-     * @param array<\Propel\Generator\Model\Column> $primaryKeys
-     *
-     * @return array<\Propel\Generator\Model\Column>
-     */
-    public function getOtherRequiredPrimaryKeys(array $primaryKeys): array
-    {
-        /** @var array<\Propel\Generator\Model\Column> $pks */
-        $pks = [];
-        foreach ($this->getPrimaryKey() as $primaryKey) {
-            if ($primaryKey->isNotNull() && !$primaryKey->hasDefault() && !in_array($primaryKey, $primaryKeys, true)) {
-                $pks[] = $primaryKey;
-            }
-        }
-
-        return $pks;
-    }
-
-    /**
      * Sets whether this table contains a foreign primary key.
      *
      * @param bool $containsForeignPK
@@ -1034,13 +1014,9 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function removeIndex(string $name): void
     {
-        // check if we have a index with this name already, then delete it
-        foreach ($this->indices as $n => $idx) {
-            if ($idx->getName() == $name) {
-                unset($this->indices[$n]);
-
-                return;
-            }
+        $key = array_find_key($this->indices, fn (Index $i) => $i->getName() === $name);
+        if ($key !== null) {
+            unset($this->indices[$key]);
         }
     }
 
@@ -1051,13 +1027,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function hasIndex(string $name): bool
     {
-        foreach ($this->indices as $idx) {
-            if ($idx->getName() == $name) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->indices, fn (Index $i) => $i->getName() === $name);
     }
 
     /**
@@ -1187,11 +1157,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function guessSchemaName(): ?string
     {
-        if ($this->schema) {
-            return $this->schema;
-        }
-
-        return $this->database ? $this->database->getSchema() : null;
+        return $this->schema ?: $this->database?->getSchema();
     }
 
     /**
@@ -1240,9 +1206,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function getPhpName(): string
     {
-        if ($this->phpName === null) {
-            $this->phpName = $this->buildPhpName($this->getStdSeparatedName());
-        }
+        $this->phpName ??= $this->buildPhpName($this->getStdSeparatedName());
 
         return $this->phpName;
     }
@@ -1355,11 +1319,8 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function getDefaultStringFormat(): string
     {
-        if ($this->defaultStringFormat !== null) {
-            return $this->defaultStringFormat;
-        }
-
-        return $this->database->getDefaultStringFormat();
+        return $this->defaultStringFormat
+            ?? $this->database->getDefaultStringFormat();
     }
 
     /**
@@ -1604,14 +1565,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function getNumLazyLoadColumns(): int
     {
-        $count = 0;
-        foreach ($this->columns as $col) {
-            if ($col->isLazyLoad()) {
-                $count++;
-            }
-        }
-
-        return $count;
+        return array_reduce($this->columns, fn ($cnt, Column $col) => $col->isLazyLoad() ? $cnt + 1 : $cnt, 0);
     }
 
     /**
@@ -1925,7 +1879,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function getPlatform(): ?PlatformInterface
     {
-        return $this->database ? $this->database->getPlatform() : null;
+        return $this->database?->getPlatform();
     }
 
     /**
@@ -2058,7 +2012,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function hasAutoIncrementPrimaryKey(): bool
     {
-        return $this->getAutoIncrementPrimaryKey() !== null;
+        return (bool)$this->getAutoIncrementPrimaryKey();
     }
 
     /**
@@ -2141,7 +2095,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function hasForeignKeys(): bool
     {
-        return count($this->foreignKeys) !== 0;
+        return (bool)$this->foreignKeys;
     }
 
     /**
@@ -2149,7 +2103,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function hasCrossForeignKeys(): bool
     {
-        return count($this->getCrossRelations()) !== 0;
+        return (bool)$this->getCrossRelations();
     }
 
     /**
@@ -2235,13 +2189,7 @@ class Table extends ScopedMappingModel implements IdMethod
      */
     public function containsColumnsOfType(ColumnType $type): bool
     {
-        foreach ($this->columns as $column) {
-            if ($column->getColumnType() === $type) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->columns, fn (Column $c) => $c->getColumnType() === $type);
     }
 
     /**

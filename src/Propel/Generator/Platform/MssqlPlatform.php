@@ -10,7 +10,6 @@ use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use function in_array;
-use function sprintf;
 use function strtr;
 
 /**
@@ -185,17 +184,13 @@ END
     #[\Override]
     public function buildPrimaryKeyDdl(Table $table): string
     {
-        if ($table->hasPrimaryKey()) {
-            $pattern = 'CONSTRAINT %s PRIMARY KEY (%s)';
-
-            return sprintf(
-                $pattern,
-                $this->quoteIdentifier($this->getPrimaryKeyName($table)),
-                $this->getColumnListDDL($table->getPrimaryKey()),
-            );
+        if (!$table->hasPrimaryKey()) {
+            return '';
         }
+        $tableName = $this->quoteIdentifier($this->getPrimaryKeyName($table));
+        $columnList = $this->buildColumnListDdl($table->getPrimaryKey());
 
-        return '';
+        return "CONSTRAINT $tableName PRIMARY KEY ($columnList)";
     }
 
     /**
@@ -209,19 +204,14 @@ END
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
         }
+        $tableName = $this->quoteIdentifier($fk->getTable()->getName());
+        $fkDdl = $this->buildForeignKeyDdl($fk);
 
-        $pattern = "
+        return "
 BEGIN
-ALTER TABLE %s ADD %s
+ALTER TABLE $tableName ADD $fkDdl
 END
-;
-";
-
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($fk->getTable()->getName()),
-            $this->getForeignKeyDDL($fk),
-        );
+;\n";
     }
 
     /**
@@ -234,13 +224,10 @@ END
     #[\Override]
     public function buildUniqueDdl(Unique $unique): string
     {
-        $pattern = 'CONSTRAINT %s UNIQUE NONCLUSTERED (%s) ON [PRIMARY]';
+        $indexName = $this->quoteIdentifier($unique->getName());
+        $columnDdl = $this->buildColumnListDdl($unique->getColumnObjects());
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($unique->getName()),
-            $this->getColumnListDDL($unique->getColumnObjects()),
-        );
+        return "CONSTRAINT $indexName UNIQUE NONCLUSTERED ($columnDdl) ON [PRIMARY]";
     }
 
     /**
@@ -254,23 +241,15 @@ END
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
         }
+        $fkName = $this->quoteIdentifier($fk->getName());
+        $localColumnsList = $this->buildColumnListDdl($fk->getLocalColumnObjects());
+        $foreignTableName = $this->quoteIdentifier($fk->getForeignTableName());
+        $foreignColumnsList = $this->buildColumnListDdl($fk->getForeignColumnObjects());
 
-        $pattern = 'CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)';
-        $script = sprintf(
-            $pattern,
-            $this->quoteIdentifier($fk->getName()),
-            $this->getColumnListDDL($fk->getLocalColumnObjects()),
-            $this->quoteIdentifier($fk->getForeignTableName()),
-            $this->getColumnListDDL($fk->getForeignColumnObjects()),
-        );
-        if ($fk->hasOnUpdate() && $fk->getOnUpdate() != ForeignKey::SETNULL) {
-            $script .= ' ON UPDATE ' . $fk->getOnUpdate();
-        }
-        if ($fk->hasOnDelete() && $fk->getOnDelete() != ForeignKey::SETNULL) {
-            $script .= ' ON DELETE ' . $fk->getOnDelete();
-        }
+        $onUpdate = $fk->hasOnUpdate() && $fk->getOnUpdate() != ForeignKey::SETNULL ? ' ON UPDATE ' . $fk->getOnUpdate() : '';
+        $onDelete = $fk->hasOnDelete() && $fk->getOnDelete() != ForeignKey::SETNULL ? ' ON DELETE ' . $fk->getOnDelete() : '';
 
-        return $script;
+        return "CONSTRAINT $fkName FOREIGN KEY ($localColumnsList) REFERENCES $foreignTableName ($foreignColumnsList){$onUpdate}{$onDelete}";
     }
 
     /**

@@ -9,12 +9,15 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Exception\InvalidArgumentException;
 use Propel\Generator\Exception\SchemaException;
 use Propel\Generator\Platform\PlatformInterface;
-use function array_search;
+use function array_filter;
+use function array_map;
+use function count;
 use function explode;
 use function implode;
 use function in_array;
 use function ltrim;
 use function sprintf;
+use function str_contains;
 use function strpos;
 use function strtolower;
 use function strtoupper;
@@ -376,14 +379,9 @@ class Database extends ScopedMappingModel
      */
     public function countTables(): int
     {
-        $count = 0;
-        foreach ($this->tables as $table) {
-            if (!$table->isReadOnly()) {
-                $count++;
-            }
-        }
+        $mutableTables = array_filter($this->tables, fn (Table $t) => !$t->isReadOnly());
 
-        return $count;
+        return count($mutableTables);
     }
 
     /**
@@ -393,14 +391,7 @@ class Database extends ScopedMappingModel
      */
     public function getTablesForSql(): array
     {
-        $tables = [];
-        foreach ($this->tables as $table) {
-            if (!$table->isSkipSql()) {
-                $tables[] = $table;
-            }
-        }
-
-        return $tables;
+        return array_filter($this->tables, fn (Table $t) => !$t->isSkipSql());
     }
 
     /**
@@ -425,21 +416,19 @@ class Database extends ScopedMappingModel
     public function getTable(string $name, bool $caseInsensitive = false): ?Table
     {
         if (
-            $this->getSchema() && $this->getPlatform()->supportsSchemas()
-            && strpos($name, $this->getPlatform()->getSchemaDelimiter()) === false
+            $this->getSchema() && $this->platform->supportsSchemas()
+            && !str_contains($name, $this->platform->getSchemaDelimiter())
         ) {
-            $name = $this->getSchema() . $this->getPlatform()->getSchemaDelimiter() . $name;
+            $name = $this->getSchema() . $this->platform->getSchemaDelimiter() . $name;
         }
 
         if (!$this->hasTable($name, $caseInsensitive)) {
             return null;
         }
 
-        if ($caseInsensitive) {
-            return $this->tablesByLowercaseName[strtolower($name)];
-        }
-
-        return $this->tablesByName[$name];
+        return $caseInsensitive
+            ? $this->tablesByLowercaseName[strtolower($name)]
+            : $this->tablesByName[$name];
     }
 
     /**
@@ -459,11 +448,7 @@ class Database extends ScopedMappingModel
      */
     public function getTableByPhpName(string $phpName): ?Table
     {
-        if (isset($this->tablesByPhpName[$phpName])) {
-            return $this->tablesByPhpName[$phpName];
-        }
-
-        return null;
+        return $this->tablesByPhpName[$phpName] ?? null;
     }
 
     /**
@@ -473,9 +458,7 @@ class Database extends ScopedMappingModel
      */
     public function addTables(array $tables): void
     {
-        foreach ($tables as $table) {
-            $this->addTable($table);
-        }
+        array_map([$this, 'addTable'], $tables);
     }
 
     /**
@@ -485,7 +468,9 @@ class Database extends ScopedMappingModel
      */
     public function removeTable(Table $table): void
     {
-        if ($this->hasTable($table->getName(), true)) {
+        if (!$this->hasTable($table->getName(), true)) {
+            return;
+        }
             foreach ($this->tables as $id => $tableExam) {
                 if ($table->getName() === $tableExam->getName()) {
                     unset($this->tables[$id]);
@@ -495,7 +480,6 @@ class Database extends ScopedMappingModel
             unset($this->tablesByName[$table->getName()]);
             unset($this->tablesByLowercaseName[strtolower($table->getName())]);
             unset($this->tablesByPhpName[$table->getPhpName()]);
-        }
     }
 
     /**
@@ -611,13 +595,13 @@ class Database extends ScopedMappingModel
     #[\Override]
     public function setSchema(?string $schema): void
     {
+        if ($this->schema !== $schema && $this->platform) {
         $oldSchema = $this->schema;
-        if ($this->schema !== $schema && $this->getPlatform()) {
-            $schemaDelimiter = $this->getPlatform()->getSchemaDelimiter();
+            $schemaDelimiter = $this->platform->getSchemaDelimiter();
             $fixHash = function (&$array) use ($schema, $oldSchema, $schemaDelimiter): void {
                 foreach ($array as $k => $v) {
-                    if ($schema && $this->getPlatform()->supportsSchemas()) {
-                        if (strpos($k, $schemaDelimiter) === false) {
+                    if ($schema && $this->platform->supportsSchemas()) {
+                        if (!str_contains($k, $schemaDelimiter)) {
                             $array[$schema . $schemaDelimiter . $k] = $v;
                             unset($array[$k]);
                         }
@@ -919,11 +903,10 @@ class Database extends ScopedMappingModel
             $tables[] = $tableDef;
         }
 
-        return sprintf(
-            "%s:\n%s",
-            $this->getName() . ($this->getSchema() ? '.' . $this->getSchema() : ''),
-            implode("\n", $tables),
-        );
+        $identifier = $this->getName() . ($this->getSchema() ? '.' . $this->getSchema() : '');
+        $properties = implode("\n", $tables);
+
+        return "$identifier:\n$properties";
     }
 
     /**

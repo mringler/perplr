@@ -28,7 +28,6 @@ use function implode;
 use function in_array;
 use function is_array;
 use function is_numeric;
-use function sprintf;
 use function str_replace;
 use function stripos;
 use function strpos;
@@ -302,25 +301,25 @@ SET FOREIGN_KEY_CHECKS = 1;
     #[\Override]
     public function buildPrimaryKeyDdl(Table $table): string
     {
-        if ($table->hasPrimaryKey()) {
+        if (!$table->hasPrimaryKey()) {
+            return '';
+        }
+
             $keys = $table->getPrimaryKey();
 
             //MySQL throws an 'Incorrect table definition; there can be only one auto column and it must be defined as a key'
             //if the primary key consists of multiple columns and if the first is not the autoIncrement one. So
             //this push the autoIncrement column to the first position if its not already.
-            $autoIncrement = $table->getAutoIncrementPrimaryKey();
-            if ($autoIncrement && $keys[0] != $autoIncrement) {
-                $idx = array_search($autoIncrement, $keys);
+        $autoIncrementColumn = $table->getAutoIncrementPrimaryKey();
+        if ($autoIncrementColumn && $keys[0] != $autoIncrementColumn) {
+            $idx = array_search($autoIncrementColumn, $keys);
                 if ($idx !== false) {
                     unset($keys[$idx]);
-                    array_unshift($keys, $autoIncrement);
+                array_unshift($keys, $autoIncrementColumn);
                 }
             }
 
-            return 'PRIMARY KEY (' . $this->getColumnListDDL($keys) . ')';
-        }
-
-        return '';
+        return 'PRIMARY KEY (' . $this->buildColumnListDdl($keys) . ')';
     }
 
     /**
@@ -373,25 +372,17 @@ SET FOREIGN_KEY_CHECKS = 1;
             $tableOptions[] = 'COMMENT=' . $this->quote($table->getDescription());
         }
 
-        $tableOptions = $tableOptions ? ' ' . implode(' ', $tableOptions) : '';
-        $sep = ",
-    ";
+        $quotedTableName = $this->quoteIdentifier($table->getName());
+        $tableDefinition = implode(",\n    ", $lines);
+        $tableEngineKeyword = $this->getTableEngineKeyword();
+        $tableOptionsSuffix = $tableOptions ? ' ' . implode(' ', $tableOptions) : '';
 
-        $pattern = "
-CREATE TABLE %s
+        return "
+CREATE TABLE {$quotedTableName}
 (
-    %s
-) %s=%s%s;
+    {$tableDefinition}
+) {$tableEngineKeyword}={$mysqlTableType}{$tableOptionsSuffix};
 ";
-
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($table->getName()),
-            implode($sep, $lines),
-            $this->getTableEngineKeyword(),
-            $mysqlTableType,
-            $tableOptions,
-        );
     }
 
     /**
@@ -449,7 +440,7 @@ CREATE TABLE %s
                     $parameterValue = $this->quote($parameterValue);
                 }
 
-                $tableOptions[] = sprintf('%s=%s', $sqlName, $parameterValue);
+                $tableOptions[] = "{$sqlName}={$parameterValue}";
             }
         }
 
@@ -464,9 +455,9 @@ CREATE TABLE %s
     #[\Override]
     public function buildDropTableDdl(Table $table): string
     {
-        return "
-DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
-";
+        $tableName = $this->quoteIdentifier($table->getName());
+
+        return "\nDROP TABLE IF EXISTS $tableName;\n";
     }
 
     /**
@@ -482,7 +473,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
         $typeMapping = $col->getTypeMapping();
         $sqlType = $col->resolveSqlTypeName();
         $notNullString = $this->getNullString($col->isNotNull());
-        $defaultSetting = $this->getColumnDefaultValueDDL($col);
+        $defaultSetting = $this->buildColumnDefaultValueDdl($col);
 
         // Special handling of TIMESTAMP/DATETIME types ...
         // See: http://propel.phpdb.org/trac/ticket/538
@@ -524,10 +515,10 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
         if ($colinfo->hasParameter('Charset')) {
             $ddl[] = 'CHARACTER SET ' . $this->quote($colinfo->getParameter('Charset'));
         }
-        if ($colinfo->hasParameter('Collation')) {
-            $ddl[] = 'COLLATE ' . $this->quote($colinfo->getParameter('Collation'));
-        } elseif ($colinfo->hasParameter('Collate')) {
-            $ddl[] = 'COLLATE ' . $this->quote($colinfo->getParameter('Collate'));
+
+        $collation = $colinfo->getParameter('Collation') ?? $colinfo->getParameter('Collate');
+        if ($collation) {
+            $ddl[] = 'COLLATE ' . $this->quote($collation);
         }
 
         if ($sqlType === 'TIMESTAMP') {
@@ -550,7 +541,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
             }
         }
 
-        $autoIncrement = $col->getAutoIncrementString();
+        $autoIncrement = $col->buildAutoIncrementString();
         if ($autoIncrement) {
             $ddl[] = $autoIncrement;
         }
@@ -646,22 +637,15 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     #[\Override]
     public function buildAddIndexDdl(Index $index): string
     {
-        $pattern = "
-CREATE %sINDEX %s ON %s (%s);
-";
+        $indexType = $this->getIndexType($index);
+        $indexName = $this->quoteIdentifier($index->getName());
+        $tableName = $this->quoteIdentifier($index->getTable()->getName());
+        $columnList = $this->buildIndexColumnListDdl($index);
 
-        return sprintf(
-            $pattern,
-            $this->getIndexType($index),
-            $this->quoteIdentifier($index->getName()),
-            $this->quoteIdentifier($index->getTable()->getName()),
-            $this->getIndexColumnListDDL($index),
-        );
+        return "\nCREATE {$indexType}INDEX $indexName ON $tableName ($columnList);\n";
     }
 
     /**
-     * Builds the DDL SQL to drop an Index.
-     *
      * @param \Propel\Generator\Model\Index $index
      *
      * @return string
@@ -669,15 +653,10 @@ CREATE %sINDEX %s ON %s (%s);
     #[\Override]
     public function buildDropIndexDdl(Index $index): string
     {
-        $pattern = "
-DROP INDEX %s ON %s;
-";
+        $indexName = $this->quoteIdentifier($index->getName());
+        $tableName = $this->quoteIdentifier($index->getTable()->getName());
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($index->getName()),
-            $this->quoteIdentifier($index->getTable()->getName()),
-        );
+        return "\nDROP INDEX $indexName ON $tableName;\n";
     }
 
     /**
@@ -688,12 +667,11 @@ DROP INDEX %s ON %s;
     #[\Override]
     public function buildIndexDdl(Index $index): string
     {
-        return sprintf(
-            '%sINDEX %s (%s)',
-            $this->getIndexType($index),
-            $this->quoteIdentifier($index->getName()),
-            $this->getIndexColumnListDDL($index),
-        );
+        $indexType = $this->getIndexType($index);
+        $indexName = $this->quoteIdentifier($index->getName());
+        $columnList = $this->buildIndexColumnListDdl($index);
+
+        return "{$indexType}INDEX $indexName ($columnList)";
     }
 
     /**
@@ -722,11 +700,10 @@ DROP INDEX %s ON %s;
     #[\Override]
     public function buildUniqueDdl(Unique $unique): string
     {
-        return sprintf(
-            'UNIQUE INDEX %s (%s)',
-            $this->quoteIdentifier($unique->getName()),
-            $this->getIndexColumnListDDL($unique),
-        );
+        $uniqueName = $this->quoteIdentifier($unique->getName());
+        $columnList = $this->buildIndexColumnListDdl($unique);
+
+        return "UNIQUE INDEX $uniqueName ($columnList)";
     }
 
     /**
@@ -765,22 +742,13 @@ DROP INDEX %s ON %s;
     #[\Override]
     public function buildDropForeignKeyDdl(ForeignKey $fk): string
     {
-        if (!$this->supportsForeignKeys($fk->getTable())) {
+        if (!$this->supportsForeignKeys($fk->getTable()) || $fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
         }
-        if ($fk->isSkipSql() || $fk->isPolymorphic()) {
-            return null;
-        }
-        $pattern = "
-ALTER TABLE %s DROP FOREIGN KEY %s;
-";
+        $tableName = $this->quoteIdentifier($fk->getTable()->getName());
+        $fkName = $this->quoteIdentifier($fk->getName());
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($fk->getTable()->getName()),
-            $this->quoteIdentifier($fk->getName()),
-        );
-    }
+        return "\nALTER TABLE $tableName DROP FOREIGN KEY $fkName;\n";
     }
 
     /**
@@ -825,15 +793,10 @@ ALTER TABLE %s DROP FOREIGN KEY %s;
     #[\Override]
     public function buildRenameTableDdl(string $fromTableName, string $toTableName): string
     {
-        $pattern = "
-RENAME TABLE %s TO %s;
-";
+        $currentTableName = $this->quoteIdentifier($fromTableName);
+        $newTableName = $this->quoteIdentifier($toTableName);
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($fromTableName),
-            $this->quoteIdentifier($toTableName),
-        );
+        return "\nRENAME TABLE $currentTableName TO $newTableName;\n";
     }
 
     /**
@@ -844,15 +807,10 @@ RENAME TABLE %s TO %s;
     #[\Override]
     public function buildRemoveColumnDdl(Column $column): string
     {
-        $pattern = "
-ALTER TABLE %s DROP %s;
-";
+        $tableName = $this->quoteIdentifier($column->getTable()->getName());
+        $columnName = $this->quoteIdentifier($column->getName());
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($column->getTable()->getName()),
-            $this->quoteIdentifier($column->getName()),
-        );
+        return "\nALTER TABLE $tableName DROP $columnName;\n";
     }
 
     /**
@@ -1060,12 +1018,7 @@ ALTER TABLE %s DROP %s;
         // FIXME - This is a temporary hack to get around apparent bugs w/ PDO+MYSQL
         // See http://pecl.php.net/bugs/bug.php?id=9919
         if ($column->getPdoType() === PDO::PARAM_BOOL) {
-            return sprintf(
-                "\n%s\$stmt->bindValue(%s, (int)%s, PDO::PARAM_INT);",
-                $tab,
-                $identifier,
-                $columnValueAccessor,
-            );
+            return "\n{$tab}\$stmt->bindValue($identifier, (int){$columnValueAccessor}, PDO::PARAM_INT);";
         }
 
         return parent::getColumnBindingPHP($column, $identifier, $columnValueAccessor, $tab);

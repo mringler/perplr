@@ -23,7 +23,6 @@ use function class_exists;
 use function filter_var;
 use function implode;
 use function in_array;
-use function sprintf;
 use function str_replace;
 use function str_starts_with;
 use function strtr;
@@ -221,14 +220,6 @@ ALTER TABLE $tableName ADD $columnDll;
      */
     public function buildMigrationTableDdl(TableDiff $tableDiff): string
     {
-        $pattern = "
-CREATE TEMPORARY TABLE %s AS SELECT %s FROM %s;
-DROP TABLE %s;
-%s
-INSERT INTO %s (%s) SELECT %s FROM %s;
-DROP TABLE %s;
-";
-
         $originTable = clone $tableDiff->getFromTable();
         $newTable = clone $tableDiff->getToTable();
 
@@ -259,21 +250,17 @@ DROP TABLE %s;
         $createTable = $this->buildAddTableDdl($newTable);
         $createTable .= $this->buildAddIndicesDdl($newTable);
 
-        $sql = sprintf(
-            $pattern,
-            $this->quoteIdentifier($tempTableName), //CREATE TEMPORARY TABLE %s
-            $originTableFields, //select %s
-            $this->quoteIdentifier($originTableName), //from %s
-            $this->quoteIdentifier($originTableName), //drop table %s
-            $createTable, //[create table] %s
-            $this->quoteIdentifier($originTableName), //insert into %s
-            implode(', ', $fieldMap), //(%s)
-            implode(', ', array_keys($fieldMap)), //select %s
-            $this->quoteIdentifier($tempTableName), //from %s
-            $this->quoteIdentifier($tempTableName), //drop table %s
-        );
+        $tempTableName = $this->quoteIdentifier($tempTableName);
+        $sourceTableName = $this->quoteIdentifier($originTableName);
+        $mappedFieldNames = implode(', ', $fieldMap);
+        $originalFieldNames = implode(', ', array_keys($fieldMap));
 
-        return $sql;
+        return "
+    CREATE TEMPORARY TABLE $tempTableName AS SELECT $originTableFields FROM $sourceTableName;
+    DROP TABLE $sourceTableName;
+    $createTable
+    INSERT INTO $sourceTableName ($mappedFieldNames) SELECT $originalFieldNames FROM $tempTableName;
+    DROP TABLE $tempTableName;\n";
     }
 
     /**
@@ -584,16 +571,10 @@ PRAGMA foreign_keys = ON;
         $foreignTable = $this->quoteIdentifier($fk->getForeignTableName());
         $foreignColumns = $this->buildColumnListDdl($fk->getForeignColumnObjects());
 
-        if ($fk->hasOnUpdate()) {
-            $script .= "
-    ON UPDATE " . $fk->getOnUpdate();
-        }
-        if ($fk->hasOnDelete()) {
-            $script .= "
-    ON DELETE " . $fk->getOnDelete();
-        }
+        $onUpdate = $fk->hasOnUpdate() ? "\n    ON UPDATE " . $fk->getOnUpdate() : '';
+        $onDelete = $fk->hasOnDelete() ? "\n    ON DELETE " . $fk->getOnDelete() : '';
 
-        return $script;
+        return "FOREIGN KEY ($localColumns) REFERENCES $foreignTable ($foreignColumns){$onUpdate}{$onDelete}";
     }
 
     /**

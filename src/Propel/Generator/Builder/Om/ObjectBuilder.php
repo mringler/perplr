@@ -2186,20 +2186,19 @@ $indent};";
      */
     protected function doInsert(ConnectionInterface \$con): void
     {";
-        if ($this->getPlatform() instanceof MssqlPlatform) {
+        if (!$this->getPlatform() instanceof MssqlPlatform) {
+            $script .= $this->addDoInsertBodyRaw();
+        } else {
             if ($table->hasAutoIncrementPrimaryKey()) {
+                $incrementedColumnName = $this->getColumnConstant($table->getAutoIncrementPrimaryKey());
                 $script .= "
-        \$this->modifiedColumns[" . $this->getColumnConstant($table->getAutoIncrementPrimaryKey()) . '] = true;';
+        \$this->modifiedColumns[$incrementedColumnName] = true;";
             }
             $script .= "
         \$criteria = \$this->buildCriteria();";
-            if ($this->getTable()->getIdMethod() != IdMethod::NO_ID_METHOD) {
-                $script .= $this->addDoInsertBodyWithIdMethod();
-            } else {
-                $script .= $this->addDoInsertBodyStandard();
-            }
-        } else {
-            $script .= $this->addDoInsertBodyRaw();
+            $script .= $this->getTable()->getIdMethod() !== IdMethod::NO_ID_METHOD
+                ? $this->addDoInsertBodyWithIdMethod()
+                : $this->addDoInsertBodyStandard();
         }
         $script .= "
         \$this->setNew(false);

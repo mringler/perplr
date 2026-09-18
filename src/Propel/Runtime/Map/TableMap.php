@@ -205,27 +205,7 @@ class TableMap
     }
 
     /**
-     * Get the name of the Table.
-     *
-     * @throws \Propel\Runtime\Exception\LogicException
-     *
-     * @return string A String with the name of the table.
-     */
-    public function getNameOrFail(): string
-    {
-        $name = $this->getName();
-
-        if ($name === null) {
-            throw new LogicException('Name is not defined.');
-        }
-
-        return $name;
-    }
-
-    /**
-     * Set the PHP name of the Table.
-     *
-     * @param string $phpName The PHP Name for this table
+     * @param string $phpName
      *
      * @return void
      */

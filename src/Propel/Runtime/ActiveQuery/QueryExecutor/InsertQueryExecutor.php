@@ -106,14 +106,10 @@ class InsertQueryExecutor extends AbstractQueryExecutor
             return;
         }
 
-        if ($this->criteria->getUpdateValue($pkFullName) !== null) {
-            return;
-        }
-
-        $keyInfo = $this->tableMap->getPrimaryKeyMethodInfo();
+        $idSequenceName = $this->tableMap->getIdSequenceName();
         $id = null;
         try {
-            $id = $this->adapter->getId($this->con, $keyInfo);
+            $id = $this->adapter->loadNextValueFromSequence($this->con, $idSequenceName);
         } catch (Throwable $e) {
             throw new PropelException('Unable to get sequence id.', 0, $e);
         }
@@ -144,9 +140,9 @@ class InsertQueryExecutor extends AbstractQueryExecutor
         if ($this->tableMap === null || !$this->tableMap->isUseIdGenerator() || !$this->adapter->isGetIdAfterInsert()) {
             return null;
         }
-        $keyInfo = $this->tableMap->getPrimaryKeyMethodInfo();
+        $idSequenceName = $this->tableMap->getIdSequenceName();
         try {
-            return $this->adapter->getId($this->con, $keyInfo);
+            return $this->adapter->loadLastInsertedId($this->con, $idSequenceName);
         } catch (Throwable $e) {
             throw new PropelException('Unable to get autoincrement id.', 0, $e);
         }

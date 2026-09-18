@@ -16,34 +16,47 @@ use Propel\Generator\Model\Diff\TableDiff;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Index;
+use Propel\Generator\Model\MappingModel;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\TypeMapping;
 use Propel\Generator\Model\Unique;
 use Propel\Generator\Platform\Util\AlterTableStatementMerger;
 use Propel\Runtime\Connection\ConnectionInterface;
 use ReflectionClass;
+use function array_column;
+use function array_filter;
+use function array_find;
+use function array_map;
 use function array_search;
+use function assert;
 use function count;
-use function explode;
+use function filter_var;
 use function implode;
 use function in_array;
 use function is_string;
 use function preg_replace;
 use function sprintf;
 use function str_contains;
+use function str_ends_with;
 use function str_replace;
+use function str_starts_with;
 use function strlen;
 use function strpos;
 use function strtolower;
 use function strtr;
 use function substr;
-use function trim;
+use const FILTER_VALIDATE_BOOL;
 
 /**
  * Default implementation for the PlatformInterface interface.
  */
 class DefaultPlatform implements PlatformInterface
 {
+    /**
+     * @var string
+     */
+    protected const PK_DEFAULT_SUFFIX = '_pk';
+
     protected ConnectionInterface|null $con = null;
 
     protected bool $identifierQuoting = true;
@@ -417,9 +430,9 @@ class DefaultPlatform implements PlatformInterface
      */
     public function buildDropTableDdl(Table $table): string
     {
-        return "
-DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
-";
+        $tableName = $this->quoteIdentifier($table->getName());
+
+        return "\nDROP TABLE IF EXISTS $tableName;\n";
     }
 
     /**
@@ -451,22 +464,14 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
             $lines[] = $this->buildUniqueDdl($unique);
         }
 
-        $sep = ",
-    ";
+        $tableName = $this->quoteIdentifier($table->getName());
+        $columnDeclarations = implode(",\n    ", $lines);
 
-        $pattern = "
-%sCREATE TABLE %s
+        return "
+{$tableDescription}CREATE TABLE $tableName
 (
-    %s
-);
-";
-
-        return sprintf(
-            $pattern,
-            $tableDescription,
-            $this->quoteIdentifier($table->getName()),
-            implode($sep, $lines),
-        );
+    $columnDeclarations
+);\n";
     }
 
     /**
@@ -477,30 +482,13 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     #[\Override]
     public function buildColumnDdl(Column $col): string
     {
-        $ddl = [$this->quoteIdentifier($col->getName())];
-        $typeDeclaration = $col->resolveSqlTypeName();
-        if ($this->hasSize($typeDeclaration) && $col->isDefaultSqlType($this)) {
-            $typeDeclaration .= $col->getSizeDefinition();
-        }
-        $ddl[] = $typeDeclaration;
-
-        $default = $this->getColumnDefaultValueDDL($col);
-
-        if ($default) {
-            $ddl[] = $default;
-        }
-
-        $notNull = $this->getNullString($col->isNotNull());
-
-        if ($notNull) {
-            $ddl[] = $notNull;
-        }
-
-        $autoIncrement = $col->getAutoIncrementString();
-
-        if ($autoIncrement) {
-            $ddl[] = $autoIncrement;
-        }
+        $ddl = array_filter([
+            $this->quoteIdentifier($col->getName()),
+            $this->buildColumnTypeDeclaration($col),
+            $this->buildColumnDefaultValueDdl($col),
+            $this->getNullString($col->isNotNull()),
+            $col->buildAutoIncrementString(),
+        ]);
 
         return implode(' ', $ddl);
     }
@@ -583,9 +571,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      */
     public function getPrimaryKeyName(Table $table): string
     {
-        $tableName = $table->getCommonName();
-
-        return $tableName . '_pk';
+        return $table->getCommonName() . static::PK_DEFAULT_SUFFIX;
     }
 
     /**
@@ -596,11 +582,12 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     #[\Override]
     public function buildPrimaryKeyDdl(Table $table): string
     {
-        if ($table->hasPrimaryKey()) {
-            return 'PRIMARY KEY (' . $this->getColumnListDDL($table->getPrimaryKey()) . ')';
+        if (!$table->hasPrimaryKey()) {
+            return '';
         }
+        $pkColumnNames = $this->buildColumnListDdl($table->getPrimaryKey());
 
-        return '';
+        return 'PRIMARY KEY (' . $pkColumnNames . ')';
     }
 
     /**
@@ -613,22 +600,14 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
         if (!$table->hasPrimaryKey()) {
             return '';
         }
+        $tableName = $this->quoteIdentifier($table->getName());
+        $pkName = $this->quoteIdentifier($this->getPrimaryKeyName($table));
 
-        $pattern = "
-ALTER TABLE %s DROP CONSTRAINT %s;
-";
-
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($table->getName()),
-            $this->quoteIdentifier($this->getPrimaryKeyName($table)),
-        );
+        return "\nALTER TABLE $tableName DROP CONSTRAINT $pkName;\n";
     }
 
     /**
-     * Returns the DDL SQL to add the primary key of a table.
-     *
-     * @param \Propel\Generator\Model\Table $table From Table
+     * @param \Propel\Generator\Model\Table $table
      *
      * @return string
      */
@@ -637,16 +616,10 @@ ALTER TABLE %s DROP CONSTRAINT %s;
         if (!$table->hasPrimaryKey()) {
             return '';
         }
+        $tableName = $this->quoteIdentifier($table->getName());
+        $pkDdl = $this->buildPrimaryKeyDdl($table);
 
-        $pattern = "
-ALTER TABLE %s ADD %s;
-";
-
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($table->getName()),
-            $this->getPrimaryKeyDDL($table),
-        );
+        return "\nALTER TABLE $tableName ADD $pkDdl;\n";
     }
 
     /**
@@ -656,12 +629,7 @@ ALTER TABLE %s ADD %s;
      */
     public function buildAddIndicesDdl(Table $table): string
     {
-        $ret = '';
-        foreach ($table->getIndices() as $fk) {
-            $ret .= $this->getAddIndexDDL($fk);
-        }
-
-        return $ret;
+        return $this->mapConcat([$this, 'buildAddIndexDdl'], $table->getIndices());
     }
 
     /**
@@ -671,36 +639,24 @@ ALTER TABLE %s ADD %s;
      */
     public function buildAddIndexDdl(Index $index): string
     {
-        $pattern = "
-CREATE %sINDEX %s ON %s (%s);
-";
+        $unique = $index->isUnique() ? 'UNIQUE ' : '';
+        $indexName = $this->quoteIdentifier($index->getName());
+        $tableName = $this->quoteIdentifier($index->getTable()->getName());
+        $columnList = $this->buildColumnListDdl($index->getColumnObjects());
 
-        return sprintf(
-            $pattern,
-            $index->isUnique() ? 'UNIQUE ' : '',
-            $this->quoteIdentifier($index->getName()),
-            $this->quoteIdentifier($index->getTable()->getName()),
-            $this->getColumnListDDL($index->getColumnObjects()),
-        );
+        return "\nCREATE {$unique}INDEX $indexName ON $tableName ($columnList);\n";
     }
 
     /**
-     * Builds the DDL SQL to drop an Index.
-     *
      * @param \Propel\Generator\Model\Index $index
      *
      * @return string
      */
     public function buildDropIndexDdl(Index $index): string
     {
-        $pattern = "
-DROP INDEX %s;
-";
+        $indexName = $this->quoteIdentifier($index->getFQName());
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($index->getFQName()),
-        );
+        return "\nDROP INDEX $indexName;\n";
     }
 
     /**
@@ -710,12 +666,11 @@ DROP INDEX %s;
      */
     public function buildIndexDdl(Index $index): string
     {
-        return sprintf(
-            '%sINDEX %s (%s)',
-            $index->isUnique() ? 'UNIQUE ' : '',
-            $this->quoteIdentifier($index->getName()),
-            $this->getColumnListDDL($index->getColumnObjects()),
-        );
+        $unique = $index->isUnique() ? 'UNIQUE ' : '';
+        $indexName = $this->quoteIdentifier($index->getName());
+        $columnList = $this->buildColumnListDdl($index->getColumnObjects());
+
+        return "{$unique}INDEX $indexName ($columnList)";
     }
 
     /**
@@ -725,7 +680,9 @@ DROP INDEX %s;
      */
     public function buildUniqueDdl(Unique $unique): string
     {
-        return sprintf('UNIQUE (%s)', $this->getColumnListDDL($unique->getColumnObjects()));
+        $columnList = $this->buildColumnListDdl($unique->getColumnObjects());
+
+        return "UNIQUE ($columnList)";
     }
 
     /**
@@ -735,12 +692,7 @@ DROP INDEX %s;
      */
     public function buildAddForeignKeysDdl(Table $table): string
     {
-        $ret = '';
-        foreach ($table->getForeignKeys() as $fk) {
-            $ret .= $this->getAddForeignKeyDDL($fk);
-        }
-
-        return $ret;
+        return $this->mapConcat([$this, 'buildAddForeignKeyDdl'], $table->getForeignKeys());
     }
 
     /**
@@ -753,15 +705,10 @@ DROP INDEX %s;
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
         }
-        $pattern = "
-ALTER TABLE %s ADD %s;
-";
+        $tableName = $this->quoteIdentifier($fk->getTable()->getName());
+        $fkDdl = $this->buildForeignKeyDdl($fk);
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($fk->getTable()->getName()),
-            $this->getForeignKeyDDL($fk),
-        );
+        return "\nALTER TABLE $tableName ADD $fkDdl;\n";
     }
 
     /**
@@ -772,17 +719,12 @@ ALTER TABLE %s ADD %s;
     public function buildDropForeignKeyDdl(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
-            return null;
+            return '';
         }
-        $pattern = "
-ALTER TABLE %s DROP CONSTRAINT %s;
-";
+        $tableName = $this->quoteIdentifier($fk->getTable()->getName());
+        $fkName = $this->quoteIdentifier($fk->getName());
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($fk->getTable()->getName()),
-            $this->quoteIdentifier($fk->getName()),
-        );
+        return "\nALTER TABLE $tableName DROP CONSTRAINT $fkName;\n";
     }
 
     /**
@@ -796,26 +738,16 @@ ALTER TABLE %s DROP CONSTRAINT %s;
             return '';
         }
 
-        $pattern = "CONSTRAINT %s
-    FOREIGN KEY (%s)
-    REFERENCES %s (%s)";
-        $script = sprintf(
-            $pattern,
-            $this->quoteIdentifier($fk->getName()),
-            $this->getColumnListDDL($fk->getLocalColumnObjects()),
-            $this->quoteIdentifier($fk->getForeignTableName()),
-            $this->getColumnListDDL($fk->getForeignColumnObjects()),
-        );
-        if ($fk->hasOnUpdate()) {
-            $script .= "
-    ON UPDATE " . $fk->getOnUpdate();
-        }
-        if ($fk->hasOnDelete()) {
-            $script .= "
-    ON DELETE " . $fk->getOnDelete();
-        }
+        $fkName = $this->quoteIdentifier($fk->getName());
+        $localColumnList = $this->buildColumnListDdl($fk->getLocalColumnObjects());
+        $foreignTableName = $this->quoteIdentifier($fk->getForeignTableName());
+        $foreignColumnList = $this->buildColumnListDdl($fk->getForeignColumnObjects());
+        $onUpdate = $fk->hasOnUpdate() ? "\n    ON UPDATE " . $fk->getOnUpdate() : '';
+        $onDelete = $fk->hasOnDelete() ? "\n    ON DELETE " . $fk->getOnDelete() : '';
 
-        return $script;
+        return "CONSTRAINT $fkName
+    FOREIGN KEY ($localColumnList)
+    REFERENCES $foreignTableName ($foreignColumnList){$onUpdate}{$onDelete}";
     }
 
     /**
@@ -825,10 +757,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      */
     public function buildCommentLineDdl(string $comment): string
     {
-        $pattern = "-- %s
-";
-
-        return sprintf($pattern, $comment);
+        return "-- $comment\n";
     }
 
     /**
@@ -971,13 +900,11 @@ ALTER TABLE %s DROP CONSTRAINT %s;
         }
 
         $modifiedColumns = $tableDiff->getModifiedColumns();
-
         if ($modifiedColumns) {
             $ret .= $this->getModifyColumnsDDL($modifiedColumns);
         }
 
         $addedColumns = $tableDiff->getAddedColumns();
-
         if ($addedColumns) {
             $ret .= $this->getAddColumnsDDL($addedColumns);
         }
@@ -1061,20 +988,13 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      */
     public function buildRemoveColumnDdl(Column $column): string
     {
-        $pattern = "
-ALTER TABLE %s DROP COLUMN %s;
-";
+        $tableName = $this->quoteIdentifier($column->getTableName());
+        $columnName = $this->quoteIdentifier($column->getName());
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($column->getTable()->getName()),
-            $this->quoteIdentifier($column->getName()),
-        );
+        return "\nALTER TABLE $tableName DROP COLUMN $columnName;\n";
     }
 
     /**
-     * Builds the DDL SQL to rename a column
-     *
      * @param \Propel\Generator\Model\Column $fromColumn
      * @param \Propel\Generator\Model\Column $toColumn
      *
@@ -1082,37 +1002,21 @@ ALTER TABLE %s DROP COLUMN %s;
      */
     public function buildRenameColumnDdl(Column $fromColumn, Column $toColumn): string
     {
-        $pattern = "
-ALTER TABLE %s RENAME COLUMN %s TO %s;
-";
+        $tableName = $this->quoteIdentifier($fromColumn->getTableName());
+        $currentColumnName = $this->quoteIdentifier($fromColumn->getName());
+        $newColumnName = $this->quoteIdentifier($toColumn->getName());
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($fromColumn->getTable()->getName()),
-            $this->quoteIdentifier($fromColumn->getName()),
-            $this->quoteIdentifier($toColumn->getName()),
-        );
+        return "\nALTER TABLE $tableName RENAME COLUMN $currentColumnName TO $newColumnName;\n";
     }
 
     /**
-     * Builds the DDL SQL to modify a column
-     *
      * @param \Propel\Generator\Model\Diff\ColumnDiff $columnDiff
      *
      * @return string
      */
     public function buildModifyColumnDdl(ColumnDiff $columnDiff): string
     {
-        $toColumn = $columnDiff->getToColumn();
-        $pattern = "
-ALTER TABLE %s MODIFY %s;
-";
-
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($toColumn->getTable()->getName()),
-            $this->getColumnDDL($toColumn),
-        );
+        return $this->buildAlterColumnDdl($columnDiff->getToColumn(), 'MODIFY');
     }
 
     /**
@@ -1122,31 +1026,21 @@ ALTER TABLE %s MODIFY %s;
      */
     public function buildAddColumnDdl(Column $column): string
     {
-        $lines = [];
-        $table = null;
-        foreach ($columnDiffs as $columnDiff) {
-            $toColumn = $columnDiff->getToColumn();
-            if ($table === null) {
-                $table = $toColumn->getTable();
-            }
-            $lines[] = $this->getColumnDDL($toColumn);
-        }
+        return $this->buildAlterColumnDdl($column, 'ADD');
+    }
 
-        $sep = ",
-    ";
+    /**
+     * @param \Propel\Generator\Model\Column $column
+     * @param string $modifier
+     *
+     * @return string
+     */
+    protected function buildAlterColumnDdl(Column $column, string $modifier = 'ADD'): string
+    {
+        $tableName = $this->quoteIdentifier($column->getTableName());
+        $columnDdl = $this->buildColumnDdl($column);
 
-        $pattern = "
-ALTER TABLE %s MODIFY
-(
-    %s
-);
-";
-
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($table->getName()),
-            implode($sep, $lines),
-        );
+        return "\nALTER TABLE $tableName $modifier $columnDdl;\n";
     }
 
     /**
@@ -1156,15 +1050,9 @@ ALTER TABLE %s MODIFY
      */
     public function buildModifyColumnsDdl(array $columnDiffs): string
     {
-        $pattern = "
-ALTER TABLE %s ADD %s;
-";
+        $toColumns = array_map(fn (ColumnDiff $d) => $d->getToColumn(), $columnDiffs);
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($column->getTable()->getName()),
-            $this->getColumnDDL($column),
-        );
+        return $this->buildModifyMultipleColumnsDdl($toColumns, 'MODIFY');
     }
 
     /**
@@ -1174,30 +1062,23 @@ ALTER TABLE %s ADD %s;
      */
     public function buildAddColumnsDdl(array $columns): string
     {
-        $lines = [];
-        $table = null;
-        foreach ($columns as $column) {
-            if ($table === null) {
-                $table = $column->getTable();
-            }
-            $lines[] = $this->getColumnDDL($column);
-        }
+        return $this->buildModifyMultipleColumnsDdl($columns, 'ADD');
+    }
 
-        $sep = ",
-    ";
+    /**
+     * @param array<\Propel\Generator\Model\Column> $columns
+     * @param string $modifier
+     *
+     * @return string
+     */
+    protected function buildModifyMultipleColumnsDdl(array $columns, string $modifier = 'ADD'): string
+    {
+        $tableColumn = array_find($columns, fn (Column $c) => (bool)$c->getTable());
+        assert($tableColumn !== null);
+        $tableName = $this->quoteIdentifier($tableColumn->getTableName());
+        $columnsDdl = $this->mapConcat([$this, 'buildColumnDdl'], $columns, ",\n    ");
 
-        $pattern = "
-ALTER TABLE %s ADD
-(
-    %s
-);
-";
-
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($table->getName()),
-            implode($sep, $lines),
-        );
+        return "\nALTER TABLE $tableName $modifier\n(\n    $columnsDdl\n);\n";
     }
 
     /**
@@ -1237,11 +1118,10 @@ ALTER TABLE %s ADD
     public function quote(string $text): string
     {
         $con = $this->getConnection();
-        if ($con) {
-            return $con->quote($text);
-        }
 
-        return "'" . $this->disconnectedEscapeText($text) . "'";
+        return $con
+            ? $con->quote($text)
+            : "'" . $this->disconnectedEscapeText($text) . "'";
     }
 
     /**
@@ -1371,18 +1251,7 @@ ALTER TABLE %s ADD
     #[\Override]
     public function getBooleanString($value): string
     {
-        if ($value === true || $value === 1) {
-            return '1';
-        }
-
-        if (
-            is_string($value)
-            && in_array(strtolower($value), ['1', 'true', 'y', 'yes'], true)
-        ) {
-            return '1';
-        }
-
-        return '0';
+        return filter_var($value, FILTER_VALIDATE_BOOL) || (is_string($value) && strtolower($value) === 'y') ? '1' : '0';
     }
 
     /**
@@ -1392,22 +1261,9 @@ ALTER TABLE %s ADD
      */
     public function getPhpArrayString(string $stringValue): ?string
     {
-        $stringValue = trim($stringValue);
-        if (!$stringValue) {
-            return null;
-        }
+        $arrayStringContent = MappingModel::buildDefaultValueExpressionForArray($stringValue);
 
-        $values = [];
-        foreach (explode(',', $stringValue) as $v) {
-            $values[] = trim($v);
-        }
-
-        $value = implode(' | ', $values);
-        if ($value === ' | ') {
-            return null;
-        }
-
-        return $this->quote(sprintf('||%s||', $value));
+        return $arrayStringContent ? $this->quote($arrayStringContent) : null;
     }
 
     /**
@@ -1529,30 +1385,53 @@ if (is_resource($columnValueAccessor)) {
      * $this->id = $con->lastInsertId();
      * </code>
      *
-     * @param string $columnValueMutator
-     * @param string $connectionVariableName
-     * @param string $sequenceName
-     * @param string $tab
+     * @param string $targetVariable
+     * @param string $connectionVariable
+     * @param string|null $sequenceName
+     * @param string $indent
      * @param string|null $phpType
      *
      * @return string
      */
-    public function getIdentifierPhp(
-        string $columnValueMutator,
-        string $connectionVariableName = '$con',
-        string $sequenceName = '',
-        string $tab = '            ',
-        ?string $phpType = null
+    public function buildLastInsertedIdStatement(
+        string $targetVariable,
+        string $connectionVariable = '$con',
+        string|null $sequenceName = null,
+        string $indent = '            ',
+        string|null $phpType = null
     ): string {
-        return sprintf(
-            "
-%s%s = %s%s->lastInsertId(%s);",
-            $tab,
-            $columnValueMutator,
-            $connectionVariableName,
-            $phpType ? '(' . $phpType . ') ' : '',
-            $sequenceName ? ("'" . $sequenceName . "'") : '',
-        );
+        $typecast = $phpType ? "($phpType)" : '';
+        $sequenceName = $sequenceName ? "'$sequenceName'" : '';
+
+        return "\n{$indent}{$targetVariable} = {$typecast}{$connectionVariable}->lastInsertId($sequenceName);";
+    }
+
+    /**
+     * Get the PHP snippet for getting a Pk from the database.
+     *
+     * Typical output:
+     * <code>
+     * $this->id = $con->lastInsertId();
+     * </code>
+     *
+     * @param string $targetVariable
+     * @param string $connectionVariable
+     * @param string|null $sequenceName
+     * @param string $indent
+     * @param string|null $phpType
+     *
+     * @throws \Propel\Generator\Exception\EngineException
+     *
+     * @return string
+     */
+    public function buildLoadNextSequenceValueStatement(
+        string $targetVariable,
+        string $connectionVariable = '$con',
+        string|null $sequenceName = null,
+        string $indent = '            ',
+        string|null $phpType = null
+    ): string {
+        throw new EngineException('Platform ' . static::class . ' does not support loading sequence values.');
     }
 
     /**
@@ -1594,11 +1473,12 @@ if (is_resource($columnValueAccessor)) {
     {
         if ($table->hasForeignKeys()) {
             foreach ($table->getForeignKeys() as $fk) {
-                if ($fk->getForeignTable() && !$fk->getForeignTable()->isUnique($fk->getForeignColumnObjects())) {
+                if (!$fk->getForeignTable() || $fk->getForeignTable()->isUnique($fk->getForeignColumnObjects())) {
+                    continue;
+                }
                     $unique = new Unique();
                     $unique->setColumns($fk->getForeignColumnObjects());
                     $fk->getForeignTable()->addUnique($unique);
-                }
             }
         }
 
@@ -1612,10 +1492,8 @@ if (is_resource($columnValueAccessor)) {
         foreach ($table->getColumns() as $column) {
             $defaultSize = $this->getDefaultTypeSize($column->getColumnType());
 
-            if ($column->getSize() && $defaultSize) {
-                if ($column->getScale() === null && (int)$column->getSize() === $defaultSize) {
+            if ($column->getSize() && $defaultSize && $column->getScale() === null && (int)$column->getSize() === $defaultSize) {
                     $column->setSize(null);
-                }
             }
         }
     }

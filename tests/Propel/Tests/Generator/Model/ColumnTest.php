@@ -816,17 +816,10 @@ class ColumnTest extends ModelTestCase
      */
     public function testGetNativeAutoIncrementString()
     {
-        $platform = $this->getPlatformMock();
-        $platform
-            ->expects($this->once())
-            ->method('getAutoIncrement')
-            ->will($this->returnValue('AUTO_INCREMENT'));
-
-        $table = $this->getTableMock('books', ['platform' => $platform]);
-        $table
-            ->expects($this->once())
-            ->method('getIdMethod')
-            ->will($this->returnValue('native'));
+        $platform = new MysqlPlatform();
+        $db = new Database(null, $platform);
+        $table = new Table('book');
+        $db->addTable($table);
 
         $column = new Column('');
         $column->setAutoIncrement(true);

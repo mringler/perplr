@@ -366,11 +366,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
             'LOCALTIMESTAMP' => 'LOCALTIMESTAMP',
         ];
 
-        if (isset($defaultColumnValueExpressions[strtoupper($default)])) {
-            return true;
-        }
-
-        return false;
+        return isset($defaultColumnValueExpressions[strtoupper($default)]);
     }
 
     /**

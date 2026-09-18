@@ -75,9 +75,9 @@ class MigrationTestCase extends TestCaseFixturesDatabase
      *
      * @throws \Propel\Generator\Exception\BuildException
      *
-     * @return \Propel\Generator\Model\Database|false
+     * @return \Propel\Generator\Model\Database|null
      */
-    public function applyXml($xml, $changeRequired = false)
+    public function applyXml($xml, $changeRequired = false): Database|null
     {
         $this->readDatabase();
 
@@ -92,7 +92,7 @@ class MigrationTestCase extends TestCaseFixturesDatabase
 
         $diff = DatabaseComparator::computeDiff($this->database, $database);
 
-        if (false === $diff) {
+        if ($diff === false) {
             if ($changeRequired) {
                 throw new BuildException(sprintf(
                     "No changes in schema to current database: \nSchema database:\n%s\n\nCurrent Database:\n%s",
@@ -101,7 +101,7 @@ class MigrationTestCase extends TestCaseFixturesDatabase
                 ));
             }
 
-            return false;
+            return null;
         }
         $sql = $this->database->getPlatform()->buildModifyDatabaseDdl($diff);
 

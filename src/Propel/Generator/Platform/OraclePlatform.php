@@ -19,7 +19,6 @@ use function implode;
 use function in_array;
 use function is_array;
 use function min;
-use function preg_replace;
 use function sprintf;
 use function strlen;
 use function substr;
@@ -220,8 +219,7 @@ ALTER SESSION SET NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS';
             $lines[] = $this->buildUniqueDdl($unique);
         }
 
-        $sep = ",
-    ";
+        $sep = ",\n    ";
 
         $pattern = "
 %sCREATE TABLE %s
@@ -263,19 +261,16 @@ ALTER SESSION SET NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS';
      */
     public function buildAddSequencesDdl(Table $table): string
     {
-        if ($table->getIdMethod() === 'native') {
-            $pattern = "
-CREATE SEQUENCE %s
-    INCREMENT BY 1 START WITH 1 NOMAXVALUE NOCYCLE NOCACHE ORDER;
-";
-
-            return sprintf(
-                $pattern,
-                $this->quoteIdentifier($this->getSequenceName($table)),
-            );
+        $sequenceName = $table->resolveDefaultIdSequenceName();
+        if (!$sequenceName) {
+            return '';
         }
 
-        return '';
+        $sequenceName = $this->quoteIdentifier($sequenceName);
+
+        return "
+CREATE SEQUENCE $sequenceName
+    INCREMENT BY 1 START WITH 1 NOMAXVALUE NOCYCLE NOCACHE ORDER;\n";
     }
 
     /**
@@ -286,13 +281,13 @@ CREATE SEQUENCE %s
     #[\Override]
     public function buildDropTableDdl(Table $table): string
     {
-        $ret = "
-DROP TABLE " . $this->quoteIdentifier($table->getName()) . " CASCADE CONSTRAINTS;
-";
-        if ($table->getIdMethod() == IdMethod::NATIVE) {
-            $ret .= "
-DROP SEQUENCE " . $this->quoteIdentifier($this->getSequenceName($table)) . ";
-";
+        $tableName = $this->quoteIdentifier($table->getName());
+        $ret = "\nDROP TABLE $tableName CASCADE CONSTRAINTS;\n";
+
+        $sequenceName = $table->resolveDefaultIdSequenceName();
+        if ($sequenceName) {
+            $sequenceName = $this->quoteIdentifier($sequenceName);
+            $ret .= "\nDROP SEQUENCE $sequenceName;\n";
         }
 
         return $ret;
@@ -441,9 +436,7 @@ DROP SEQUENCE " . $this->quoteIdentifier($this->getSequenceName($table)) . ";
         }
 
         if ($isPrimaryKey) {
-            $physicalParameters = "
-USING INDEX
-";
+            $physicalParameters = "\nUSING INDEX\n";
             $prefix = 'PK';
         } else {
             $physicalParameters = "\n";
@@ -451,31 +444,23 @@ USING INDEX
         }
 
         if ($vendorSpecific->hasParameter($prefix . 'PCTFree')) {
-            $physicalParameters .= 'PCTFREE ' . $vendorSpecific->getParameter($prefix . 'PCTFree') . "
-";
+            $physicalParameters .= 'PCTFREE ' . $vendorSpecific->getParameter($prefix . 'PCTFree') . "\n";
         }
         if ($vendorSpecific->hasParameter($prefix . 'InitTrans')) {
-            $physicalParameters .= 'INITRANS ' . $vendorSpecific->getParameter($prefix . 'InitTrans') . "
-";
+            $physicalParameters .= 'INITRANS ' . $vendorSpecific->getParameter($prefix . 'InitTrans') . "\n";
         }
         if ($vendorSpecific->hasParameter($prefix . 'MinExtents') || $vendorSpecific->hasParameter($prefix . 'MaxExtents') || $vendorSpecific->hasParameter($prefix . 'PCTIncrease')) {
-            $physicalParameters .= "STORAGE
-(
-";
+            $physicalParameters .= "STORAGE\n(\n";
             if ($vendorSpecific->hasParameter($prefix . 'MinExtents')) {
-                $physicalParameters .= '    MINEXTENTS ' . $vendorSpecific->getParameter($prefix . 'MinExtents') . "
-";
+                $physicalParameters .= '    MINEXTENTS ' . $vendorSpecific->getParameter($prefix . 'MinExtents') . "\n";
             }
             if ($vendorSpecific->hasParameter($prefix . 'MaxExtents')) {
-                $physicalParameters .= '    MAXEXTENTS ' . $vendorSpecific->getParameter($prefix . 'MaxExtents') . "
-";
+                $physicalParameters .= '    MAXEXTENTS ' . $vendorSpecific->getParameter($prefix . 'MaxExtents') . "\n";
             }
             if ($vendorSpecific->hasParameter($prefix . 'PCTIncrease')) {
-                $physicalParameters .= '    PCTINCREASE ' . $vendorSpecific->getParameter($prefix . 'PCTIncrease') . "
-";
+                $physicalParameters .= '    PCTINCREASE ' . $vendorSpecific->getParameter($prefix . 'PCTIncrease') . "\n";
             }
-            $physicalParameters .= ")
-";
+            $physicalParameters .= ")\n";
         }
         if ($vendorSpecific->hasParameter($prefix . 'Tablespace')) {
             $physicalParameters .= 'TABLESPACE ' . $vendorSpecific->getParameter($prefix . 'Tablespace');
@@ -499,9 +484,7 @@ USING INDEX
             return '';
         }
 
-        $pattern = "
-CREATE %sINDEX %s ON %s (%s)%s;
-";
+        $pattern = "\nCREATE %sINDEX %s ON %s (%s)%s;\n";
 
         return sprintf(
             $pattern,
@@ -530,8 +513,7 @@ CREATE %sINDEX %s ON %s (%s)%s;
     {
         if ($column->getColumnType() === ColumnType::CLOB_EMU) {
             return sprintf(
-                "%s\$stmt->bindParam(%s, %s, %d, strlen(%s));
-",
+                "%s\$stmt->bindParam(%s, %s, %d, strlen(%s));\n",
                 $tab,
                 $identifier,
                 $columnValueAccessor,
@@ -548,10 +530,10 @@ CREATE %sINDEX %s ON %s (%s)%s;
      * Warning: duplicates logic from OracleAdapter::getId().
      * Any code modification here must be ported there.
      *
-     * @param string $columnValueMutator
-     * @param string $connectionVariableName
-     * @param string $sequenceName
-     * @param string $tab
+     * @param string $targetVariable
+     * @param string $connectionVariable
+     * @param string|null $sequenceName
+     * @param string $indent
      * @param string|null $phpType
      *
      * @throws \Propel\Generator\Exception\EngineException
@@ -559,27 +541,20 @@ CREATE %sINDEX %s ON %s (%s)%s;
      * @return string
      */
     #[\Override]
-    public function getIdentifierPhp(
-        string $columnValueMutator,
-        string $connectionVariableName = '$con',
-        string $sequenceName = '',
-        string $tab = '            ',
-        ?string $phpType = null
+    public function buildLoadNextSequenceValueStatement(
+        string $targetVariable,
+        string $connectionVariable = '$con',
+        string|null $sequenceName = null,
+        string $indent = '            ',
+        string|null $phpType = null
     ): string {
         if (!$sequenceName) {
             throw new EngineException('Oracle needs a sequence name to fetch primary keys');
         }
-        $snippet = "
-\$dataFetcher = %s->query('SELECT %s.nextval FROM dual');
-%s = %s\$dataFetcher->fetchColumn();";
-        $script = sprintf(
-            $snippet,
-            $connectionVariableName,
-            $sequenceName,
-            $columnValueMutator,
-            $phpType ? '(' . $phpType . ') ' : '',
-        );
+        $typecast = $phpType ? "($phpType)" : '';
 
-        return preg_replace('/^/m', $tab, $script);
+        return "
+{$indent}\$dataFetcher = {$connectionVariable}->query('SELECT {$sequenceName}.nextval FROM dual');
+{$indent}$targetVariable = {$typecast}\$dataFetcher->fetchColumn();";
     }
 }
