@@ -21,6 +21,7 @@ use Propel\Generator\Platform\MysqlPlatform;
 use Propel\Tests\Helpers\ColorsBackedEnum;
 use Propel\Tests\Helpers\ColorsUnitEnum;
 use Propel\Tests\TestCase;
+use const PHP_INT_SIZE;
 
 /**
  * Tests for package handling.
@@ -621,7 +622,7 @@ class ColumnTest extends ModelTestCase
             [ColumnType::SMALLINT, 'int', true],
             [ColumnType::TINYINT, 'int', true],
             [ColumnType::INTEGER, 'int', true],
-            [ColumnType::BIGINT, 'string', false],
+            [ColumnType::BIGINT, PHP_INT_SIZE === 8 ? 'int' : 'string', PHP_INT_SIZE === 8],
             [ColumnType::FLOAT, 'float', true],
             [ColumnType::DOUBLE, 'float', true],
             [ColumnType::NUMERIC, 'string', false],
@@ -649,7 +650,7 @@ class ColumnTest extends ModelTestCase
     public static function provideMappingUuidTypes()
     {
         return [
-            // column type, php type, 
+            // column type, php type,
             [ColumnType::UUID, 'string'],
             [ColumnType::UUID_BINARY, 'string'],
         ];
