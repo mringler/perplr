@@ -172,7 +172,7 @@ class IdTableTableMap extends TableMap
         $this->setName('id_table');
         $this->setPhpName('IdTable');
         $this->setIdentifierQuoting(false);
-        $this->setClassName('\\IdTable');
+        $this->setModelClassName('\\IdTable');
         $this->setPackage('');
         $this->setUseIdGenerator(true);
         // columns

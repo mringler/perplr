@@ -627,8 +627,7 @@ class $className extends TableMap
     protected function addInitialize(string &$script): void
     {
         $table = $this->getTable();
-        /** @var \Propel\Generator\Platform\DefaultPlatform $platform */
-        $platform = $this->getPlatform();
+        $modelClassName = addslashes($this->getStubObjectBuilder()->getFullyQualifiedClassName());
 
         $script .= "
     /**
@@ -643,7 +642,7 @@ class $className extends TableMap
         \$this->setName('" . $table->getName() . "');
         \$this->setPhpName('" . $table->getPhpName() . "');
         \$this->setIdentifierQuoting(" . ($table->isIdentifierQuotingEnabled() ? 'true' : 'false') . ");
-        \$this->setClassName('" . addslashes($this->getStubObjectBuilder()->getFullyQualifiedClassName()) . "');
+        \$this->setModelClassName('$modelClassName');
         \$this->setPackage('" . parent::getPackage() . "');";
         if ($table->getIdMethod() === 'native') {
             $script .= "

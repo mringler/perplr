@@ -102,7 +102,7 @@ class TableMap
     /**
      * @var class-string<\Propel\Runtime\ActiveRecord\ActiveRecordInterface>
      */
-    protected $classname;
+    protected string|null $modeClassname = null;
 
     protected string|null $package = null;
 
@@ -268,9 +268,9 @@ class TableMap
      *
      * @return void
      */
-    public function setClassName(string $classname): void
+    public function setModelClassName(string $classname): void
     {
-        $this->classname = $classname;
+        $this->modeClassname = $classname;
     }
 
     /**
@@ -278,9 +278,19 @@ class TableMap
      *
      * @return string|null
      */
+    public function getModelClassName(): ?string
+    {
+        return $this->modeClassname;
+    }
+
+    /**
+     * @deprecated Use aptly named {@see static::getModelClassName()}
+     *
+     * @return string|null
+     */
     public function getClassName(): ?string
     {
-        return $this->classname;
+        return $this->modeClassname;
     }
 
     /**
@@ -292,7 +302,7 @@ class TableMap
      */
     public function getClassNameOrFail(): string
     {
-        $className = $this->getClassName();
+        $className = $this->getModelClassName();
 
         if ($className === null) {
             throw new LogicException('Class name is not defined.');
@@ -880,6 +890,6 @@ class TableMap
     {
         return $this->tableName === $identifier
             || $this->phpName === $identifier
-            || $this->classname === ($identifier[0] === '\\' ? $identifier : '\\' . $identifier);
+            || $this->modeClassname === ($identifier[0] === '\\' ? $identifier : '\\' . $identifier);
     }
 }

@@ -241,7 +241,7 @@ class GenspecTableTableMap extends TableMap
         $this->setName('genspec_table');
         $this->setPhpName('GenspecTable');
         $this->setIdentifierQuoting(false);
-        $this->setClassName('\\GenspecTable');
+        $this->setModelClassName('\\GenspecTable');
         $this->setPackage('');
         $this->setUseIdGenerator(true);
         $this->setSingleTableInheritance(true);
