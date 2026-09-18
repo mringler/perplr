@@ -29,6 +29,7 @@ use RuntimeException;
 use function array_filter;
 use function array_map;
 use function array_slice;
+use function assert;
 use function count;
 use function explode;
 use function file_put_contents;
@@ -71,12 +72,7 @@ class QuickBuilder
      */
     public static bool $disableVfs = false;
 
-    /**
-     * The Xml.
-     *
-     * @var string
-     */
-    protected $schema = '';
+    protected string $schemaXml = '';
 
     protected string $schemaName = '';
 
@@ -99,21 +95,21 @@ class QuickBuilder
     protected bool $vfs = true;
 
     /**
-     * @param string $schema
+     * @param string $schemaXml
      *
      * @return void
      */
-    public function setSchema(string $schema): void
+    public function setSchemaXml(string $schemaXml): void
     {
-        $this->schema = $schema;
+        $this->schemaXml = $schemaXml;
     }
 
     /**
      * @return string
      */
-    public function getSchema(): string
+    public function getSchemaXml(): string
     {
-        return $this->schema;
+        return $this->schemaXml;
     }
 
     /**
@@ -191,9 +187,7 @@ class QuickBuilder
      */
     public function getConfig(): AbstractGeneratorConfig
     {
-        if ($this->config === null) {
-            $this->config = new QuickGeneratorConfig();
-        }
+        $this->config ??= new QuickGeneratorConfig();
 
         return $this->config;
     }
@@ -217,7 +211,7 @@ class QuickBuilder
     }
 
     /**
-     * @param string $schema
+     * @param string $schemaXml
      * @param string|null $dsn
      * @param string|null $user
      * @param string|null $pass
@@ -227,7 +221,7 @@ class QuickBuilder
      * @return \Propel\Runtime\Connection\ConnectionWrapper
      */
     public static function buildSchema(
-        string $schema,
+        string $schemaXml,
         ?string $dsn = null,
         ?string $user = null,
         ?string $pass = null,
@@ -235,7 +229,7 @@ class QuickBuilder
         bool $vfs = true
     ): ConnectionWrapper {
         $builder = new self();
-        $builder->setSchema($schema);
+        $builder->setSchemaXml($schemaXml);
         $builder->setVfs($vfs);
 
         return $builder->build($dsn, $user, $pass, $adapter);
@@ -245,14 +239,14 @@ class QuickBuilder
      * Create Database object from schema.
      * Does not create classes or DB tables.
      *
-     * @param string $schema
+     * @param string $schemaXml
      *
      * @return \Propel\Generator\Model\Database|null
      */
-    public static function parseSchema(string $schema): ?Database
+    public static function parseSchema(string $schemaXml): ?Database
     {
         $builder = new self();
-        $builder->setSchema($schema);
+        $builder->setSchemaXml($schemaXml);
 
         return $builder->getDatabase();
     }
@@ -290,7 +284,7 @@ class QuickBuilder
         $con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         /** @phpstan-var \Propel\Runtime\Adapter\Pdo\SqliteAdapter $adapter */
         $adapter->initConnection($con, []);
-        $this->buildSQL($con);
+        $this->buildAndRunSql($con);
         $this->buildClasses($classTargets);
         $name = (string)$this->getDatabase()->getName();
         Perpl::getServiceContainer()->setAdapter($name, $adapter);
@@ -300,16 +294,17 @@ class QuickBuilder
     }
 
     /**
-     * @return \Propel\Generator\Model\Database|null
+     * @return \Propel\Generator\Model\Database
      */
-    public function getDatabase(): ?Database
+    public function getDatabase(): Database
     {
         if ($this->database === null) {
-            $xtad = new SchemaReader($this->getPlatform());
-            $xtad->setGeneratorConfig($this->getConfig());
-            $appData = $xtad->parseString($this->schema);
-            $this->database = $appData->getDatabase(); // does final initialization
+            $schemaReader = new SchemaReader($this->getPlatform());
+            $schemaReader->setGeneratorConfig($this->getConfig());
+            $schema = $schemaReader->parseString($this->schemaXml);
+            $this->database = $schema->getDatabase(); // does final initialization
         }
+        assert($this->database !== null);
 
         return $this->database;
     }
@@ -321,9 +316,9 @@ class QuickBuilder
      *
      * @return int The number of statements executed
      */
-    public function buildSQL(ConnectionInterface $con): int
+    public function buildAndRunSql(ConnectionInterface $con): int
     {
-        $sql = $this->getSQL();
+        $sql = $this->buildSql();
         $statements = SqlParser::parseString($sql);
         foreach ($statements as $statement) {
             if (strpos($statement, 'DROP') === 0) {
@@ -362,7 +357,7 @@ class QuickBuilder
         }
         /** @var \Propel\Generator\Platform\DefaultPlatform $platform */
         $platform = $this->database->getPlatform();
-        $sql = $platform->getModifyDatabaseDDL($diff);
+        $sql = $platform->buildModifyDatabaseDdl($diff);
 
         $statements = SqlParser::parseString($sql);
         foreach ($statements as $statement) {
@@ -407,12 +402,12 @@ class QuickBuilder
     /**
      * @return string
      */
-    public function getSQL(): string
+    public function buildSql(): string
     {
         /** @var \Propel\Generator\Platform\DefaultPlatform $platform */
         $platform = $this->getPlatform();
 
-        return $platform->getAddTablesDDL($this->getDatabase());
+        return $platform->buildAddTablesDdl($this->getDatabase());
     }
 
     /**

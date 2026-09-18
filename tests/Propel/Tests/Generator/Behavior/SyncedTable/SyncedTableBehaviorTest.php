@@ -963,7 +963,7 @@ EOT;
     protected function buildSchema(string $schema): Database
     {
         $builder = new QuickBuilder();
-        $builder->setSchema($schema);
+        $builder->setSchemaXml($schema);
 
         return $builder->getDatabase();
     }
