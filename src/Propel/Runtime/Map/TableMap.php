@@ -12,6 +12,7 @@ use Propel\Runtime\Map\Exception\RelationNotFoundException;
 use function array_find;
 use function array_key_exists;
 use function array_keys;
+use function assert;
 use function implode;
 use function sprintf;
 use function substr;
@@ -76,60 +77,34 @@ class TableMap
     public const DEFAULT_OBJECT_COLLECTION = ObjectCollection::class;
 
     /**
-     * Columns in the table
-     *
      * @var array<\Propel\Runtime\Map\ColumnMap>
      */
-    protected $columns = [];
+    protected array $columns = [];
 
     /**
      * Columns in the table, using table phpName as key
      *
      * @var array<\Propel\Runtime\Map\ColumnMap>
      */
-    protected $columnsByPhpName = [];
+    protected array $columnsByPhpName = [];
 
     /**
-     * Map of normalized column names
-     *
      * @var array<string>
      */
     protected $normalizedColumnNameMap = [];
 
-    /**
-     * The database this table belongs to
-     *
-     * @var \Propel\Runtime\Map\DatabaseMap
-     */
-    protected $dbMap;
+    protected DatabaseMap|null $dbMap = null;
+
+    protected string|null $tableName = null;
+
+    protected string|null $phpName = null;
 
     /**
-     * The name of the table
-     */
-    protected ?string $tableName = null;
-
-    /**
-     * The PHP name of the table
-     *
-     * @var string
-     */
-    protected $phpName;
-
-    /**
-     * The ClassName for this table
-     *
-     * @psalm-var class-string<\Propel\Runtime\ActiveRecord\ActiveRecordInterface>
-     *
-     * @var string
+     * @var class-string<\Propel\Runtime\ActiveRecord\ActiveRecordInterface>
      */
     protected $classname;
 
-    /**
-     * The Package for this table
-     *
-     * @var string
-     */
-    protected $package;
+    protected string|null $package = null;
 
     protected bool $useIdGenerator = false;
 
@@ -160,12 +135,7 @@ class TableMap
      */
     protected bool $relationsBuilt = false;
 
-    /**
-     *  Object to store information that is needed if the for generating primary keys
-     *
-     * @var mixed
-     */
-    protected $pkInfo;
+    protected string|null $idSequenceName = null;
 
     protected bool $identifierQuoting = false;
 
@@ -197,9 +167,7 @@ class TableMap
     }
 
     /**
-     * Set the DatabaseMap containing this TableMap.
-     *
-     * @param \Propel\Runtime\Map\DatabaseMap $dbMap A DatabaseMap.
+     * @param \Propel\Runtime\Map\DatabaseMap $dbMap
      *
      * @return void
      */
@@ -209,19 +177,17 @@ class TableMap
     }
 
     /**
-     * Get the DatabaseMap containing this TableMap.
-     *
-     * @return \Propel\Runtime\Map\DatabaseMap A DatabaseMap.
+     * @return \Propel\Runtime\Map\DatabaseMap
      */
     public function getDatabaseMap(): DatabaseMap
     {
+        assert($this->dbMap !== null);
+
         return $this->dbMap;
     }
 
     /**
-     * Set the name of the Table.
-     *
-     * @param string|null $name The name of the table.
+     * @param string|null $name
      *
      * @return void
      */
@@ -231,9 +197,7 @@ class TableMap
     }
 
     /**
-     * Get the name of the Table.
-     *
-     * @return string|null A String with the name of the table.
+     * @return string|null
      */
     public function getName(): ?string
     {
@@ -271,9 +235,7 @@ class TableMap
     }
 
     /**
-     * Get the PHP name of the Table.
-     *
-     * @return string|null A String with the name of the table.
+     * @return string|null
      */
     public function getPhpName(): ?string
     {
@@ -281,11 +243,9 @@ class TableMap
     }
 
     /**
-     * Get the PHP name of the Table.
-     *
      * @throws \Propel\Runtime\Exception\LogicException
      *
-     * @return string A String with the name of the table.
+     * @return string
      */
     public function getPhpNameOrFail(): string
     {
@@ -299,12 +259,12 @@ class TableMap
     }
 
     /**
-     * Set the ClassName of the Table. Could be useful for calling
+     * Set the model ClassName of the Table. Could be useful for calling
      * tableMap and Object methods dynamically.
      *
      * @psalm-param class-string<\Propel\Runtime\ActiveRecord\ActiveRecordInterface> $classname
      *
-     * @param string $classname The ClassName
+     * @param string $classname
      *
      * @return void
      */
@@ -314,8 +274,6 @@ class TableMap
     }
 
     /**
-     * Get the ClassName of the Propel Class belonging to this table.
-     *
      * @psalm-return class-string<\Propel\Runtime\ActiveRecord\ActiveRecordInterface>
      *
      * @return string|null
@@ -344,8 +302,6 @@ class TableMap
     }
 
     /**
-     * Get the Collection ClassName to this table.
-     *
      * @return class-string
      */
     public function getCollectionClassName(): string
@@ -354,9 +310,7 @@ class TableMap
     }
 
     /**
-     * Set the Package of the Table
-     *
-     * @param string $package The Package
+     * @param string $package
      *
      * @return void
      */
@@ -366,8 +320,6 @@ class TableMap
     }
 
     /**
-     * Get the Package of the table.
-     *
      * @return string|null
      */
     public function getPackage(): ?string
@@ -376,7 +328,7 @@ class TableMap
     }
 
     /**
-     * Set whether to use Id generator for primary key.
+     * @param \Propel\Generator\Model\IdMethod $idMethod
      *
      * @param bool $bit
      *
@@ -422,23 +374,23 @@ class TableMap
     /**
      * Sets the name of the sequence used to generate a key
      *
-     * @param mixed $pkInfo information needed to generate a key
+     * @param string|null $idSequenceName
      *
      * @return void
      */
-    public function setPrimaryKeyMethodInfo($pkInfo): void
+    public function setPrimaryKeyMethodInfo(string|null $idSequenceName): void
     {
-        $this->pkInfo = $pkInfo;
+        $this->idSequenceName = $idSequenceName;
     }
 
     /**
      * Get the name of the sequence used to generate a primary key
      *
-     * @return mixed
+     * @return string|null
      */
-    public function getPrimaryKeyMethodInfo()
+    public function getIdSequenceName(): string|null
     {
-        return $this->pkInfo;
+        return $this->idSequenceName;
     }
 
     /**

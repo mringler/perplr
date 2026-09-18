@@ -626,8 +626,6 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     }
 
     /**
-     * Builds the DDL SQL to drop the primary key of a table.
-     *
      * @param \Propel\Generator\Model\Table $table
      *
      * @return string
@@ -645,8 +643,6 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     }
 
     /**
-     * Builds the DDL SQL to add an Index.
-     *
      * @param \Propel\Generator\Model\Index $index
      *
      * @return string
@@ -755,8 +751,6 @@ DROP INDEX %s ON %s;
     }
 
     /**
-     * Builds the DDL SQL for a ForeignKey object.
-     *
      * @param \Propel\Generator\Model\ForeignKey $fk
      *
      * @return string
@@ -814,9 +808,6 @@ ALTER TABLE %s DROP FOREIGN KEY %s;
     }
 
     /**
-     * Builds the DDL SQL to modify a database
-     * based on a DatabaseDiff instance
-     *
      * @param \Propel\Generator\Model\Diff\DatabaseDiff $databaseDiff
      *
      * @return string
@@ -850,8 +841,6 @@ ALTER TABLE %s DROP FOREIGN KEY %s;
     }
 
     /**
-     * Builds the DDL SQL to rename a table
-     *
      * @param string $fromTableName
      * @param string $toTableName
      *

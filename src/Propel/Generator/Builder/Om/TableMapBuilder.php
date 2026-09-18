@@ -620,7 +620,7 @@ class $className extends TableMap
     /**
      * Adds the addInitialize() method to the table map class.
      *
-     * @param string $script The script will be modified in this method.
+     * @param string $script
      *
      * @return void
      */

@@ -1028,8 +1028,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Removes a index from the table.
-     *
      * @param string $name
      *
      * @return void
@@ -1047,8 +1045,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Checks if the table has a index by name.
-     *
      * @param string $name
      *
      * @return bool
@@ -1065,8 +1061,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Get indexes on a column
-     *
      * @param \Propel\Generator\Model\Column $column
      *
      * @return array<\Propel\Generator\Model\Index>
@@ -1139,8 +1133,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Retrieves the configuration object.
-     *
      * @return \Propel\Generator\Config\AbstractGeneratorConfig|null
      */
     #[\Override]
@@ -1216,8 +1208,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns the table description.
-     *
      * @return string|null
      */
     public function getDescription(): ?string
@@ -1226,8 +1216,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns whether the table has a description.
-     *
      * @return bool
      */
     public function hasDescription(): bool
@@ -1236,8 +1224,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Sets the table description.
-     *
      * @param string $description
      *
      * @return void
@@ -1295,8 +1281,6 @@ class Table extends ScopedMappingModel implements IdMethod
 
     /**
      * Returns the camelCase version of PHP name.
-     *
-     * The studly name is the PHP name with the first character lowercase.
      *
      * @return string
      */
@@ -1367,9 +1351,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns the default string format for ActiveRecord objects in this table,
-     * or the one for the whole database if not set.
-     *
      * @return string
      */
     public function getDefaultStringFormat(): string
@@ -1384,10 +1365,7 @@ class Table extends ScopedMappingModel implements IdMethod
     /**
      * Returns the method strategy for generating primary keys.
      *
-     * [HL] changing behavior so that Database default method is returned
-     * if no method has been specified for the table.
-     *
-     * @return string
+     * @return \Propel\Generator\Model\IdMethod
      */
     public function getIdMethod(): string
     {
@@ -1476,7 +1454,7 @@ class Table extends ScopedMappingModel implements IdMethod
     /**
      * Makes this database reload on insert statement.
      *
-     * @param bool $flag True by default
+     * @param bool $flag
      *
      * @return void
      */
@@ -1498,7 +1476,7 @@ class Table extends ScopedMappingModel implements IdMethod
     /**
      * Makes this database reload on update statement.
      *
-     * @param bool $flag True by default
+     * @param bool $flag
      *
      * @return void
      */
@@ -1612,8 +1590,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns the number of columns in this table.
-     *
      * @return int
      */
     public function getNumColumns(): int
@@ -1649,8 +1625,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns the list of all foreign keys.
-     *
      * @return array<\Propel\Generator\Model\ForeignKey>
      */
     public function getForeignKeys(): array
@@ -1947,8 +1921,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns the Database platform.
-     *
      * @return \Propel\Generator\Platform\PlatformInterface|null
      */
     public function getPlatform(): ?PlatformInterface
@@ -2165,8 +2137,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns whether the table has foreign keys.
-     *
      * @return bool
      */
     public function hasForeignKeys(): bool
@@ -2175,8 +2145,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns whether the table has cross foreign keys or not.
-     *
      * @return bool
      */
     public function hasCrossForeignKeys(): bool
@@ -2185,8 +2153,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns the PHP naming method.
-     *
      * @return string|null
      */
     public function getPhpNamingMethod(): ?string
@@ -2195,8 +2161,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Sets the PHP naming method.
-     *
      * @param string $phpNamingMethod
      *
      * @return void
@@ -2207,8 +2171,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Sets the default accessor visibility.
-     *
      * @param string $defaultAccessorVisibility
      *
      * @return void
@@ -2219,8 +2181,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns the default accessor visibility.
-     *
      * @return string
      */
     public function getDefaultAccessorVisibility(): string
@@ -2229,8 +2189,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Sets the default mutator visibility.
-     *
      * @param string $defaultMutatorVisibility
      *
      * @return void
@@ -2241,8 +2199,6 @@ class Table extends ScopedMappingModel implements IdMethod
     }
 
     /**
-     * Returns the default mutator visibility.
-     *
      * @return string
      */
     public function getDefaultMutatorVisibility(): string

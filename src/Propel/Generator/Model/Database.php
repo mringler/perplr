@@ -26,85 +26,54 @@ class Database extends ScopedMappingModel
 {
     use BehaviorableTrait;
 
-    /**
-     * The database's platform.
-     *
-     * @var \Propel\Generator\Platform\PlatformInterface|null
-     */
-    private $platform;
+    private PlatformInterface|null $platform = null;
 
     /**
      * @var array<\Propel\Generator\Model\Table>
      */
     private $tables = [];
 
-    /**
-     * @var string|null
-     */
-    private $name;
+    private string|null $name = null;
 
-    /**
-     * @var string|null
-     */
-    private $baseClass;
+    private string|null $baseClass = null;
 
     /**
      * @var class-string|null
      */
-    private $baseQueryClass;
+    private string|null $baseQueryClass = null;
 
     /**
      * @var string
      */
     private $defaultIdMethod;
 
-    /**
-     * @var string
-     */
-    private $defaultPhpNamingMethod;
+    private string $defaultPhpNamingMethod;
 
     /**
-     * The default accessor visibility.
-     *
-     * It may be one of public, private and protected.
-     *
-     * @var string
+     * Visibility of generated model setter methods (public, private or protected).
      */
-    private $defaultAccessorVisibility;
+    private string $defaultAccessorVisibility;
 
     /**
-     * The default mutator visibility.
-     *
-     * It may be one of public, private and protected.
-     *
-     * @var string
+     * Visibility of generated model getter methods (public, private or protected).
      */
-    private $defaultMutatorVisibility;
+    private string $defaultMutatorVisibility;
 
     /**
-     * @var array
+     * @var array<string, \Propel\Generator\Model\TypeMapping>
      */
-    private $typeMapping = [];
+    private array $typeMapping = [];
 
-    /**
-     * @var bool
-     */
-    private $heavyIndexing = false;
+    private bool $heavyIndexing = false;
 
-    /**
-     * @var bool
-     */
-    private $identifierQuoting = false;
+    private bool $identifierQuoting = false;
 
-    /**
-     * @var \Propel\Generator\Model\Schema|null
-     */
-    private $parentSchema;
+    private Schema|null $parentSchema = null;
 
     /**
      * @var array<\Propel\Generator\Model\Table>
      */
-    private $tablesByName = [];
+    private array $tablesByName = [];
 
     /**
      * @var array<\Propel\Generator\Model\Table>
@@ -114,28 +83,20 @@ class Database extends ScopedMappingModel
     /**
      * @var array<\Propel\Generator\Model\Table>
      */
-    private $tablesByPhpName = [];
+    private array $tablesByPhpName = [];
 
     /**
      * @var array<string>
      */
-    private $sequences = [];
+    private array $sequencesNames = [];
+
+    protected string $defaultStringFormat;
+
+    protected string|null $tablePrefix = null;
 
     /**
-     * @var string
-     */
-    protected $defaultStringFormat;
-
-    /**
-     * @var string|null
-     */
-    protected $tablePrefix;
-
-    /**
-     * Constructs a new Database object.
-     *
-     * @param string|null $name The database's name
-     * @param \Propel\Generator\Platform\PlatformInterface|null $platform The database's platform
+     * @param string|null $name
+     * @param \Propel\Generator\Platform\PlatformInterface|null $platform
      */
     public function __construct(?string $name = null, ?PlatformInterface $platform = null)
     {
@@ -180,8 +141,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the PlatformInterface implementation for this database.
-     *
      * @return \Propel\Generator\Platform\PlatformInterface|null
      */
     public function getPlatform(): ?PlatformInterface
@@ -190,8 +149,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Sets the PlatformInterface implementation for this database.
-     *
      * @param \Propel\Generator\Platform\PlatformInterface|null $platform A Platform implementation
      *
      * @return void
@@ -202,8 +159,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the max column name's length.
-     *
      * @return int
      */
     public function getMaxColumnNameLength(): int
@@ -212,8 +167,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the database name.
-     *
      * @return string|null
      */
     public function getName(): ?string
@@ -222,8 +175,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Sets the database name.
-     *
      * @param string $name
      *
      * @return void
@@ -399,8 +350,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Sets whether heavy indexing is enabled.
-     *
      * @param bool $flag
      *
      * @return void
@@ -411,8 +360,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Return the list of all tables.
-     *
      * @return array<\Propel\Generator\Model\Table>
      */
     public function getTables(): array
@@ -457,8 +404,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns whether the database has a table.
-     *
      * @param string $name
      * @param bool $caseInsensitive
      *
@@ -472,8 +417,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the table with the specified name.
-     *
      * @param string $name
      * @param bool $caseInsensitive
      *
@@ -500,9 +443,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns whether the database has a table identified by its
-     * PHP name.
-     *
      * @param string $phpName
      *
      * @return bool
@@ -513,8 +453,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the table object with the specified PHP name.
-     *
      * @param string $phpName
      *
      * @return \Propel\Generator\Model\Table|null
@@ -529,9 +467,7 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Adds several tables at once.
-     *
-     * @param array<\Propel\Generator\Model\Table> $tables An array of Table instances
+     * @param array<\Propel\Generator\Model\Table> $tables
      *
      * @return void
      */
@@ -563,8 +499,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Adds a new table to this database.
-     *
      * @param \Propel\Generator\Model\Table|array $table
      *
      * @throws \Propel\Generator\Exception\EngineException
@@ -609,13 +543,13 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * @param array<string> $sequences
+     * @param array<string> $sequenceNames
      *
      * @return void
      */
-    public function setSequences(array $sequences): void
+    public function setSequences(array $sequenceNames): void
     {
-        $this->sequences = $sequences;
+        $this->sequencesNames = $sequenceNames;
     }
 
     /**
@@ -623,32 +557,27 @@ class Database extends ScopedMappingModel
      */
     public function getSequences(): array
     {
-        return $this->sequences;
+        return $this->sequencesNames;
     }
 
     /**
-     * @param string $sequence
+     * @param string $sequenceName
      *
      * @return void
      */
-    public function addSequence(string $sequence): void
+    public function addSequence(string $sequenceName): void
     {
-        $this->sequences[] = $sequence;
+        $this->sequencesNames[] = $sequenceName;
     }
 
     /**
-     * @param string $sequence
+     * @param string $sequenceName
      *
      * @return void
      */
-    public function removeSequence(string $sequence): void
+    public function removeSequence(string $sequenceName): void
     {
-        if ($this->sequences) {
-            $idx = array_search($sequence, $this->sequences);
-            if ($idx !== false) {
-                unset($this->sequences[$idx]);
-            }
-        }
+        $this->sequencesNames = array_filter($this->sequencesNames, fn (string $s) => $s !== $sequenceName);
     }
 
     /**
@@ -658,7 +587,7 @@ class Database extends ScopedMappingModel
      */
     public function hasSequence(string $sequence): bool
     {
-        return $this->sequences && in_array($sequence, $this->sequences, true);
+        return $this->sequencesNames && in_array($sequence, $this->sequencesNames, true);
     }
 
     /**
@@ -675,8 +604,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Sets the database's schema.
-     *
      * @param string|null $schema
      *
      * @return void
@@ -741,8 +668,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Sets the parent schema
-     *
      * @param \Propel\Generator\Model\Schema $parent The parent schema
      *
      * @return void
@@ -753,8 +678,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the parent schema
-     *
      * @return \Propel\Generator\Model\Schema|null
      */
     public function getParentSchema(): ?Schema
@@ -763,8 +686,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Adds a type mapping to this database.
-     *
      * @param \Propel\Generator\Model\TypeMapping|array $data
      *
      * @return \Propel\Generator\Model\TypeMapping
@@ -821,8 +742,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the GeneratorConfigInterface object.
-     *
      * @return \Propel\Generator\Config\AbstractGeneratorConfig|null
      */
     #[\Override]
@@ -832,8 +751,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the table prefix for this database.
-     *
      * @return string|null
      */
     public function getTablePrefix(): ?string
@@ -842,8 +759,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Sets the tables' prefix.
-     *
      * @param string $tablePrefix
      *
      * @return void
@@ -856,6 +771,8 @@ class Database extends ScopedMappingModel
     /**
      * Returns the next behavior on all tables, ordered by behavior priority,
      * and skipping the ones that were already executed.
+     *
+     * Behaviors can add other behaviors, so this can't be precomputed.
      *
      * @return \Propel\Generator\Model\Behavior|null
      */
@@ -916,8 +833,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Setups all table referrers.
-     *
      * @return void
      */
     protected function setupTableReferrers(): void
@@ -1012,8 +927,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Sets the default accessor visibility.
-     *
      * @param string $defaultAccessorVisibility
      *
      * @return void
@@ -1024,8 +937,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the default accessor visibility.
-     *
      * @return string
      */
     public function getDefaultAccessorVisibility(): string
@@ -1034,8 +945,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Sets the default mutator visibility.
-     *
      * @param string $defaultMutatorVisibility
      *
      * @return void
@@ -1046,8 +955,6 @@ class Database extends ScopedMappingModel
     }
 
     /**
-     * Returns the default mutator visibility.
-     *
      * @return string
      */
     public function getDefaultMutatorVisibility(): string

@@ -82,8 +82,6 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Sets the database connection to use for this Platform class.
-     *
      * @param \Propel\Runtime\Connection\ConnectionInterface|null $con Database connection to use in this platform.
      *
      * @return void
@@ -95,8 +93,6 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Returns the database connection to use for this Platform class.
-     *
      * @return \Propel\Runtime\Connection\ConnectionInterface|null
      */
     #[\Override]
@@ -147,8 +143,6 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Returns the db specific mapping for a column type.
-     *
      * @param \Propel\Generator\Model\Datatype\ColumnType $type
      *
      * @return \Propel\Generator\Model\TypeMapping
@@ -248,7 +242,7 @@ class DefaultPlatform implements PlatformInterface
     /**
      * Returns the max column length supported by the db.
      *
-     * @return int The max column length
+     * @return int
      */
     #[\Override]
     public function getMaxColumnNameLength(): int
@@ -403,8 +397,6 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Builds the DDL SQL to drop a table
-     *
      * @param \Propel\Generator\Model\Table $table
      *
      * @return string
@@ -571,8 +563,6 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     }
 
     /**
-     * Returns the name of a table primary key.
-     *
      * @param \Propel\Generator\Model\Table $table
      *
      * @return string
@@ -585,8 +575,6 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     }
 
     /**
-     * Returns the SQL for the primary key of a Table object.
-     *
      * @param \Propel\Generator\Model\Table $table
      *
      * @return string
@@ -602,8 +590,6 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     }
 
     /**
-     * Returns the DDL SQL to drop the primary key of a table.
-     *
      * @param \Propel\Generator\Model\Table $table
      *
      * @return string
@@ -650,9 +636,7 @@ ALTER TABLE %s ADD %s;
     }
 
     /**
-     * Returns the DDL SQL to add the indices of a table.
-     *
-     * @param \Propel\Generator\Model\Table $table To Table
+     * @param \Propel\Generator\Model\Table $table
      *
      * @return string
      */
@@ -667,8 +651,6 @@ ALTER TABLE %s ADD %s;
     }
 
     /**
-     * Returns the DDL SQL to add an Index.
-     *
      * @param \Propel\Generator\Model\Index $index
      *
      * @return string
@@ -708,8 +690,6 @@ DROP INDEX %s;
     }
 
     /**
-     * Builds the DDL SQL for an Index object.
-     *
      * @param \Propel\Generator\Model\Index $index
      *
      * @return string
@@ -737,8 +717,6 @@ DROP INDEX %s;
     }
 
     /**
-     * Builds the DDL SQL to add the foreign keys of a table.
-     *
      * @param \Propel\Generator\Model\Table $table
      *
      * @return string
@@ -754,8 +732,6 @@ DROP INDEX %s;
     }
 
     /**
-     * Builds the DDL SQL to add a foreign key.
-     *
      * @param \Propel\Generator\Model\ForeignKey $fk
      *
      * @return string
@@ -777,8 +753,6 @@ ALTER TABLE %s ADD %s;
     }
 
     /**
-     * Builds the DDL SQL to drop a foreign key.
-     *
      * @param \Propel\Generator\Model\ForeignKey $fk
      *
      * @return string|null
@@ -800,8 +774,6 @@ ALTER TABLE %s DROP CONSTRAINT %s;
     }
 
     /**
-     * Builds the DDL SQL for a ForeignKey object.
-     *
      * @param \Propel\Generator\Model\ForeignKey $fk
      *
      * @return string
@@ -864,9 +836,6 @@ ALTER TABLE %s DROP CONSTRAINT %s;
     }
 
     /**
-     * Builds the DDL SQL to modify a database
-     * based on a DatabaseDiff instance
-     *
      * @param \Propel\Generator\Model\Diff\DatabaseDiff $databaseDiff
      *
      * @return string
@@ -1006,9 +975,6 @@ ALTER TABLE %s RENAME TO %s;
     }
 
     /**
-     * Builds the DDL SQL to alter a table
-     * based on a TableDiff instance
-     *
      * @param \Propel\Generator\Model\Diff\TableDiff $tableDiff
      *
      * @return string
@@ -1041,9 +1007,6 @@ ALTER TABLE %s RENAME TO %s;
     }
 
     /**
-     * Builds the DDL SQL to alter a table's primary key
-     * based on a TableDiff instance
-     *
      * @param \Propel\Generator\Model\Diff\TableDiff $tableDiff
      *
      * @return string
@@ -1061,9 +1024,6 @@ ALTER TABLE %s RENAME TO %s;
     }
 
     /**
-     * Builds the DDL SQL to alter a table's indices
-     * based on a TableDiff instance
-     *
      * @param \Propel\Generator\Model\Diff\TableDiff $tableDiff
      *
      * @return string
@@ -1090,9 +1050,6 @@ ALTER TABLE %s RENAME TO %s;
     }
 
     /**
-     * Builds the DDL SQL to alter a table's foreign keys
-     * based on a TableDiff instance
-     *
      * @param \Propel\Generator\Model\Diff\TableDiff $tableDiff
      *
      * @return string
@@ -1119,8 +1076,6 @@ ALTER TABLE %s RENAME TO %s;
     }
 
     /**
-     * Builds the DDL SQL to remove a column
-     *
      * @param \Propel\Generator\Model\Column $column
      *
      * @return string
@@ -1238,8 +1193,6 @@ ALTER TABLE %s ADD %s;
     }
 
     /**
-     * Builds the DDL SQL to remove a list of columns
-     *
      * @param array<\Propel\Generator\Model\Column> $columns
      *
      * @return string
@@ -1275,9 +1228,9 @@ ALTER TABLE %s ADD
     /**
      * Returns if the RDBMS-specific SQL type has a size attribute.
      *
-     * @param string $sqlType the SQL type
+     * @param string $sqlType
      *
-     * @return bool True if the type has a size attribute
+     * @return bool
      */
     #[\Override]
     public function hasSize(string $sqlType): bool
@@ -1288,9 +1241,9 @@ ALTER TABLE %s ADD
     /**
      * Returns if the RDBMS-specific SQL type has a scale attribute.
      *
-     * @param string $sqlType the SQL type
+     * @param string $sqlType
      *
-     * @return bool True if the type has a scale attribute
+     * @return bool
      */
     #[\Override]
     public function hasScale(string $sqlType): bool
@@ -1595,8 +1548,6 @@ if (is_resource($columnValueAccessor)) {
 
     /**
      * Get the PHP snippet for getting a Pk from the database.
-     * Warning: duplicates logic from AdapterInterface::getId().
-     * Any code modification here must be ported there.
      *
      * Typical output:
      * <code>

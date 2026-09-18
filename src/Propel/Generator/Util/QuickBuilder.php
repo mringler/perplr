@@ -78,47 +78,25 @@ class QuickBuilder
      */
     protected $schema = '';
 
-    /**
-     * The Database Schema.
-     *
-     * @var string
-     */
-    protected $schemaName = '';
+    protected string $schemaName = '';
 
-    /**
-     * @var \Propel\Generator\Platform\PlatformInterface|null
-     */
-    protected $platform;
+    protected PlatformInterface|null $platform = null;
 
-    /**
-     * @var \Propel\Generator\Config\AbstractGeneratorConfig|null
-     */
-    protected $config;
+    protected AbstractGeneratorConfig|null $config = null;
 
-    /**
-     * @var \Propel\Generator\Model\Database|null
-     */
-    protected $database;
+    protected Database|null $database = null;
 
-    /**
-     * @var \Propel\Generator\Reverse\SchemaParserInterface|null
-     */
-    protected $parser;
+    protected SchemaParserInterface|null $parser = null;
 
     /**
      * Identifier quoting for reversed database.
-     *
-     * @var bool
      */
-    protected $identifierQuoting = false;
+    protected bool $identifierQuoting = false;
 
     /**
      * If use the virtual or physical filesystem.
-     * Default to virtual.
-     *
-     * @var bool
      */
-    protected $vfs = true;
+    protected bool $vfs = true;
 
     /**
      * @param string $schema
@@ -175,8 +153,6 @@ class QuickBuilder
     }
 
     /**
-     * Setter for the platform property
-     *
      * @param \Propel\Generator\Platform\PlatformInterface $platform
      *
      * @return void
@@ -187,8 +163,6 @@ class QuickBuilder
     }
 
     /**
-     * Getter for the platform property
-     *
      * @return \Propel\Generator\Platform\PlatformInterface
      */
     public function getPlatform(): PlatformInterface
@@ -203,8 +177,6 @@ class QuickBuilder
     }
 
     /**
-     * Setter for the config property
-     *
      * @param \Propel\Generator\Config\AbstractGeneratorConfig $config
      *
      * @return void
@@ -215,8 +187,6 @@ class QuickBuilder
     }
 
     /**
-     * Getter for the config property
-     *
      * @return \Propel\Generator\Config\AbstractGeneratorConfig
      */
     public function getConfig(): AbstractGeneratorConfig

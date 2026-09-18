@@ -84,7 +84,6 @@ class PgsqlSchemaParser extends AbstractSchemaParser
             'date' => ColumnType::DATE,
             'time' => ColumnType::TIME,
             'timetz' => ColumnType::TIME,
-            //'year' => ColumnType::YEAR,  ColumnType::YEAR does not exist... does this need to be mapped to a different propel type?
             'datetime' => ColumnType::TIMESTAMP,
             'timestamp' => ColumnType::TIMESTAMP,
             'timestamptz' => ColumnType::TIMESTAMP,
@@ -101,7 +100,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
     }
 
     /**
-     * Parses a database schema.
+     * Read database structure into provided Database object.
      *
      * @param \Propel\Generator\Model\Database $database
      * @param array<\Propel\Generator\Model\Table> $additionalTables
@@ -165,7 +164,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
             $params[] = $filterTable->getCommonName();
         } elseif (!$database->getSchema()) {
             /** @var \PDOStatement $stmt */
-            $stmt = $this->dbh->query('SELECT schema_name FROM information_schema.schemata');
+            $stmt = $this->con->query('SELECT schema_name FROM information_schema.schemata');
             $searchPath = [];
 
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -189,7 +188,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
           ORDER BY relname";
 
         /** @var \PDOStatement $stmt */
-        $stmt = $this->dbh->prepare($sql);
+        $stmt = $this->con->prepare($sql);
 
         $stmt->execute($params);
 
@@ -241,7 +240,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
         if ($schema) {
             $params = [$schema];
         } elseif (!$table->getDatabase()->getSchema()) {
-            $stmt = $this->dbh->query('SHOW search_path');
+            $stmt = $this->con->query('SHOW search_path');
             if ($stmt === false) {
                 throw new RuntimeException('Could not retrieve search_path from database.');
             }
@@ -257,7 +256,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
             $searchPath = implode(', ', $searchPath);
         }
 
-        $stmt = $this->dbh->prepare("
+        $stmt = $this->con->prepare("
         SELECT
             column_name,
             data_type,
@@ -387,7 +386,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
     protected function addForeignKeys(Table $table, int $oid): void
     {
         $database = $table->getDatabase();
-        $stmt = $this->dbh->prepare("SELECT
+        $stmt = $this->con->prepare("SELECT
             conname,
             confupdtype,
             confdeltype,
@@ -515,7 +514,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
      */
     protected function addIndexes(Table $table, int $oid): void
     {
-        $stmt = $this->dbh->prepare("SELECT
+        $stmt = $this->con->prepare("SELECT
             DISTINCT ON(cls.relname)
             cls.relname as idxname,
             indkey,
@@ -531,7 +530,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
         $stmt->bindValue(1, $oid);
         $stmt->execute();
 
-        $stmt2 = $this->dbh->prepare("SELECT a.attname
+        $stmt2 = $this->con->prepare("SELECT a.attname
             FROM pg_catalog.pg_class c JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
             WHERE c.oid = ? AND a.attnum = ? AND NOT a.attisdropped
             ORDER BY a.attnum");
@@ -589,7 +588,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
      */
     protected function addPrimaryKey(Table $table, int $oid): void
     {
-        $stmt = $this->dbh->prepare("SELECT
+        $stmt = $this->con->prepare("SELECT
             DISTINCT ON(cls.relname)
             cls.relname as idxname,
             indkey,
@@ -609,7 +608,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $arrColumns = explode(' ', $row['indkey']);
             foreach ($arrColumns as $intColNum) {
-                $stmt2 = $this->dbh->prepare("SELECT a.attname
+                $stmt2 = $this->con->prepare("SELECT a.attname
                     FROM pg_catalog.pg_class c JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
                     WHERE c.oid = ? AND a.attnum = ? AND NOT a.attisdropped
                     ORDER BY a.attnum");
@@ -643,7 +642,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
         $searchPath = '?';
         $params = [$database->getSchema()];
         if (!$database->getSchema()) {
-            $stmt = $this->dbh->query('SHOW search_path');
+            $stmt = $this->con->query('SHOW search_path');
             if ($stmt === false) {
                 throw new RuntimeException('Query returned no statement.');
             }
@@ -659,7 +658,7 @@ class PgsqlSchemaParser extends AbstractSchemaParser
             $searchPath = implode(', ', $searchPath);
         }
 
-        $stmt = $this->dbh->prepare("
+        $stmt = $this->con->prepare("
             SELECT c.relname, n.nspname
             FROM pg_class c, pg_namespace n
             WHERE
