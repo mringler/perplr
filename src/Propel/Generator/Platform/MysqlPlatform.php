@@ -781,22 +781,6 @@ ALTER TABLE %s DROP FOREIGN KEY %s;
             $this->quoteIdentifier($fk->getName()),
         );
     }
-
-    /**
-     * @param string $comment
-     *
-     * @return string
-     */
-    #[\Override]
-    public function getCommentBlockDDL(string $comment): string
-    {
-        $pattern = "
--- ---------------------------------------------------------------------
--- %s
--- ---------------------------------------------------------------------
-";
-
-        return sprintf($pattern, $comment);
     }
 
     /**
