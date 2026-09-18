@@ -399,6 +399,14 @@ class Column extends MappingModel
     }
 
     /**
+     * @return \Propel\Generator\Model\IdMethod|null
+     */
+    public function getIdMethod(): IdMethod|null
+    {
+        return $this->isAutoIncrement ? $this->parentTable?->getIdMethod() : null;
+    }
+
+    /**
      * Returns the fully qualified column name (table.COLUMN or table.column).
      *
      * @param bool $lowercaseColumnName

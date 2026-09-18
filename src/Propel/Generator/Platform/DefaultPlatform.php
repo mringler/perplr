@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Platform;
 
+use BadMethodCallException;
 use Propel\Common\Util\SetColumnConverter;
 use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Exception\EngineException;
@@ -45,6 +46,7 @@ use function strpos;
 use function strtolower;
 use function strtr;
 use function substr;
+use function trigger_deprecation;
 use const FILTER_VALIDATE_BOOL;
 
 /**
@@ -228,12 +230,12 @@ class DefaultPlatform implements PlatformInterface
         return match ($type) {
             ColumnType::BOOLEAN,
             ColumnType::SET_BINARY
-                => 'INTEGER',
+            => 'INTEGER',
             ColumnType::ENUM_BINARY
-                => 'TINYINT',
+            => 'TINYINT',
             ColumnType::SET_NATIVE,
             ColumnType::ENUM_NATIVE
-                => 'VARCHAR',
+            => 'VARCHAR',
             default => null
         };
     }
@@ -289,22 +291,12 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Returns the native IdMethod (sequence|identity)
-     *
-     * @return string The native IdMethod (PlatformInterface:IDENTITY, PlatformInterface::SEQUENCE).
+     * @return \Propel\Generator\Model\IdMethod
      */
     #[\Override]
-    public function getNativeIdMethod(): string
+    public function getNativeIdMethod(): IdMethod
     {
-        return PlatformInterface::IDENTITY;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isNativeIdMethodAutoIncrement(): bool
-    {
-        return $this->getNativeIdMethod() === PlatformInterface::IDENTITY;
+        return IdMethod::NO_ID_METHOD;
     }
 
     /**
@@ -333,21 +325,37 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Returns the auto increment strategy for the configured RDBMS.
+     * Build column DDL fragment for id method (i.e. 'AUTO_INCREMENT' for native id method in MySQL)
      *
-     * @return string
+     * @param \Propel\Generator\Model\IdMethod $idMethod
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string|null Null means id method is not supported (might trigger Exception),
+     *                     empty string means column DDL is not affected by id method.
      */
     #[\Override]
-    public function getAutoIncrement(): string
+    final public function buildAutoIncrementColumnDdl(IdMethod $idMethod, Column $column): ?string
     {
-        return 'IDENTITY';
+        if ($idMethod === IdMethod::NATIVE) {
+            $idMethod = $this->getNativeIdMethod();
+        }
+
+        return $this->resolveAutoIncrementColumnDdl($idMethod, $column);
     }
 
     /**
-     * Returns the name to use for creating a table sequence.
+     * @param \Propel\Generator\Model\IdMethod $idMethod
+     * @param \Propel\Generator\Model\Column $column
      *
-     * This will create a new name or use one specified in an
-     * id-method-parameter tag, if specified.
+     * @return string|null
+     */
+    protected function resolveAutoIncrementColumnDdl(IdMethod $idMethod, Column $column): ?string
+    {
+        return '';
+    }
+
+    /**
+     * @deprecated Use {@see Table::resolveDefaultIdSequenceName()}
      *
      * @param \Propel\Generator\Model\Table $table
      *
@@ -355,26 +363,52 @@ class DefaultPlatform implements PlatformInterface
      */
     public function getSequenceName(Table $table): ?string
     {
-        static $longNamesMap = [];
-        $result = null;
-        if ($table->getIdMethod() === IdMethod::NATIVE) {
-            $idMethodParams = $table->getIdMethodParameters();
-            $maxIdentifierLength = $this->getMaxColumnNameLength();
-            if (!$idMethodParams) {
-                if (strlen($table->getName() . '_SEQ') > $maxIdentifierLength) {
-                    if (!isset($longNamesMap[$table->getName()])) {
-                        $longNamesMap[$table->getName()] = (string)(count($longNamesMap) + 1);
-                    }
-                    $result = substr($table->getName(), 0, $maxIdentifierLength - strlen('_SEQ_' . $longNamesMap[$table->getName()])) . '_SEQ_' . $longNamesMap[$table->getName()];
-                } else {
-                    $result = substr($table->getName(), 0, $maxIdentifierLength - 4) . '_SEQ';
-                }
-            } else {
-                $result = (string)substr($idMethodParams[0]->getValue(), 0, $maxIdentifierLength);
-            }
+        return $table->resolveDefaultIdSequenceName();
+    }
+
+    /**
+     * Build platform-specific name for id column sequence.
+     *
+     * Note: Typically called via {@see Table::resolveDefaultIdSequenceName()} to handle
+     *       table-specific adjustments.
+     *
+     * @param \Propel\Generator\Model\Table $table
+     *
+     * @return string|null
+     */
+    #[\Override]
+    public function buildDefaultTableIdSequenceName(Table $table): ?string
+    {
+        return $this->limitIdentifierName($table->getName(), '_SEQ');
+    }
+
+    /**
+     * @param string $identifier
+     * @param string|null $suffix
+     *
+     * @return string
+     */
+    #[\Override]
+    public function limitIdentifierName(string $identifier, string|null $suffix = null): string
+    {
+        $suffix ??= '';
+        $defaultName = "{$identifier}{$suffix}";
+        $maxIdentifierLength = $this->getMaxColumnNameLength();
+        if (strlen($defaultName) <= $maxIdentifierLength) {
+            return $defaultName;
         }
 
-        return $result;
+        /** @var array<string, string> $longNamesMap*/
+        static $longNamesMap = [];
+        if (!isset($longNamesMap[$defaultName])) {
+            $counter = 1 + count($longNamesMap) + 1; // FIXME: Creates different sequence names depending on order/number of sequences (should be number of collisions)
+            $suffix = "~$counter{$suffix}";
+            $shortenedLength = $maxIdentifierLength - strlen($suffix);
+
+            $longNamesMap[$defaultName] = substr($identifier, 0, $shortenedLength) . $suffix;
+        }
+
+        return $longNamesMap[$defaultName];
     }
 
     /**
@@ -494,48 +528,79 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Returns the SQL for the default value of a Column object
+     * @param \Propel\Generator\Model\Column $column
      *
-     * @param \Propel\Generator\Model\Column $col
+     * @return string
+     */
+    protected function buildColumnTypeDeclaration(Column $column): string
+    {
+        $sqlType = $column->resolveSqlTypeName();
+        if ($this->hasSize($sqlType) && $column->isDefaultSqlType($this)) {
+            $sqlType .= $column->getSizeDefinition();
+        }
+
+        return $sqlType;
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Column $column
      *
      * @return string
      */
     #[\Override]
-    public function getColumnDefaultValueDDL(Column $col): string
+    public function buildColumnDefaultValueDdl(Column $column): string
+    {
+        $defaultValueExpression = $this->buildDefaultValueExpression($column);
+
+        return ($defaultValueExpression === null) ? '' : "DEFAULT $defaultValueExpression";
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Column $col
+     *
+     * @return string|null
+     */
+    protected function buildDefaultValueExpression(Column $col): ?string
     {
         $defaultValueObject = $col->getDefaultValue();
         if ($defaultValueObject === null) {
-            return '';
+            return null;
         }
-
         $value = $defaultValueObject->getValue();
+
         if ($defaultValueObject->isExpression()) {
-            return "DEFAULT $value";
+            return $value;
         }
 
         if ($col->isTextType()) {
-            $value = $this->quote((string)$value);
-        } elseif (in_array($col->getColumnType(), [ColumnType::BOOLEAN, ColumnType::BOOLEAN_EMU], true)) {
-            $value = $this->getBooleanString($value);
-        } elseif ($col->isBinaryEnumType()) {
-            $value = array_search($value, $col->getValueSet());
-        } elseif ($col->isBinarySetType()) {
-            $items = SetColumnConverter::itemsCsvToArray($value);
-            $value = SetColumnConverter::convertToBitmask($items, $col->getValueSet());
-        } elseif ($col->getColumnType() === ColumnType::SET_NATIVE) {
-            if (str_contains($value, ',')) {
-                return ''; // MySQL does not allow multiple values as default
-            }
-            $value = $this->quote((string)$value);
-        } elseif ($col->isPhpArrayType()) {
-            $value = $this->getPhpArrayString((string)$value);
-
-            if ($value === null) {
-                return '';
-            }
+            return $this->quote($value);
         }
 
-        return "DEFAULT $value";
+        if (in_array($col->getColumnType(), [ColumnType::BOOLEAN, ColumnType::BOOLEAN_EMU])) {
+            return $this->getBooleanString($value);
+        }
+
+        if (($col->isBinaryEnumType())) {
+            return (string)array_search($value, $col->getValueSet());
+        }
+
+        if ($col->isBinarySetType()) {
+            $items = SetColumnConverter::itemsCsvToArray($value);
+
+            return (string)SetColumnConverter::convertToBitmask($items, $col->getValueSet());
+        }
+
+        if ($col->getColumnType() === ColumnType::SET_NATIVE) {
+            return str_contains($value, ',')
+                ? null // MySQL does not allow multiple values as default
+                : $this->quote((string)$value);
+        }
+
+        if ($col->isPhpArrayType()) {
+            return $this->getPhpArrayString($value);
+        }
+
+        return $value;
     }
 
     /**
@@ -901,12 +966,12 @@ class DefaultPlatform implements PlatformInterface
 
         $modifiedColumns = $tableDiff->getModifiedColumns();
         if ($modifiedColumns) {
-            $ret .= $this->getModifyColumnsDDL($modifiedColumns);
+            $ret .= $this->buildModifyColumnsDdl($modifiedColumns);
         }
 
         $addedColumns = $tableDiff->getAddedColumns();
         if ($addedColumns) {
-            $ret .= $this->getAddColumnsDDL($addedColumns);
+            $ret .= $this->buildAddColumnsDdl($addedColumns);
         }
 
         return $ret;
@@ -919,14 +984,10 @@ class DefaultPlatform implements PlatformInterface
      */
     public function buildModifyTablePrimaryKeyDdl(TableDiff $tableDiff): string
     {
-        $ret = '';
-
-        if ($tableDiff->hasModifiedPk()) {
-            $ret .= $this->getDropPrimaryKeyDDL($tableDiff->getFromTable());
-            $ret .= $this->getAddPrimaryKeyDDL($tableDiff->getToTable());
-        }
-
-        return $ret;
+        return $tableDiff->hasModifiedPk()
+            ? $this->buildDropPrimaryKeyDdl($tableDiff->getFromTable())
+            . $this->buildAddPrimaryKeyDdl($tableDiff->getToTable())
+            : '';
     }
 
     /**
@@ -938,18 +999,13 @@ class DefaultPlatform implements PlatformInterface
     {
         $ret = '';
 
-        foreach ($tableDiff->getRemovedIndices() as $index) {
-            $ret .= $this->getDropIndexDDL($index);
-        }
-
-        foreach ($tableDiff->getAddedIndices() as $index) {
-            $ret .= $this->getAddIndexDDL($index);
-        }
+        $ret .= $this->mapConcat([$this, 'buildDropIndexDdl'], $tableDiff->getRemovedIndices());
+        $ret .= $this->mapConcat([$this, 'buildAddIndexDdl'], $tableDiff->getAddedIndices());
 
         foreach ($tableDiff->getModifiedIndices() as $indexModification) {
             [$fromIndex, $toIndex] = $indexModification;
-            $ret .= $this->getDropIndexDDL($fromIndex);
-            $ret .= $this->getAddIndexDDL($toIndex);
+            $ret .= $this->buildDropIndexDdl($fromIndex);
+            $ret .= $this->buildAddIndexDdl($toIndex);
         }
 
         return $ret;
@@ -964,18 +1020,13 @@ class DefaultPlatform implements PlatformInterface
     {
         $ret = '';
 
-        foreach ($tableDiff->getRemovedFks() as $fk) {
-            $ret .= $this->getDropForeignKeyDDL($fk);
-        }
-
-        foreach ($tableDiff->getAddedFks() as $fk) {
-            $ret .= $this->getAddForeignKeyDDL($fk);
-        }
+        $ret .= $this->mapConcat([$this, 'buildDropForeignKeyDdl'], $tableDiff->getRemovedFks());
+        $ret .= $this->mapConcat([$this, 'buildAddForeignKeyDdl'], $tableDiff->getAddedFks());
 
         foreach ($tableDiff->getModifiedFks() as $fkModification) {
             [$fromFk, $toFk] = $fkModification;
-            $ret .= $this->getDropForeignKeyDDL($fromFk);
-            $ret .= $this->getAddForeignKeyDDL($toFk);
+            $ret .= $this->buildDropForeignKeyDdl($fromFk);
+            $ret .= $this->buildAddForeignKeyDdl($toFk);
         }
 
         return $ret;
@@ -1050,7 +1101,7 @@ class DefaultPlatform implements PlatformInterface
      */
     public function buildModifyColumnsDdl(array $columnDiffs): string
     {
-        $toColumns = array_map(fn (ColumnDiff $d) => $d->getToColumn(), $columnDiffs);
+        $toColumns = array_filter(array_map(fn (ColumnDiff $d) => $d->getToColumn(), $columnDiffs));
 
         return $this->buildModifyMultipleColumnsDdl($toColumns, 'MODIFY');
     }
@@ -1415,7 +1466,7 @@ if (is_resource($columnValueAccessor)) {
      * </code>
      *
      * @param string $targetVariable
-     * @param string $connectionVariable
+     * @param string $connectionVariableName
      * @param string|null $sequenceName
      * @param string $indent
      * @param string|null $phpType
@@ -1426,7 +1477,7 @@ if (is_resource($columnValueAccessor)) {
      */
     public function buildLoadNextSequenceValueStatement(
         string $targetVariable,
-        string $connectionVariable = '$con',
+        string $connectionVariableName = '$con',
         string|null $sequenceName = null,
         string $indent = '            ',
         string|null $phpType = null
@@ -1476,9 +1527,9 @@ if (is_resource($columnValueAccessor)) {
                 if (!$fk->getForeignTable() || $fk->getForeignTable()->isUnique($fk->getForeignColumnObjects())) {
                     continue;
                 }
-                    $unique = new Unique();
-                    $unique->setColumns($fk->getForeignColumnObjects());
-                    $fk->getForeignTable()->addUnique($unique);
+                $unique = new Unique();
+                $unique->setColumns($fk->getForeignColumnObjects());
+                $fk->getForeignTable()->addUnique($unique);
             }
         }
 
@@ -1493,7 +1544,7 @@ if (is_resource($columnValueAccessor)) {
             $defaultSize = $this->getDefaultTypeSize($column->getColumnType());
 
             if ($column->getSize() && $defaultSize && $column->getScale() === null && (int)$column->getSize() === $defaultSize) {
-                    $column->setSize(null);
+                $column->setSize(null);
             }
         }
     }

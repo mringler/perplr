@@ -19,8 +19,10 @@ use Propel\Runtime\Util\UuidConverter;
 use function array_any;
 use function array_filter;
 use function array_find;
+use function array_find_key;
 use function array_map;
 use function array_merge;
+use function array_reduce;
 use function array_slice;
 use function array_values;
 use function count;
@@ -41,7 +43,7 @@ use function var_export;
 /**
  * Data about a table used in an application.
  */
-class Table extends ScopedMappingModel implements IdMethod
+class Table extends ScopedMappingModel
 {
     use BehaviorableTrait;
 
@@ -88,7 +90,7 @@ class Table extends ScopedMappingModel implements IdMethod
 
     private ?string $phpName = null;
 
-    private string $idMethod;
+    private IdMethod|null $idMethod = null;
 
     private bool $allowPkInsert = false;
 
@@ -182,7 +184,6 @@ class Table extends ScopedMappingModel implements IdMethod
 
         $this->setCommonName($name);
 
-        $this->idMethod = IdMethod::NO_ID_METHOD;
         $this->defaultAccessorVisibility = static::VISIBILITY_PUBLIC;
         $this->defaultMutatorVisibility = static::VISIBILITY_PUBLIC;
     }
@@ -227,7 +228,8 @@ class Table extends ScopedMappingModel implements IdMethod
 
         $this->phpName = $this->getAttribute('phpName') ?? $this->buildPhpName($this->getStdSeparatedName());
 
-        $this->idMethod = $this->getAttribute('idMethod', $this->database->getDefaultIdMethod());
+        $idMethod = IdMethod::fromAttribute($this->getAttribute('idMethod')) ?? $this->database->getDefaultIdMethod();
+        $this->setIdMethod($idMethod);
         $this->allowPkInsert = $this->booleanValue($this->getAttribute('allowPkInsert'));
 
         $this->skipSql = $this->booleanValue($this->getAttribute('skipSql'));
@@ -307,13 +309,8 @@ class Table extends ScopedMappingModel implements IdMethod
 
         // if idMethod is "native" and in fact there are no autoIncrement
         // columns in the table, then change it to "none"
-        $anyAutoInc = false;
-        foreach ($this->columns as $column) {
-            if ($column->isAutoIncrement()) {
-                $anyAutoInc = true;
-            }
-        }
-        if ($this->getIdMethod() === IdMethod::NATIVE && !$anyAutoInc) {
+        $hasAutoIncrement = array_any($this->columns, fn (Column $c) => $c->isAutoIncrement());
+        if (!$hasAutoIncrement) {
             $this->setIdMethod(IdMethod::NO_ID_METHOD);
         }
     }
@@ -481,7 +478,7 @@ class Table extends ScopedMappingModel implements IdMethod
     /**
      * Returns a delimiter-delimited string list of column names.
      *
-     * @see \Propel\Generator\Platform\PlatformInterface::getColumnListDDL() if quoting is required
+     * @see \Propel\Generator\Platform\PlatformInterface::buildColumnListDdl() if quoting is required
      *
      * @param array<\Propel\Generator\Model\Column|string> $columns
      * @param string $delimiter
@@ -1328,9 +1325,13 @@ class Table extends ScopedMappingModel implements IdMethod
      *
      * @return \Propel\Generator\Model\IdMethod
      */
-    public function getIdMethod(): string
+    public function getIdMethod(): IdMethod
     {
-        return $this->idMethod;
+        if ($this->idMethod && $this->idMethod !== IdMethod::NATIVE) {
+            return $this->idMethod;
+        }
+
+        return $this->getPlatform()?->getNativeIdMethod() ?? IdMethod::NO_ID_METHOD;
     }
 
     /**
@@ -1347,11 +1348,11 @@ class Table extends ScopedMappingModel implements IdMethod
     /**
      * Sets the method strategy for generating primary keys.
      *
-     * @param string $idMethod
+     * @param \Propel\Generator\Model\IdMethod $idMethod
      *
      * @return void
      */
-    public function setIdMethod(string $idMethod): void
+    public function setIdMethod(IdMethod $idMethod): void
     {
         $this->idMethod = $idMethod;
     }
@@ -1584,6 +1585,25 @@ class Table extends ScopedMappingModel implements IdMethod
     public function getForeignKeys(): array
     {
         return $this->foreignKeys;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function resolveDefaultIdSequenceName(): string|null
+    {
+        if (!$this->getIdMethod()->usesSequence()) {
+            return null;
+        }
+
+        $platform = $this->getPlatform();
+
+        if (!$this->idMethodParameters) {
+            return $platform?->buildDefaultTableIdSequenceName($this);
+        }
+        $name = $this->idMethodParameters[0]->getValue();
+
+        return $platform?->limitIdentifierName($name) ?? $name;
     }
 
     /**
@@ -1997,6 +2017,7 @@ class Table extends ScopedMappingModel implements IdMethod
         $columns = [];
         foreach ($this->columns as $oldCol) {
             $col = clone $oldCol;
+            $col->setTable($this);
             $columns[] = $col;
             $this->columnsByName[(string)$col->getName()] = $col;
             $this->columnsByLowercaseName[strtolower((string)$col->getName())] = $col;
@@ -2025,24 +2046,6 @@ class Table extends ScopedMappingModel implements IdMethod
         return $this->getIdMethod() !== IdMethod::NO_ID_METHOD
             ? array_find($this->getPrimaryKey(), fn (Column $pk) => $pk->isAutoIncrement())
             : null;
-    }
-
-    /**
-     * Returns the auto incremented primary key.
-     *
-     * @throws \Propel\Generator\Exception\LogicException
-     *
-     * @return \Propel\Generator\Model\Column
-     */
-    public function getAutoIncrementPrimaryKeyOrFail(): Column
-    {
-        $column = $this->getAutoIncrementPrimaryKey();
-
-        if ($column === null) {
-            throw new LogicException('Autoincrement primary key is not defined.');
-        }
-
-        return $column;
     }
 
     /**

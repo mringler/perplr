@@ -4,9 +4,11 @@ declare(strict_types = 1);
 
 namespace Propel\Generator\Platform;
 
+use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\ForeignKey;
+use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use function in_array;
@@ -45,7 +47,7 @@ class MssqlPlatform extends DefaultPlatform
             ColumnType::DATETIME,
             ColumnType::TIMESTAMP,
             ColumnType::BU_TIMESTAMP,
-             => 'DATETIME2',
+            => 'DATETIME2',
             ColumnType::TIME => 'TIME',
             ColumnType::BINARY => 'BINARY(7132)',
             ColumnType::VARBINARY,
@@ -95,6 +97,36 @@ class MssqlPlatform extends DefaultPlatform
     public function supportsInsertNullPk(): bool
     {
         return false;
+    }
+
+    /**
+     * @return \Propel\Generator\Model\IdMethod
+     */
+    #[\Override]
+    public function getNativeIdMethod(): IdMethod
+    {
+        return IdMethod::IDENTITY;
+    }
+
+    /**
+     * Build column DDL fragment for id method (i.e. 'AUTO_INCREMENT' for native id method in MySQL)
+     *
+     * @param \Propel\Generator\Model\IdMethod $idMethod
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string|null Null means id method is not supported (might trigger Exception),
+     *                     empty string means column DDL is not affected by id method.
+     */
+    #[\Override]
+    protected function resolveAutoIncrementColumnDdl(IdMethod $idMethod, Column $column): string|null
+    {
+        return match ($idMethod) {
+            IdMethod::IDENTITY,
+            => 'IDENTITY(1,1)',
+            IdMethod::NO_ID_METHOD,
+            => '',
+            default => null,
+        };
     }
 
     /**

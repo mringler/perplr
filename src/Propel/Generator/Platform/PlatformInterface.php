@@ -7,6 +7,7 @@ namespace Propel\Generator\Platform;
 use Propel\Generator\Config\AbstractGeneratorConfig;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Datatype\ColumnType;
+use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\TypeMapping;
 use Propel\Runtime\Connection\ConnectionInterface;
@@ -16,27 +17,6 @@ use Propel\Runtime\Connection\ConnectionInterface;
  */
 interface PlatformInterface
 {
-    /**
-     * Constant for auto-increment id method.
-     *
-     * @var string
-     */
-    public const IDENTITY = 'identity';
-
-    /**
-     * Constant for sequence id method.
-     *
-     * @var string
-     */
-    public const SEQUENCE = 'sequence';
-
-    /**
-     * Constant for serial id method (postgresql).
-     *
-     * @var string
-     */
-    public const SERIAL = 'serial';
-
     /**
      * Sets a database connection to use (for quoting, etc.).
      *
@@ -71,11 +51,11 @@ interface PlatformInterface
     public function getDatabaseType(): string;
 
     /**
-     * Returns the native IdMethod (sequence|identity)
+     * Returns the native IdMethod
      *
-     * @return string The native IdMethod (PlatformInterface:IDENTITY, PlatformInterface::SEQUENCE).
+     * @return \Propel\Generator\Model\IdMethod
      */
-    public function getNativeIdMethod(): string;
+    public function getNativeIdMethod(): IdMethod;
 
     /**
      * Returns the max column length supported by the db.
@@ -126,11 +106,11 @@ interface PlatformInterface
     /**
      * Returns the SQL for the default value of a Column object.
      *
-     * @param \Propel\Generator\Model\Column $col
+     * @param \Propel\Generator\Model\Column $column
      *
      * @return string
      */
-    public function buildColumnDefaultValueDdl(Column $col): string;
+    public function buildColumnDefaultValueDdl(Column $column): string;
 
     /**
      * Creates a delimiter-delimited string list of column names, quoted using quoteIdentifier().
@@ -374,4 +354,19 @@ interface PlatformInterface
      * @return string
      */
     public function buildNativeEnumeratedColumnSqlType(ColumnType $columnType, array $valueSet): string;
+
+    /**
+     * @param \Propel\Generator\Model\Table $table
+     *
+     * @return string|null
+     */
+    public function buildDefaultTableIdSequenceName(Table $table): ?string;
+
+    /**
+     * @param string $identifier
+     * @param string|null $suffix
+     *
+     * @return string
+     */
+    public function limitIdentifierName(string $identifier, string|null $suffix = null): string;
 }

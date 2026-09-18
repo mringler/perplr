@@ -13,6 +13,7 @@ use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\TableDiff;
 use Propel\Generator\Model\ForeignKey;
+use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
 use Propel\Runtime\Connection\PdoConnection;
@@ -144,7 +145,7 @@ class SqlitePlatform extends DefaultPlatform
         $ret = '';
         foreach ($columns as $column) {
             $tableName = $this->quoteIdentifier($column->getTableName());
-            $columnDll = $this->getColumnDDL($column);
+            $columnDll = $this->buildColumnDdl($column);
             $ret .= "
 ALTER TABLE $tableName ADD $columnDll;
 ";
@@ -350,7 +351,6 @@ PRAGMA foreign_keys = ON;
 
             if ($table->hasAutoIncrementPrimaryKey()) {
                 foreach ($table->getPrimaryKey() as $pk) {
-                    //no pk can be NULL, as usual
                     $pk->setNotNull(true);
                     //in SQLite the column with the AUTOINCREMENT MUST be a primary key, too.
                     if (!$pk->isAutoIncrement()) {
@@ -446,7 +446,7 @@ PRAGMA foreign_keys = ON;
      * @inheritDoc
      */
     #[\Override]
-    public function getAddForeignKeyDDL(ForeignKey $fk): string
+    public function buildAddForeignKeyDdl(ForeignKey $fk): string
     {
         //not supported
         return '';
@@ -456,21 +456,43 @@ PRAGMA foreign_keys = ON;
      * @inheritDoc
      */
     #[\Override]
-    public function getDropForeignKeyDDL(ForeignKey $fk): string
+    public function buildDropForeignKeyDdl(ForeignKey $fk): string
     {
         //not supported
         return '';
     }
 
     /**
-     * @link http://www.sqlite.org/autoinc.html
-     *
-     * @return string
+     * @return \Propel\Generator\Model\IdMethod
      */
     #[\Override]
-    public function getAutoIncrement(): string
+    public function getNativeIdMethod(): IdMethod
     {
-        return 'PRIMARY KEY AUTOINCREMENT';
+        return IdMethod::AUTO_INCREMENT;
+    }
+
+    /**
+     * Build column DDL fragment for id method (i.e. 'AUTO_INCREMENT' for native id method in MySQL)
+     *
+     * @link http://www.sqlite.org/autoinc.html
+     *
+     * @param \Propel\Generator\Model\IdMethod $idMethod
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string|null Null means id method is not supported (might trigger Exception),
+     *                     empty string means column DDL is not affected by id method.
+     */
+    #[\Override]
+    protected function resolveAutoIncrementColumnDdl(IdMethod $idMethod, Column $column): string|null
+    {
+        return match ($idMethod) {
+            IdMethod::AUTO_INCREMENT,
+            => 'PRIMARY KEY AUTOINCREMENT',
+            IdMethod::SEQUENCE,
+            IdMethod::NO_ID_METHOD
+            => '',
+            default => null,
+        };
     }
 
     /**

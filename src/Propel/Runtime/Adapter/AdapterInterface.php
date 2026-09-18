@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Propel\Runtime\Adapter;
 
 use DateTimeInterface;
+use Propel\Generator\Model\IdMethod;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Map\ColumnMap;
@@ -14,21 +15,6 @@ use Propel\Runtime\Map\ColumnMap;
  */
 interface AdapterInterface
 {
-    /**
-     * @var int
-     */
-    public const ID_METHOD_NONE = 0;
-
-    /**
-     * @var int
-     */
-    public const ID_METHOD_AUTOINCREMENT = 1;
-
-    /**
-     * @var int
-     */
-    public const ID_METHOD_SEQUENCE = 2;
-
     /**
      * Build database connection
      *
@@ -146,18 +132,24 @@ interface AdapterInterface
     public function quoteColumnIdentifier(?string $tableAlias, string $columnName): string;
 
     /**
-     * Whether this adapter uses an ID generation system that requires getting ID _before_ performing INSERT.
+     * Whether an ID generation system requires getting ID _before_ performing INSERT.
+     *
+     * @param \Propel\Generator\Model\IdMethod $idMethod
      *
      * @return bool
+     * @return bool
      */
-    public function isGetIdBeforeInsert(): bool;
+    public function isGetIdBeforeInsert(IdMethod $idMethod): bool;
 
     /**
-     * Whether this adapter uses an ID generation system that requires getting ID _before_ performing INSERT.
+     * Whether an ID generation system requires getting ID _before_ performing INSERT.
+     *
+     * @param \Propel\Generator\Model\IdMethod $idMethod
      *
      * @return bool
+     * @return bool
      */
-    public function isGetIdAfterInsert(): bool;
+    public function isGetIdAfterInsert(IdMethod $idMethod): bool;
 
     /**
      * Load next value for given sequence

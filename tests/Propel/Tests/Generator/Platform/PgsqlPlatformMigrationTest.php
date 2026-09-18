@@ -12,6 +12,9 @@ use Propel\Generator\Builder\Util\SchemaReader;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnComparator;
+use Propel\Generator\Model\Diff\TableComparator;
+use Propel\Generator\Model\Diff\TableDiff;
+use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PgsqlPlatform;
 use Propel\Generator\Platform\PlatformInterface;
@@ -40,11 +43,15 @@ BEGIN;
 
 DROP TABLE IF EXISTS "foo1" CASCADE;
 
+DROP SEQUENCE IF EXISTS "foo1_id_seq";
+
 ALTER TABLE "foo3" RENAME TO "foo4";
+
+CREATE SEQUENCE IF NOT EXISTS "foo5_id_seq";
 
 CREATE TABLE "foo5"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('foo5_id_seq'::regclass) NOT NULL,
     "lkdjfsh" INTEGER,
     "dfgdsgf" TEXT,
     PRIMARY KEY ("id")
@@ -61,7 +68,7 @@ ALTER TABLE "foo2"
 COMMIT;
 
 END;
-        $this->assertEquals($expected, static::getPlatform()->getModifyDatabaseDDL($databaseDiff));
+        $this->assertEquals($expected, static::getPlatform()->buildModifyDatabaseDdl($databaseDiff));
     }
 
     /**
@@ -444,11 +451,69 @@ EOF;
 
 ALTER TABLE "foo" ALTER COLUMN "id" TYPE uuid USING id::uuid;
 
+ALTER TABLE "foo" ALTER COLUMN "id" DROP DEFAULT;
+
+DROP SEQUENCE IF EXISTS foo_id_seq CASCADE;
+
 ALTER TABLE "foo" ALTER COLUMN "id" SET DEFAULT vendor_specific_uuid_generator_function();
 
 END;
         $this->assertEquals($expected, static::getPlatform()->buildModifyTableColumnsDdl($tableDiff));
     }
+
+    protected static function buildTableDiffForIdMethods(IdMethod $fromId, IdMethod $toId): TableDiff
+    {
+$schema = <<<EOF
+        <database name="test" identifierQuoting="true">
+            <table name="foo">
+                <column name="id" primaryKey="true" type="INTEGER" autoIncrement="true"/>
+            </table>
+        </database>
+EOF;
+        $sequenceTable = static::getTableFromSchema($schema);
+        $sequenceTable->setIdMethod($fromId);
+
+        $identityTable = clone $sequenceTable;
+        $identityTable->setIdMethod($toId);
+
+        return TableComparator::computeDiff($sequenceTable, $identityTable);
+    }
+
+    public static function IdMethodDataProvider(): array
+    {
+        return [
+            [
+                'from sequence to identity',
+                static::buildTableDiffForIdMethods(IdMethod::SEQUENCE, IdMethod::IDENTITY),
+                '
+ALTER TABLE "foo" ALTER COLUMN "id" DROP DEFAULT;
+
+DROP SEQUENCE IF EXISTS foo_id_seq CASCADE;
+
+ALTER TABLE "foo" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY;
+
+SELECT setval(pg_get_serial_sequence(\'foo\', \'id\'), (SELECT COALESCE(MAX("id"),1) FROM "foo"));
+'
+            ],[
+                'from identity to sequence',
+                static::buildTableDiffForIdMethods(IdMethod::IDENTITY, IdMethod::SEQUENCE),
+                '
+ALTER TABLE "foo" ALTER COLUMN "id" DROP IDENTITY;
+
+CREATE SEQUENCE IF NOT EXISTS foo_id_seq OWNED BY "foo"."id";
+
+ALTER TABLE "foo" ALTER COLUMN "id" SET DEFAULT nextval(\'foo_id_seq\'::regclass);
+
+SELECT setval(\'foo_id_seq\', (SELECT COALESCE(MAX("id"),1) FROM "foo"));
+'
+                ]
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('IdMethodDataProvider')]
+    public function testMigrateFromSequenceToIdentity(string $description, TableDiff $tableDiff, string $expected): void
+    {
+        $this->assertEquals($expected, static::getPlatform()->buildModifyTableColumnsDdl($tableDiff));
     }
 
     /**

@@ -14,6 +14,7 @@ use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\DatabaseDiff;
 use Propel\Generator\Model\ForeignKey;
+use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\Unique;
@@ -193,12 +194,33 @@ class MysqlPlatform extends DefaultPlatform
     }
 
     /**
-     * @return string
+     * @return \Propel\Generator\Model\IdMethod
      */
     #[\Override]
-    public function getAutoIncrement(): string
+    public function getNativeIdMethod(): IdMethod
     {
-        return 'AUTO_INCREMENT';
+        return IdMethod::AUTO_INCREMENT;
+    }
+
+    /**
+     * Build column DDL fragment for id method (i.e. 'AUTO_INCREMENT' for native id method in MySQL)
+     *
+     * @param \Propel\Generator\Model\IdMethod $idMethod
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string|null Null means id method is not supported (might trigger Exception),
+     *                     empty string means column DDL is not affected by id method.
+     */
+    #[\Override]
+    protected function resolveAutoIncrementColumnDdl(IdMethod $idMethod, Column $column): string|null
+    {
+        return match ($idMethod) {
+            IdMethod::AUTO_INCREMENT,
+            => 'AUTO_INCREMENT',
+            IdMethod::NO_ID_METHOD,
+            => '',
+            default => null,
+        };
     }
 
     /**
@@ -305,19 +327,19 @@ SET FOREIGN_KEY_CHECKS = 1;
             return '';
         }
 
-            $keys = $table->getPrimaryKey();
+        $keys = $table->getPrimaryKey();
 
-            //MySQL throws an 'Incorrect table definition; there can be only one auto column and it must be defined as a key'
-            //if the primary key consists of multiple columns and if the first is not the autoIncrement one. So
-            //this push the autoIncrement column to the first position if its not already.
+        //MySQL throws an 'Incorrect table definition; there can be only one auto column and it must be defined as a key'
+        //if the primary key consists of multiple columns and if the first is not the autoIncrement one. So
+        //this push the autoIncrement column to the first position if its not already.
         $autoIncrementColumn = $table->getAutoIncrementPrimaryKey();
         if ($autoIncrementColumn && $keys[0] != $autoIncrementColumn) {
             $idx = array_search($autoIncrementColumn, $keys);
-                if ($idx !== false) {
-                    unset($keys[$idx]);
+            if ($idx !== false) {
+                unset($keys[$idx]);
                 array_unshift($keys, $autoIncrementColumn);
-                }
             }
+        }
 
         return 'PRIMARY KEY (' . $this->buildColumnListDdl($keys) . ')';
     }
@@ -785,16 +807,16 @@ CREATE TABLE {$quotedTableName}
     }
 
     /**
-     * @param string $fromTableName
-     * @param string $toTableName
+     * @param string $currentTableName
+     * @param string $newTableName
      *
      * @return string
      */
     #[\Override]
-    public function buildRenameTableDdl(string $fromTableName, string $toTableName): string
+    public function buildRenameTableDdl(string $currentTableName, string $newTableName): string
     {
-        $currentTableName = $this->quoteIdentifier($fromTableName);
-        $newTableName = $this->quoteIdentifier($toTableName);
+        $currentTableName = $this->quoteIdentifier($currentTableName);
+        $newTableName = $this->quoteIdentifier($newTableName);
 
         return "\nRENAME TABLE $currentTableName TO $newTableName;\n";
     }

@@ -11,7 +11,6 @@ namespace Propel\Tests\Generator\Platform;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\IdMethod;
-use Propel\Generator\Model\IdMethodParameter;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PlatformInterface;
 use Propel\Generator\Platform\SqlitePlatform;
@@ -43,32 +42,6 @@ class SqlitePlatformTest extends PlatformTestProvider
 
         $expected = "'Naughty '' string'";
         $this->assertEquals($expected, $quoted);
-    }
-
-    /**
-     * @return void
-     */
-    public function testGetSequenceNameDefault()
-    {
-        $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
-        $expected = 'foo_SEQ';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
-    }
-
-    /**
-     * @return void
-     */
-    public function testGetSequenceNameCustom()
-    {
-        $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
-        $idMethodParameter = new IdMethodParameter();
-        $idMethodParameter->setValue('foo_sequence');
-        $table->addIdMethodParameter($idMethodParameter);
-        $table->setIdMethod(IdMethod::NATIVE);
-        $expected = 'foo_sequence';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
     }
 
     /**
@@ -249,7 +222,7 @@ DROP TABLE IF EXISTS [foo];
     public function testGetPrimaryKeyDDLCompositeKeyWithAutoIncrement()
     {
         $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
+        $table->setIdMethod(IdMethod::AUTO_INCREMENT);
 
         $column1 = new Column('bar');
         $column1->setPrimaryKey(true);

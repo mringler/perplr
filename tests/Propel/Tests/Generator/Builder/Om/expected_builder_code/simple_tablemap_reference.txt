@@ -6,6 +6,7 @@ use Base\Collection\IdTableCollection;
 use IdTable;
 use IdTableQuery;
 use Propel\Generator\Model\Datatype\ColumnType;
+use Propel\Generator\Model\IdMethod;
 use Propel\Runtime\ActiveQuery\ColumnResolver\ColumnExpression\LocalColumnExpression;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\InstancePoolTrait;
@@ -174,7 +175,7 @@ class IdTableTableMap extends TableMap
         $this->setIdentifierQuoting(false);
         $this->setModelClassName('\\IdTable');
         $this->setPackage('');
-        $this->setUseIdGenerator(true);
+        $this->setIdMethod(IdMethod::AUTO_INCREMENT);
         // columns
         $this->addPrimaryKey('id', 'Id', ColumnType::INTEGER, true, null, null);
     }

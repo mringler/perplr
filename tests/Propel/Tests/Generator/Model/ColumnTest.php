@@ -13,7 +13,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Exception\SchemaException;
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Datatype\ColumnType;
+use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\TypeMapping;
 use Propel\Generator\Platform\DefaultPlatform;
@@ -38,7 +40,7 @@ class ColumnTest extends ModelTestCase
         $column = new Column('title');
 
         $this->assertSame('title', $column->getName());
-        $this->assertEmpty($column->getAutoIncrementString());
+        $this->assertEmpty($column->buildAutoIncrementString());
         $this->assertSame('COL_TITLE', $column->getConstantName());
         $this->assertSame('public', $column->getMutatorVisibility());
         $this->assertSame('public', $column->getAccessorVisibility());
@@ -797,18 +799,18 @@ class ColumnTest extends ModelTestCase
      */
     public function testGetAutoIncrementStringThrowsEngineException()
     {
-        $this->expectException(EngineException::class);
-
-        $table = $this->getTableMock('books');
+        $table = $this->getTableMock('books', ['platform' => new DefaultPlatform()]);
         $table
             ->expects($this->once())
             ->method('getIdMethod')
-            ->will($this->returnValue('none'));
+            ->will($this->returnValue(IdMethod::NO_ID_METHOD));
 
         $column = new Column('');
         $column->setTable($table);
         $column->setAutoIncrement(true);
-        $column->getAutoIncrementString();
+
+        $this->expectException(EngineException::class);
+        $column->buildAutoIncrementString();
     }
 
     /**
@@ -825,7 +827,7 @@ class ColumnTest extends ModelTestCase
         $column->setAutoIncrement(true);
         $column->setTable($table);
 
-        $this->assertEquals('AUTO_INCREMENT', $column->getAutoIncrementString());
+        $this->assertEquals('AUTO_INCREMENT', $column->buildAutoIncrementString());
     }
 
     /**
@@ -1101,5 +1103,23 @@ class ColumnTest extends ModelTestCase
     public function testHasCustomPhpName(Column $column, bool $expected, string $description): void
     {
         $this->assertSame($expected, $column->hasCustomPhpName(), $description);
+    }
+
+    /**
+     * @return void
+     */
+    public function testMissingIdMethod(): void
+    {
+        $column = new Column('foo');
+        $column->setAutoIncrement(true);
+
+        $table = new Table('t');
+        $table->setIdMethod(IdMethod::NO_ID_METHOD);
+        $table->addColumn($column);
+
+        $this->expectException(EngineException::class);
+        $this->expectExceptionMessage('Column `t.FOO` uses auto increment but no idMethod is set on database or table.');
+
+        $column->buildAutoIncrementString();
     }
 }

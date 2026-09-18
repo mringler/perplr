@@ -10,7 +10,6 @@ namespace Propel\Tests\Generator\Platform;
 
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Datatype\ColumnType;
-use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\IdMethodParameter;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\OraclePlatform;
@@ -26,32 +25,6 @@ class OraclePlatformTest extends PlatformTestProvider
     protected static function getPlatform(): PlatformInterface
     {
         return new OraclePlatform();
-    }
-
-    /**
-     * @return void
-     */
-    public function testGetSequenceNameDefault()
-    {
-        $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
-        $expected = 'foo_SEQ';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
-    }
-
-    /**
-     * @return void
-     */
-    public function testGetSequenceNameCustom()
-    {
-        $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
-        $idMethodParameter = new IdMethodParameter();
-        $idMethodParameter->setValue('foo_sequence');
-        $table->addIdMethodParameter($idMethodParameter);
-        $table->setIdMethod(IdMethod::NATIVE);
-        $expected = 'foo_sequence';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
     }
 
     /**
@@ -116,7 +89,7 @@ ALTER TABLE book ADD CONSTRAINT book_fk_ea464c
     FOREIGN KEY (author_id) REFERENCES author (id);
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTablesDDL($database));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTablesDdl($database));
     }
 
     /**

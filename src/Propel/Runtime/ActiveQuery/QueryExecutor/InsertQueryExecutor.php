@@ -102,7 +102,12 @@ class InsertQueryExecutor extends AbstractQueryExecutor
     protected function setIdFromSequence(): void
     {
         $pkFullName = $this->getFirstPkFullyQualifiedName();
-        if (!$pkFullName || !$this->tableMap->isUseIdGenerator() || !$this->adapter->isGetIdBeforeInsert()) {
+        if (
+            !$pkFullName
+            || $this->criteria->getUpdateValue($pkFullName) !== null
+            || !$this->tableMap->isUsingAutoIncrementedIds()
+            || !$this->adapter->isGetIdBeforeInsert($this->tableMap->getIdMethod())
+        ) {
             return;
         }
 
@@ -137,7 +142,11 @@ class InsertQueryExecutor extends AbstractQueryExecutor
      */
     protected function retrieveLastInsertedId()
     {
-        if ($this->tableMap === null || !$this->tableMap->isUseIdGenerator() || !$this->adapter->isGetIdAfterInsert()) {
+        if (
+            !$this->tableMap
+            || !$this->tableMap->isUsingAutoIncrementedIds()
+            || !$this->adapter->isGetIdAfterInsert($this->tableMap->getIdMethod())
+        ) {
             return null;
         }
         $idSequenceName = $this->tableMap->getIdSequenceName();

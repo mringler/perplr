@@ -10,7 +10,6 @@ use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Datatype\ColumnType;
 use Propel\Generator\Model\Diff\ColumnDiff;
-use Propel\Generator\Model\Diff\TableDiff;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Index;
@@ -51,9 +50,9 @@ class PgsqlPlatform extends DefaultPlatform
             ColumnType::TINYINT,
             ColumnType::SMALLINT,
             ColumnType::ENUM_BINARY,
-             => 'INT2',
+            => 'INT2',
             ColumnType::BIGINT => 'INT8',
-            //ColumnType::REAL => 'FLOAT',
+                //ColumnType::REAL => 'FLOAT',
             ColumnType::DOUBLE,
             ColumnType::FLOAT,
             => 'DOUBLE PRECISION',
@@ -76,21 +75,34 @@ class PgsqlPlatform extends DefaultPlatform
     }
 
     /**
-     * @return string
+     * @return \Propel\Generator\Model\IdMethod
      */
     #[\Override]
-    public function getNativeIdMethod(): string
+    public function getNativeIdMethod(): IdMethod
     {
-        return PlatformInterface::SERIAL;
+        return IdMethod::SEQUENCE;
     }
 
     /**
-     * @return string
+     * Build column DDL fragment for id method
+     *
+     * @param \Propel\Generator\Model\IdMethod $idMethod
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string|null Null means id method is not supported (might trigger Exception),
+     *                     empty string means column DDL is not affected by id method.
      */
     #[\Override]
-    public function getAutoIncrement(): string
+    protected function resolveAutoIncrementColumnDdl(IdMethod $idMethod, Column $column): string|null
     {
-        return '';
+        // no AUTO_INCREMENT statement in postgres, it uses DEFAULT handled in getDefaultValueExpression()
+        return match ($idMethod) {
+            IdMethod::IDENTITY,
+            IdMethod::NO_ID_METHOD,
+            IdMethod::SEQUENCE,
+            => '',
+            default => null,
+        };
     }
 
     /**
@@ -155,35 +167,28 @@ class PgsqlPlatform extends DefaultPlatform
     }
 
     /**
+     * @return bool
+     */
+    #[\Override]
+    public function supportsInsertNullPk(): bool
+    {
+        return false;
+    }
+
+    /**
      * Override to provide sequence names that conform to postgres' standard when
      * no id-method-parameter specified.
      *
      * @param \Propel\Generator\Model\Table $table
      *
-     * @return string
+     * @return string|null
      */
     #[\Override]
-    public function getSequenceName(Table $table): string
+    public function buildDefaultTableIdSequenceName(Table $table): string|null
     {
-        $result = null;
-        if ($table->getIdMethod() == IdMethod::NATIVE) {
-            $idMethodParams = $table->getIdMethodParameters();
-            if (!$idMethodParams) {
-                // We're going to ignore a check for max length (mainly
-                // because I'm not sure how Postgres would handle this w/ SERIAL anyway)
-                foreach ($table->getColumns() as $col) {
-                    if ($col->isAutoIncrement()) {
-                        $result = $table->getName() . '_' . $col->getName() . '_seq';
+        $autoIncrementColumn = array_find($table->getColumns(), fn (Column $col) => $col->isAutoIncrement());
 
-                        break; // there's only one auto-increment column allowed
-                    }
-                }
-            } else {
-                $result = $idMethodParams[0]->getValue();
-            }
-        }
-
-        return $result;
+        return $autoIncrementColumn ? $this->buildColumnSequenceName($autoIncrementColumn) : null;
     }
 
     /**
@@ -216,7 +221,7 @@ class PgsqlPlatform extends DefaultPlatform
         }
         $normalizedName = $this->quoteIdentifier(strtolower($tableSequenceName));
 
-        return '';
+        return "\nDROP SEQUENCE IF EXISTS $normalizedName;\n";
     }
 
     /**
@@ -233,7 +238,7 @@ class PgsqlPlatform extends DefaultPlatform
             if (!$vi->hasParameter('schema') || isset($schemas[$vi->getParameter('schema')])) {
                 continue;
             }
-                $schemas[$vi->getParameter('schema')] = true;
+            $schemas[$vi->getParameter('schema')] = true;
             $ret .= $this->buildAddSchemaDdl($table);
         }
 
@@ -456,44 +461,71 @@ class PgsqlPlatform extends DefaultPlatform
     }
 
     /**
-     * @param \Propel\Generator\Model\Table $table
+     * @param \Propel\Generator\Model\Column $column
      *
      * @return string
      */
     #[\Override]
-    public function getPrimaryKeyName(Table $table): string
+    protected function buildColumnTypeDeclaration(Column $column): string
     {
-        $tableName = $table->getCommonName();
+        $sqlType = $column->resolveSqlTypeName();
+        $isNonNumericNumber = $this->isNumber($sqlType) && strtoupper($sqlType) !== 'NUMERIC';
 
-        return $tableName . '_pkey';
+        if (!$this->hasSize($sqlType) || !$column->isDefaultSqlType($this) || $isNonNumericNumber) {
+            return $sqlType;
+        }
+
+        return $sqlType . $column->getSizeDefinition();
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string
+     */
+    #[\Override]
+    public function buildColumnDefaultValueDdl(Column $column): string
+    {
+        $defaultValue = $column->getDefaultValue();
+        if ($defaultValue?->isExpression() && $defaultValue->getValue() === 'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP') {
+            $column->setDefaultValue(new ColumnDefaultValue('CURRENT_TIMESTAMP', ColumnDefaultValue::TYPE_EXPR));
+        }
+
+        $defaultValueExpression = $this->buildDefaultValueExpression($column);
+        if ($defaultValueExpression !== null) {
+            return "DEFAULT $defaultValueExpression";
+        }
+
+        return $column->isAutoIncrement() ? $this->buildAutoIdDefaultExpression($column) : '';
     }
 
     /**
      * @param \Propel\Generator\Model\Column $col
+     * @param bool $asAlterColumnExpression
      *
      * @return string
      */
-    #[\Override]
-    public function buildColumnDefaultValueDdl(Column $col): string
+    protected function buildAutoIdDefaultExpression(Column $col, bool $asAlterColumnExpression = false): string
     {
-        }
+        $idMethod = $col->getIdMethod();
 
-        $default = $this->getColumnDefaultValueDDL($col);
-        if ($default) {
-            $ddl[] = $default;
-    }
+        $action = !$asAlterColumnExpression ? '' : match ($idMethod) {
+            IdMethod::IDENTITY,
+            => 'ADD ',
+            IdMethod::SEQUENCE,
+            => 'SET ',
+            default => '',
+        };
 
-        $notNull = $this->getNullString($col->isNotNull());
-        if ($notNull) {
-            $ddl[] = $notNull;
-        }
+        $expression = match ($idMethod) {
+            IdMethod::IDENTITY,
+            => 'GENERATED ALWAYS AS IDENTITY',
+            IdMethod::SEQUENCE,
+            => sprintf("DEFAULT nextval('%s'::regclass)", $this->buildColumnSequenceName($col)),
+            default => '',
+        };
 
-        $autoIncrement = $col->getAutoIncrementString();
-        if ($autoIncrement) {
-            $ddl[] = $autoIncrement;
-        }
-
-        return implode(' ', $ddl);
+        return "$action$expression";
     }
 
     /**
@@ -511,22 +543,22 @@ class PgsqlPlatform extends DefaultPlatform
     }
 
     /**
-     * @param string $fromTableName
-     * @param string $toTableName
+     * @param string $currentTableName
+     * @param string $newTableName
      *
      * @return string
      */
     #[\Override]
-    public function buildRenameTableDdl(string $fromTableName, string $toTableName): string
+    public function buildRenameTableDdl(string $currentTableName, string $newTableName): string
     {
-        $pos = strpos($toTableName, '.');
+        $pos = strpos($newTableName, '.');
         if ($pos !== false) {
-            $toTableName = substr($toTableName, $pos + 1);
+            $newTableName = substr($newTableName, $pos + 1);
         }
-        $fromTableName = $this->quoteIdentifier($fromTableName);
-        $toTableName = $this->quoteIdentifier($toTableName);
+        $currentTableName = $this->quoteIdentifier($currentTableName);
+        $newTableName = $this->quoteIdentifier($newTableName);
 
-        return "\nALTER TABLE $fromTableName RENAME TO $toTableName;\n";
+        return "\nALTER TABLE $currentTableName RENAME TO $newTableName;\n";
     }
 
     /**
@@ -567,25 +599,6 @@ class PgsqlPlatform extends DefaultPlatform
     public function supportsVarcharWithoutSize(): bool
     {
         return true;
-    }
-
-    /**
-     * @param \Propel\Generator\Model\Diff\TableDiff $tableDiff
-     *
-     * @return string
-     */
-    #[\Override]
-    public function getModifyTableDDL(TableDiff $tableDiff): string
-    {
-        $ret = parent::getModifyTableDDL($tableDiff);
-
-        if ($this->createOrDropSequences) {
-            $ret = $this->createOrDropSequences . $ret;
-        }
-
-        $this->createOrDropSequences = '';
-
-        return $ret;
     }
 
     /**
@@ -644,7 +657,7 @@ class PgsqlPlatform extends DefaultPlatform
         }
 
         return implode('', $alterTableStatements);
-                }
+    }
 
     /**
      * @param \Propel\Generator\Model\Column $column
@@ -673,54 +686,110 @@ class PgsqlPlatform extends DefaultPlatform
 
         if ($fromIdMethod === $toIdMethod) {
             return null;
-                }
+        }
+
+        $statements = [];
+        if ($fromIdMethod) {
+            $dropExpression = $this->getDropAutoIncrementExpression($fromColumn);
+            if ($dropExpression) {
+                $statements[] = $this->buildAlterColumnStatement($fromColumn, $dropExpression);
+            }
+            if ($fromIdMethod === IdMethod::SEQUENCE) {
+                $statements[] = $this->buildDropColumnSequenceStatement($fromColumn);
             }
         }
 
-        if (isset($changedProperties['size']) || isset($changedProperties['type']) || isset($changedProperties['sqlType']) || isset($changedProperties['scale'])) {
-            $sqlType = $toColumn->resolveSqlTypeName();
-
-            if ($this->hasSize($sqlType) && $toColumn->isDefaultSqlType($this)) {
-                if ($this->isNumber($sqlType)) {
-                    if (strtoupper($sqlType) === 'NUMERIC') {
-                        $sqlType .= $toColumn->getSizeDefinition();
-                    }
-                } else {
-                    $sqlType .= $toColumn->getSizeDefinition();
-                }
+        if ($toIdMethod) {
+            if ($toIdMethod === IdMethod::SEQUENCE) {
+                $statements[] = $this->buildCreateColumnSequenceStatement($toColumn);
             }
 
-            $using = $this->getUsingCast($fromColumn, $toColumn);
-            if ($using) {
-                $sqlType .= $using;
+            $alterColumnExpression = $this->buildAutoIdDefaultExpression($toColumn, true);
+            if ($alterColumnExpression) {
+                $statements[] = $this->buildAlterColumnStatement($toColumn, $alterColumnExpression);
             }
 
-            $ret .= sprintf(
-                $pattern,
-                $this->quoteIdentifier($table->getName()),
-                $colName . ' TYPE ' . $sqlType,
-            );
+            $statements[] = $this->buildUpdateColumnIdSequenceStatement($toColumn);
         }
 
-        if (isset($changedProperties['defaultValueValue'])) {
-            $property = $changedProperties['defaultValueValue'];
-            if ($property[0] !== null && $property[1] === null) {
-                $ret .= sprintf($pattern, $this->quoteIdentifier($table->getName()), $colName . ' DROP DEFAULT');
-            } else {
-                $ret .= sprintf($pattern, $this->quoteIdentifier($table->getName()), $colName . ' SET ' . $this->getColumnDefaultValueDDL($toColumn));
-            }
-        }
+        return $statements;
+    }
 
-        if (isset($changedProperties['notNull'])) {
-            $property = $changedProperties['notNull'];
-            $notNull = ' DROP NOT NULL';
-            if ($property[1]) {
-                $notNull = ' SET NOT NULL';
-            }
-            $ret .= sprintf($pattern, $this->quoteIdentifier($table->getName()), $colName . $notNull);
-        }
+    /**
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string
+     */
+    protected function buildColumnSequenceName(Column $column): string
+    {
+        $tableName = $column->getTableName();
+        $colPlainName = $column->getName();
 
-        return $ret;
+        return $this->limitIdentifierName("{$tableName}_{$colPlainName}", '_seq');
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string
+     */
+    protected function buildCreateColumnSequenceStatement(Column $column): string
+    {
+        $columnName = $this->quoteIdentifier($column->getName());
+        $tableName = $this->quoteIdentifier($column->getTableName());
+        $sequenceName = $this->buildColumnSequenceName($column);
+
+        return "\nCREATE SEQUENCE IF NOT EXISTS $sequenceName OWNED BY $tableName.$columnName;\n";
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Column $column
+     * @param string|null $sequenceName
+     *
+     * @return string
+     */
+    protected function buildUpdateColumnIdSequenceStatement(Column $column, string|null $sequenceName = null): string
+    {
+        $columnName = $column->getName();
+        $tableName = $column->getTableName();
+        $sequenceName = !$sequenceName && $column->getIdMethod() === IdMethod::IDENTITY
+            ? "pg_get_serial_sequence('$tableName', '$columnName')"
+            : "'" . ($sequenceName ?: $this->buildColumnSequenceName($column)) . "'";
+
+        $quotedColumnName = $this->quoteIdentifier($columnName);
+        $quotedTableName = $this->quoteIdentifier($tableName);
+
+        return "\nSELECT setval($sequenceName, (SELECT COALESCE(MAX($quotedColumnName),1) FROM $quotedTableName));\n";
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string
+     */
+    protected function buildDropColumnSequenceStatement(Column $column): string
+    {
+        $sequenceName = $this->buildColumnSequenceName($column);
+
+        return "\nDROP SEQUENCE IF EXISTS $sequenceName CASCADE;\n";
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string
+     */
+    protected function getDropAutoIncrementExpression(Column $column): string
+    {
+        $idMethod = $column->getTable()->getIdMethod();
+
+        return match ($idMethod) {
+            IdMethod::IDENTITY
+            => 'DROP IDENTITY',
+            IdMethod::SEQUENCE,
+            => 'DROP DEFAULT',
+            default => ''
+        };
     }
 
     /**
@@ -754,7 +823,7 @@ class PgsqlPlatform extends DefaultPlatform
      */
     public function isNumber(string $type): bool
     {
-        $numbers = ['INTEGER', 'INT4', 'INT2', 'NUMBER', 'NUMERIC', 'SMALLINT', 'BIGINT', 'DECIMAL', 'REAL', 'DOUBLE PRECISION', 'SERIAL', 'BIGSERIAL'];
+        $numbers = ['INTEGER', 'INT4', 'INT2', 'NUMBER', 'NUMERIC', 'SMALLINT', 'BIGINT', 'DECIMAL', 'REAL', 'DOUBLE PRECISION'];
 
         return in_array(strtoupper($type), $numbers, true);
     }
@@ -856,7 +925,7 @@ class PgsqlPlatform extends DefaultPlatform
      * @param string $targetVariable
      * @param string $connectionVariableName
      * @param string|null $sequenceName
-     * @param string $tab
+     * @param string $indent
      * @param string|null $phpType
      *
      * @throws \LogicException
@@ -868,7 +937,7 @@ class PgsqlPlatform extends DefaultPlatform
         string $targetVariable,
         string $connectionVariableName = '$con',
         string|null $sequenceName = null,
-        string $tab = '            ',
+        string $indent = '            ',
         string|null $phpType = null
     ): string {
         if (!$sequenceName) {
@@ -877,8 +946,8 @@ class PgsqlPlatform extends DefaultPlatform
         $typecast = $phpType ? "($phpType)" : '';
 
         return "
-{$tab}\$dataFetcher = {$connectionVariableName}->query(\"SELECT nextval('$sequenceName')\");
-{$tab}$targetVariable = {$typecast}\$dataFetcher->fetchColumn();";
+{$indent}\$dataFetcher = {$connectionVariableName}->query(\"SELECT nextval('$sequenceName')\");
+{$indent}$targetVariable = {$typecast}\$dataFetcher->fetchColumn();";
     }
 
     /**

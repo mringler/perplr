@@ -10,8 +10,6 @@ namespace Propel\Tests\Generator\Platform;
 
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Datatype\ColumnType;
-use Propel\Generator\Model\IdMethod;
-use Propel\Generator\Model\IdMethodParameter;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\MssqlPlatform;
 use Propel\Generator\Platform\PlatformInterface;
@@ -26,32 +24,6 @@ class MssqlPlatformTest extends PlatformTestProvider
     protected static function getPlatform(): PlatformInterface
     {
         return new MssqlPlatform();
-    }
-
-    /**
-     * @return void
-     */
-    public function testGetSequenceNameDefault()
-    {
-        $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
-        $expected = 'foo_SEQ';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
-    }
-
-    /**
-     * @return void
-     */
-    public function testGetSequenceNameCustom()
-    {
-        $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
-        $idMethodParameter = new IdMethodParameter();
-        $idMethodParameter->setValue('foo_sequence');
-        $table->addIdMethodParameter($idMethodParameter);
-        $table->setIdMethod(IdMethod::NATIVE);
-        $expected = 'foo_sequence';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
     }
 
     /**
@@ -97,7 +69,7 @@ END
 
 CREATE TABLE [book]
 (
-    [id] INT NOT NULL IDENTITY,
+    [id] INT NOT NULL IDENTITY(1,1),
     [title] VARCHAR(255) NOT NULL,
     [author_id] INT NULL,
     CONSTRAINT [book_pk] PRIMARY KEY ([id])
@@ -136,7 +108,7 @@ END
 
 CREATE TABLE [author]
 (
-    [id] INT NOT NULL IDENTITY,
+    [id] INT NOT NULL IDENTITY(1,1),
     [first_name] VARCHAR(100) NULL,
     [last_name] VARCHAR(100) NULL,
     CONSTRAINT [author_pk] PRIMARY KEY ([id])
@@ -194,7 +166,7 @@ END
 
 CREATE TABLE [x].[book]
 (
-    [id] INT NOT NULL IDENTITY,
+    [id] INT NOT NULL IDENTITY(1,1),
     [title] VARCHAR(255) NOT NULL,
     [author_id] INT NULL,
     CONSTRAINT [book_pk] PRIMARY KEY ([id])
@@ -233,7 +205,7 @@ END
 
 CREATE TABLE [y].[author]
 (
-    [id] INT NOT NULL IDENTITY,
+    [id] INT NOT NULL IDENTITY(1,1),
     [first_name] VARCHAR(100) NULL,
     [last_name] VARCHAR(100) NULL,
     CONSTRAINT [author_pk] PRIMARY KEY ([id])
@@ -273,7 +245,7 @@ END
 
 CREATE TABLE [x].[book_summary]
 (
-    [id] INT NOT NULL IDENTITY,
+    [id] INT NOT NULL IDENTITY(1,1),
     [book_id] INT NOT NULL,
     [summary] VARCHAR(MAX) NOT NULL,
     CONSTRAINT [book_summary_pk] PRIMARY KEY ([id])
@@ -315,7 +287,7 @@ EOF;
 -- This is foo table
 CREATE TABLE [foo]
 (
-    [id] INT NOT NULL IDENTITY,
+    [id] INT NOT NULL IDENTITY(1,1),
     [bar] VARCHAR(255) NOT NULL,
     CONSTRAINT [foo_pk] PRIMARY KEY ([id])
 );
@@ -352,7 +324,7 @@ CREATE TABLE [foo]
         $expected = "
 CREATE TABLE [foo]
 (
-    [id] INT NOT NULL IDENTITY,
+    [id] INT NOT NULL IDENTITY(1,1),
     [bar] INT NULL,
     CONSTRAINT [foo_pk] PRIMARY KEY ([id]),
     CONSTRAINT [foo_u_14f552] UNIQUE NONCLUSTERED ([bar]) ON [PRIMARY]
@@ -371,7 +343,7 @@ CREATE TABLE [foo]
         $expected = "
 CREATE TABLE [Woopah].[foo]
 (
-    [id] INT NOT NULL IDENTITY,
+    [id] INT NOT NULL IDENTITY(1,1),
     [bar] INT NULL,
     CONSTRAINT [foo_pk] PRIMARY KEY ([id])
 );

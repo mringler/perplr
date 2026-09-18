@@ -8,6 +8,7 @@
 
 namespace Propel\Tests\Generator\Platform;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Datatype\ColumnType;
@@ -35,33 +36,15 @@ class PgsqlPlatformTest extends PlatformTestProvider
      */
     public function testGetSequenceNameDefault()
     {
+        $platform = static::getPlatform();
         $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
+        $table->setIdMethod(IdMethod::SEQUENCE);
         $col = new Column('bar');
-        $col->setTypeMapping(static::getPlatform()->getColumnTypeMapping(ColumnType::INTEGER));
+        $col->setTypeMapping($platform->getColumnTypeMapping(ColumnType::INTEGER));
         $col->setAutoIncrement(true);
         $table->addColumn($col);
         $expected = 'foo_bar_seq';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
-    }
-
-    /**
-     * @return void
-     */
-    public function testGetSequenceNameCustom()
-    {
-        $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
-        $idMethodParameter = new IdMethodParameter();
-        $idMethodParameter->setValue('foo_sequence');
-        $table->addIdMethodParameter($idMethodParameter);
-        $table->setIdMethod(IdMethod::NATIVE);
-        $col = new Column('bar');
-        $col->setTypeMapping(static::getPlatform()->getColumnTypeMapping(ColumnType::INTEGER));
-        $col->setAutoIncrement(true);
-        $table->addColumn($col);
-        $expected = 'foo_sequence';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
+        $this->assertEquals($expected, $platform->buildDefaultTableIdSequenceName($table));
     }
 
     /**
@@ -81,9 +64,13 @@ BEGIN;
 
 DROP TABLE IF EXISTS "book" CASCADE;
 
+DROP SEQUENCE IF EXISTS "book_id_seq";
+
+CREATE SEQUENCE IF NOT EXISTS "book_id_seq";
+
 CREATE TABLE "book"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('book_id_seq'::regclass) NOT NULL,
     "title" VARCHAR(255) NOT NULL,
     "author_id" INTEGER,
     PRIMARY KEY ("id")
@@ -97,9 +84,13 @@ CREATE INDEX "book_i_639136" ON "book" ("title");
 
 DROP TABLE IF EXISTS "author" CASCADE;
 
+DROP SEQUENCE IF EXISTS "author_id_seq";
+
+CREATE SEQUENCE IF NOT EXISTS "author_id_seq";
+
 CREATE TABLE "author"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('author_id_seq'::regclass) NOT NULL,
     "first_name" VARCHAR(100),
     "last_name" VARCHAR(100),
     PRIMARY KEY ("id")
@@ -112,7 +103,7 @@ ALTER TABLE "book" ADD CONSTRAINT "book_fk_ea464c"
 COMMIT;
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTablesDDL($database));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTablesDdl($database));
     }
 
     /**
@@ -167,13 +158,17 @@ SET search_path TO "Woopah";
 
 DROP TABLE IF EXISTS "table1" CASCADE;
 
+DROP SEQUENCE IF EXISTS "table1_id_seq";
+
 SET search_path TO public;
 
 SET search_path TO "Woopah";
 
+CREATE SEQUENCE IF NOT EXISTS "table1_id_seq";
+
 CREATE TABLE "table1"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('table1_id_seq'::regclass) NOT NULL,
     PRIMARY KEY ("id")
 );
 
@@ -185,9 +180,13 @@ SET search_path TO public;
 
 DROP TABLE IF EXISTS "table2" CASCADE;
 
+DROP SEQUENCE IF EXISTS "table2_id_seq";
+
+CREATE SEQUENCE IF NOT EXISTS "table2_id_seq";
+
 CREATE TABLE "table2"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('table2_id_seq'::regclass) NOT NULL,
     PRIMARY KEY ("id")
 );
 
@@ -199,13 +198,17 @@ SET search_path TO "Yipee";
 
 DROP TABLE IF EXISTS "table3" CASCADE;
 
+DROP SEQUENCE IF EXISTS "table3_id_seq";
+
 SET search_path TO public;
 
 SET search_path TO "Yipee";
 
+CREATE SEQUENCE IF NOT EXISTS "table3_id_seq";
+
 CREATE TABLE "table3"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('table3_id_seq'::regclass) NOT NULL,
     PRIMARY KEY ("id")
 );
 
@@ -234,9 +237,13 @@ BEGIN;
 
 DROP TABLE IF EXISTS "x"."book" CASCADE;
 
+DROP SEQUENCE IF EXISTS "x"."book_id_seq";
+
+CREATE SEQUENCE IF NOT EXISTS "x"."book_id_seq";
+
 CREATE TABLE "x"."book"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('x.book_id_seq'::regclass) NOT NULL,
     "title" VARCHAR(255) NOT NULL,
     "author_id" INTEGER,
     PRIMARY KEY ("id")
@@ -250,9 +257,13 @@ CREATE INDEX "book_i_639136" ON "x"."book" ("title");
 
 DROP TABLE IF EXISTS "y"."author" CASCADE;
 
+DROP SEQUENCE IF EXISTS "y"."author_id_seq";
+
+CREATE SEQUENCE IF NOT EXISTS "y"."author_id_seq";
+
 CREATE TABLE "y"."author"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('y.author_id_seq'::regclass) NOT NULL,
     "first_name" VARCHAR(100),
     "last_name" VARCHAR(100),
     PRIMARY KEY ("id")
@@ -264,9 +275,13 @@ CREATE TABLE "y"."author"
 
 DROP TABLE IF EXISTS "x"."book_summary" CASCADE;
 
+DROP SEQUENCE IF EXISTS "x"."book_summary_id_seq";
+
+CREATE SEQUENCE IF NOT EXISTS "x"."book_summary_id_seq";
+
 CREATE TABLE "x"."book_summary"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('x.book_summary_id_seq'::regclass) NOT NULL,
     "book_id" INTEGER NOT NULL,
     "summary" TEXT NOT NULL,
     PRIMARY KEY ("id")
@@ -296,9 +311,11 @@ EOF;
         $table = $this->getTableFromSchema($schema);
         $expected = <<<EOF
 
+CREATE SEQUENCE IF NOT EXISTS "foo_id_seq";
+
 CREATE TABLE "foo"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('foo_id_seq'::regclass) NOT NULL,
     "bar" VARCHAR(255) NOT NULL,
     PRIMARY KEY ("id")
 );
@@ -339,9 +356,11 @@ EOF;
         $table = $this->getTableFromSchema($schema);
         $expected = <<<EOF
 
+CREATE SEQUENCE IF NOT EXISTS "foo_id_seq";
+
 CREATE TABLE "foo"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('foo_id_seq'::regclass) NOT NULL,
     "bar" INTEGER,
     PRIMARY KEY ("id"),
     CONSTRAINT "foo_u_14f552" UNIQUE ("bar")
@@ -371,9 +390,11 @@ EOF;
 
 SET search_path TO "Woopah";
 
+CREATE SEQUENCE IF NOT EXISTS "foo_id_seq";
+
 CREATE TABLE "foo"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('foo_id_seq'::regclass) NOT NULL,
     PRIMARY KEY ("id")
 );
 
@@ -392,9 +413,11 @@ EOF;
         $table = $this->getTableFromSchema($schema, 'Woopah.foo');
         $expected = <<<EOF
 
+CREATE SEQUENCE IF NOT EXISTS "woopah"."foo_id_seq";
+
 CREATE TABLE "Woopah"."foo"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('Woopah.foo_id_seq'::regclass) NOT NULL,
     "bar" INTEGER,
     PRIMARY KEY ("id")
 );
@@ -410,7 +433,7 @@ EOF;
     {
         $schema = <<<EOF
 <database name="test" identifierQuoting="true">
-    <table name="foo">
+    <table name="foo" idMethod="sequence">
         <column name="id" primaryKey="true" type="INTEGER" autoIncrement="true"/>
         <id-method-parameter value="my_custom_sequence_name"/>
     </table>
@@ -419,11 +442,11 @@ EOF;
         $table = $this->getTableFromSchema($schema);
         $expected = <<<EOF
 
-CREATE SEQUENCE "my_custom_sequence_name";
+CREATE SEQUENCE IF NOT EXISTS "my_custom_sequence_name";
 
 CREATE TABLE "foo"
 (
-    "id" INTEGER NOT NULL,
+    "id" INTEGER DEFAULT nextval('foo_id_seq'::regclass) NOT NULL,
     PRIMARY KEY ("id")
 );
 
@@ -447,9 +470,11 @@ EOF;
         $table = $this->getTableFromSchema($schema);
         $expected = <<<EOF
 
+CREATE SEQUENCE IF NOT EXISTS "foo_id_seq";
+
 CREATE TABLE "foo"
 (
-    "id" serial NOT NULL,
+    "id" INTEGER DEFAULT nextval('foo_id_seq'::regclass) NOT NULL,
     "bar" INTEGER,
     PRIMARY KEY ("id")
 );
@@ -496,6 +521,8 @@ SET search_path TO "Woopah";
 
 DROP TABLE IF EXISTS "foo" CASCADE;
 
+DROP SEQUENCE IF EXISTS "foo_id_seq";
+
 SET search_path TO public;
 
 EOF;
@@ -513,6 +540,8 @@ EOF;
 
 DROP TABLE IF EXISTS "Woopah"."foo" CASCADE;
 
+DROP SEQUENCE IF EXISTS "woopah"."foo_id_seq";
+
 EOF;
         $this->assertEquals($expected, static::getPlatform()->buildDropTableDdl($table));
     }
@@ -526,11 +555,11 @@ EOF;
         $idMethodParameter = new IdMethodParameter();
         $idMethodParameter->setValue('foo_sequence');
         $table->addIdMethodParameter($idMethodParameter);
-        $table->setIdMethod(IdMethod::NATIVE);
+        $table->setIdMethod(IdMethod::SEQUENCE);
         $expected = '
 DROP TABLE IF EXISTS "foo" CASCADE;
 
-DROP SEQUENCE "foo_sequence";
+DROP SEQUENCE IF EXISTS "foo_sequence";
 ';
         $this->assertEquals($expected, static::getPlatform()->buildDropTableDdl($table));
     }
@@ -550,18 +579,31 @@ DROP SEQUENCE "foo_sequence";
         $this->assertEquals($expected, static::getPlatform()->buildColumnDdl($c));
     }
 
+    public static function SerialTypeDataProvider(): array
+    {
+        return [
+            [ColumnType::BIGINT, '"foo" INT8 DEFAULT nextval(\'foo_table_foo_seq\'::regclass)'],
+            [ColumnType::SMALLINT, '"foo" INT2 DEFAULT nextval(\'foo_table_foo_seq\'::regclass)'],
+            [ColumnType::INTEGER, '"foo" INTEGER DEFAULT nextval(\'foo_table_foo_seq\'::regclass)'],
+        ];
+    }
     /**
      * @return void
      */
-    public function testGetColumnDDLAutoIncrement()
+    #[DataProvider('SerialTypeDataProvider')]
+    public function testGetColumnDDLAutoIncrement(ColumnType $columnType, string $expected)
     {
+        $platform = static::getPlatform();
+
         $database = new Database();
-        $database->setPlatform(static::getPlatform());
+        $database->setPlatform($platform);
+
         $table = new Table('foo_table');
         $table->setIdMethod(IdMethod::NATIVE);
         $database->addTable($table);
+
         $column = new Column('foo');
-        $column->setTypeMapping(static::getPlatform()->getColumnTypeMapping(ColumnType::BIGINT));
+        $column->setTypeMapping($platform->getColumnTypeMapping($columnType));
         $column->setAutoIncrement(true);
         $table->addColumn($column);
 

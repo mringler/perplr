@@ -45,10 +45,7 @@ class Database extends ScopedMappingModel
      */
     private string|null $baseQueryClass = null;
 
-    /**
-     * @var string
-     */
-    private $defaultIdMethod;
+    private IdMethod $defaultIdMethod;
 
     private string $defaultPhpNamingMethod;
 
@@ -131,7 +128,7 @@ class Database extends ScopedMappingModel
         $this->name = $this->getAttribute('name');
         $this->baseClass = $this->getAttribute('baseClass');
         $this->baseQueryClass = $this->getAttribute('baseQueryClass');
-        $this->defaultIdMethod = $this->getAttribute('defaultIdMethod', IdMethod::NATIVE);
+        $this->defaultIdMethod = IdMethod::fromAttribute($this->getAttribute('defaultIdMethod')) ?? IdMethod::NATIVE;
         $this->defaultPhpNamingMethod = $this->getAttribute('defaultPhpNamingMethod', NameGeneratorInterface::CONV_METHOD_UNDERSCORE);
         $this->heavyIndexing = $this->booleanValue($this->getAttribute('heavyIndexing'));
 
@@ -239,9 +236,9 @@ class Database extends ScopedMappingModel
      * Returns the name of the default ID method strategy.
      * This parameter can be overridden at the table level.
      *
-     * @return string
+     * @return \Propel\Generator\Model\IdMethod
      */
-    public function getDefaultIdMethod(): string
+    public function getDefaultIdMethod(): IdMethod
     {
         return $this->defaultIdMethod;
     }
@@ -250,11 +247,11 @@ class Database extends ScopedMappingModel
      * Sets the name of the default ID method strategy.
      * This parameter can be overridden at the table level.
      *
-     * @param string $strategy
+     * @param \Propel\Generator\Model\IdMethod $strategy
      *
      * @return void
      */
-    public function setDefaultIdMethod(string $strategy): void
+    public function setDefaultIdMethod(IdMethod $strategy): void
     {
         $this->defaultIdMethod = $strategy;
     }
@@ -471,15 +468,15 @@ class Database extends ScopedMappingModel
         if (!$this->hasTable($table->getName(), true)) {
             return;
         }
-            foreach ($this->tables as $id => $tableExam) {
-                if ($table->getName() === $tableExam->getName()) {
-                    unset($this->tables[$id]);
-                }
+        foreach ($this->tables as $id => $tableExam) {
+            if ($table->getName() === $tableExam->getName()) {
+                unset($this->tables[$id]);
             }
+        }
 
-            unset($this->tablesByName[$table->getName()]);
-            unset($this->tablesByLowercaseName[strtolower($table->getName())]);
-            unset($this->tablesByPhpName[$table->getPhpName()]);
+        unset($this->tablesByName[$table->getName()]);
+        unset($this->tablesByLowercaseName[strtolower($table->getName())]);
+        unset($this->tablesByPhpName[$table->getPhpName()]);
     }
 
     /**
@@ -596,7 +593,7 @@ class Database extends ScopedMappingModel
     public function setSchema(?string $schema): void
     {
         if ($this->schema !== $schema && $this->platform) {
-        $oldSchema = $this->schema;
+            $oldSchema = $this->schema;
             $schemaDelimiter = $this->platform->getSchemaDelimiter();
             $fixHash = function (&$array) use ($schema, $oldSchema, $schemaDelimiter): void {
                 foreach ($array as $k => $v) {
@@ -953,6 +950,7 @@ class Database extends ScopedMappingModel
         $tables = [];
         foreach ($this->tables as $oldTable) {
             $table = clone $oldTable;
+            $table->setDatabase($this);
             $tables[] = $table;
             $this->tablesByName[$table->getName()] = $table;
             $this->tablesByLowercaseName[strtolower($table->getName())] = $table;

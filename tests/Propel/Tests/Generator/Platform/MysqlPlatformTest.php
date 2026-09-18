@@ -14,8 +14,6 @@ use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Datatype\ColumnType;
-use Propel\Generator\Model\IdMethod;
-use Propel\Generator\Model\IdMethodParameter;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Model\VendorInfo;
@@ -43,32 +41,6 @@ class MysqlPlatformTest extends PlatformTestProvider
         }
 
         return $platform;
-    }
-
-    /**
-     * @return void
-     */
-    public function testGetSequenceNameDefault()
-    {
-        $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
-        $expected = 'foo_SEQ';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
-    }
-
-    /**
-     * @return void
-     */
-    public function testGetSequenceNameCustom()
-    {
-        $table = new Table('foo');
-        $table->setIdMethod(IdMethod::NATIVE);
-        $idMethodParameter = new IdMethodParameter();
-        $idMethodParameter->setValue('foo_sequence');
-        $table->addIdMethodParameter($idMethodParameter);
-        $table->setIdMethod(IdMethod::NATIVE);
-        $expected = 'foo_sequence';
-        $this->assertEquals($expected, static::getPlatform()->getSequenceName($table));
     }
 
     /**
@@ -911,7 +883,7 @@ CREATE TABLE `bar`
 ";
 
         $table = $this->getDatabaseFromSchema($schema)->getTable('bar');
-        $relationTableSql = static::getPlatform()->getAddTableDDL($table);
+        $relationTableSql = static::getPlatform()->buildAddTableDdl($table);
 
         $this->assertEquals($expectedRelationSql, $relationTableSql);
     }

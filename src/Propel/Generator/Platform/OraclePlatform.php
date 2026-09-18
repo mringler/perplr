@@ -134,21 +134,34 @@ class OraclePlatform extends DefaultPlatform
     }
 
     /**
-     * @return string
+     * @return \Propel\Generator\Model\IdMethod
      */
     #[\Override]
-    public function getNativeIdMethod(): string
+    public function getNativeIdMethod(): IdMethod
     {
-        return PlatformInterface::SEQUENCE;
+        return IdMethod::SEQUENCE;
     }
 
     /**
-     * @return string
+     * Build column DDL fragment for id method (i.e. 'AUTO_INCREMENT' for native id method in MySQL)
+     *
+     * @param \Propel\Generator\Model\IdMethod $idMethod
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string|null Null means id method is not supported (might trigger Exception),
+     *                     empty string means column DDL is not affected by id method.
      */
     #[\Override]
-    public function getAutoIncrement(): string
+    protected function resolveAutoIncrementColumnDdl(IdMethod $idMethod, Column $column): string|null
     {
-        return '';
+        return match ($idMethod) {
+            IdMethod::NO_ID_METHOD,
+            IdMethod::SEQUENCE,
+            => '',
+            IdMethod::IDENTITY, // not implemented
+            => null,
+            default => null,
+        };
     }
 
     /**
@@ -531,7 +544,7 @@ CREATE SEQUENCE $sequenceName
      * Any code modification here must be ported there.
      *
      * @param string $targetVariable
-     * @param string $connectionVariable
+     * @param string $connectionVariableName
      * @param string|null $sequenceName
      * @param string $indent
      * @param string|null $phpType
@@ -543,7 +556,7 @@ CREATE SEQUENCE $sequenceName
     #[\Override]
     public function buildLoadNextSequenceValueStatement(
         string $targetVariable,
-        string $connectionVariable = '$con',
+        string $connectionVariableName = '$con',
         string|null $sequenceName = null,
         string $indent = '            ',
         string|null $phpType = null
@@ -554,7 +567,7 @@ CREATE SEQUENCE $sequenceName
         $typecast = $phpType ? "($phpType)" : '';
 
         return "
-{$indent}\$dataFetcher = {$connectionVariable}->query('SELECT {$sequenceName}.nextval FROM dual');
+{$indent}\$dataFetcher = {$connectionVariableName}->query('SELECT {$sequenceName}.nextval FROM dual');
 {$indent}$targetVariable = {$typecast}\$dataFetcher->fetchColumn();";
     }
 }

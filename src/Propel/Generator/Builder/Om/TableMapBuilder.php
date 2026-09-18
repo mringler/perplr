@@ -14,7 +14,6 @@ use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PgsqlPlatform;
-use Propel\Generator\Platform\PlatformInterface;
 use Propel\Runtime\ActiveQuery\ColumnResolver\ColumnExpression\LocalColumnExpression;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\InstancePoolTrait;
@@ -626,8 +625,13 @@ class $className extends TableMap
      */
     protected function addInitialize(string &$script): void
     {
+        $this->declareClass(IdMethod::class);
+
         $table = $this->getTable();
         $modelClassName = addslashes($this->getStubObjectBuilder()->getFullyQualifiedClassName());
+        $idMethodName = $table->getIdMethod() !== IdMethod::NO_ID_METHOD ? $table->getIdMethod()->name : null;
+
+        $idSequenceName = $table->resolveDefaultIdSequenceName();
 
         $script .= "
     /**
@@ -644,22 +648,14 @@ class $className extends TableMap
         \$this->setIdentifierQuoting(" . ($table->isIdentifierQuotingEnabled() ? 'true' : 'false') . ");
         \$this->setModelClassName('$modelClassName');
         \$this->setPackage('" . parent::getPackage() . "');";
-        if ($table->getIdMethod() === 'native') {
-            $script .= "
-        \$this->setUseIdGenerator(true);";
-        } else {
-            $script .= "
-        \$this->setUseIdGenerator(false);";
-        }
 
-        if ($table->getIdMethodParameters()) {
-            $params = $table->getIdMethodParameters();
-            $imp = $params[0];
+        if ($idMethodName) {
             $script .= "
-        \$this->setPrimaryKeyMethodInfo('" . $imp->getValue() . "');";
-        } elseif ($table->getIdMethod() == IdMethod::NATIVE && ($platform->getNativeIdMethod() == PlatformInterface::SEQUENCE || $platform->getNativeIdMethod() == PlatformInterface::SERIAL)) {
+        \$this->setIdMethod(IdMethod::{$idMethodName});";
+        }
+        if ($idSequenceName) {
             $script .= "
-        \$this->setPrimaryKeyMethodInfo('" . $platform->getSequenceName($table) . "');";
+        \$this->setPrimaryKeyMethodInfo('$idSequenceName');";
         }
 
         if ($this->getTable()->getChildrenColumn()) {
@@ -1639,7 +1635,9 @@ class $className extends TableMap
         $stubObjectName = $this->tableNames->useObjectStubClassName();
         $stubObjectNameFq = $this->tableNames->useObjectStubClassName(false);
         $queryClassName = $this->getQueryClassName();
-        $autoIncrementedKeyColumns = $table->getIdMethod() === 'none' ? [] : array_filter($table->getPrimaryKey(), fn (Column $pkCol) => $pkCol->isAutoIncrement());
+        $autoIncrementedKeyColumns = $table->getIdMethod() !== IdMethod::NO_ID_METHOD
+            ? array_filter($table->getPrimaryKey(), fn (Column $pkCol) => $pkCol->isAutoIncrement())
+            : [];
 
         $throwsException = $autoIncrementedKeyColumns && !$table->isAllowPkInsert();
         if ($throwsException) {

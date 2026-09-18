@@ -33,7 +33,7 @@ class ColumnComparator
         $fromDDL = $platform?->buildColumnDdl($fromColumn);
         $toDDL = $platform?->buildColumnDdl($toColumn);
 
-        if ($platform && $fromDDL === $toDDL) {
+        if ($platform && $fromDDL === $toDDL && empty($changedProperties['idMethod'])) { // Note: change to idMethod doesn't have to change DDL
             return false;
         }
         $columnDiff = new ColumnDiff($fromColumn, $toColumn);
