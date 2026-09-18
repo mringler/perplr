@@ -109,22 +109,22 @@ class MssqlPlatform extends DefaultPlatform
      * @return string
      */
     #[\Override]
-    public function getAddTablesDDL(Database $database): string
+    public function buildAddTablesDdl(Database $database): string
     {
-        $ret = $this->getBeginDDL();
+        $ret = $this->buildBeginDdl();
         foreach ($database->getTablesForSql() as $table) {
             $this->normalizeTable($table);
         }
         foreach ($database->getTablesForSql() as $table) {
-            $ret .= $this->getCommentBlockDDL($table->getName());
-            $ret .= $this->getDropTableDDL($table);
-            $ret .= $this->getAddTableDDL($table);
-            $ret .= $this->getAddIndicesDDL($table);
+            $ret .= $this->buildCommentBlockDdl($table->getName());
+            $ret .= $this->buildDropTableDdl($table);
+            $ret .= $this->buildAddTableDdl($table);
+            $ret .= $this->buildAddIndicesDdl($table);
         }
         foreach ($database->getTablesForSql() as $table) {
-            $ret .= $this->getAddForeignKeysDDL($table);
+            $ret .= $this->buildAddForeignKeysDdl($table);
         }
-        $ret .= $this->getEndDDL();
+        $ret .= $this->buildEndDdl();
 
         return $ret;
     }
@@ -135,7 +135,7 @@ class MssqlPlatform extends DefaultPlatform
      * @return string
      */
     #[\Override]
-    public function getDropTableDDL(Table $table): string
+    public function buildDropTableDdl(Table $table): string
     {
         $ret = '';
         foreach ($table->getForeignKeys() as $fk) {
@@ -183,7 +183,7 @@ END
      * @return string
      */
     #[\Override]
-    public function getPrimaryKeyDDL(Table $table): string
+    public function buildPrimaryKeyDdl(Table $table): string
     {
         if ($table->hasPrimaryKey()) {
             $pattern = 'CONSTRAINT %s PRIMARY KEY (%s)';
@@ -204,7 +204,7 @@ END
      * @return string
      */
     #[\Override]
-    public function getAddForeignKeyDDL(ForeignKey $fk): string
+    public function buildAddForeignKeyDdl(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
@@ -232,7 +232,7 @@ END
      * @return string
      */
     #[\Override]
-    public function getUniqueDDL(Unique $unique): string
+    public function buildUniqueDdl(Unique $unique): string
     {
         $pattern = 'CONSTRAINT %s UNIQUE NONCLUSTERED (%s) ON [PRIMARY]';
 
@@ -249,7 +249,7 @@ END
      * @return string
      */
     #[\Override]
-    public function getForeignKeyDDL(ForeignKey $fk): string
+    public function buildForeignKeyDdl(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';

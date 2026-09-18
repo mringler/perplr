@@ -103,7 +103,7 @@ class MigrationTestCase extends TestCaseFixturesDatabase
 
             return false;
         }
-        $sql = $this->database->getPlatform()->getModifyDatabaseDDL($diff);
+        $sql = $this->database->getPlatform()->buildModifyDatabaseDdl($diff);
 
         $this->con->beginTransaction();
         if (!$sql) {
@@ -202,7 +202,7 @@ class MigrationTestCase extends TestCaseFixturesDatabase
         $this->readDatabase();
         $diff = DatabaseComparator::computeDiff($this->database, $database);
         if ($diff) {
-            $sql = $this->database->getPlatform()->getModifyDatabaseDDL($diff);
+            $sql = $this->database->getPlatform()->buildModifyDatabaseDdl($diff);
 
             throw new BuildException(sprintf(
                 "There are unexpected diffs (real to model): \n%s\n-----%s-----\nCurrent Database: \n%s\nTo XML Database: \n%s\n",

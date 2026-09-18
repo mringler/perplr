@@ -148,7 +148,7 @@ END
 ;
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTablesDDL($database));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTablesDdl($database));
     }
 
     /**
@@ -290,7 +290,7 @@ END
 ;
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTablesDDL($database));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTablesDdl($database));
     }
 
     /**
@@ -301,7 +301,7 @@ EOF;
     {
         $database = $this->getDatabaseFromSchema($schema);
         $expected = '';
-        $this->assertEquals($expected, static::getPlatform()->getAddTablesDDL($database));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTablesDdl($database));
     }
 
     /**
@@ -320,7 +320,7 @@ CREATE TABLE [foo]
     CONSTRAINT [foo_pk] PRIMARY KEY ([id])
 );
 ";
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -339,7 +339,7 @@ CREATE TABLE [foo]
     CONSTRAINT [foo_pk] PRIMARY KEY ([foo],[bar])
 );
 ";
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -358,7 +358,7 @@ CREATE TABLE [foo]
     CONSTRAINT [foo_u_14f552] UNIQUE NONCLUSTERED ([bar]) ON [PRIMARY]
 );
 ";
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -376,7 +376,7 @@ CREATE TABLE [Woopah].[foo]
     CONSTRAINT [foo_pk] PRIMARY KEY ([id])
 );
 ";
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -411,7 +411,7 @@ BEGIN
     DROP TABLE [foo]
 END
 ";
-        $this->assertEquals($expected, static::getPlatform()->getDropTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildDropTableDdl($table));
     }
 
     /**
@@ -447,7 +447,7 @@ BEGIN
     DROP TABLE [Woopah].[foo]
 END
 ";
-        $this->assertEquals($expected, static::getPlatform()->getDropTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildDropTableDdl($table));
     }
 
     /**
@@ -463,7 +463,7 @@ END
         $column->getTypeMapping()->createDefaultValue(123);
         $column->getTypeMapping()->setSqlType('DECIMAL(5,6)');
         $expected = '[foo] DECIMAL(5,6) DEFAULT 123 NOT NULL';
-        $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
+        $this->assertEquals($expected, static::getPlatform()->buildColumnDdl($column));
     }
 
     /**
@@ -476,7 +476,7 @@ END
         $column->setPrimaryKey(true);
         $table->addColumn($column);
         $expected = 'CONSTRAINT [foo_pk] PRIMARY KEY ([bar])';
-        $this->assertEquals($expected, static::getPlatform()->getPrimaryKeyDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildPrimaryKeyDdl($table));
     }
 
     /**
@@ -492,7 +492,7 @@ END
         $column2->setPrimaryKey(true);
         $table->addColumn($column2);
         $expected = 'CONSTRAINT [foo_pk] PRIMARY KEY ([bar1],[bar2])';
-        $this->assertEquals($expected, static::getPlatform()->getPrimaryKeyDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildPrimaryKeyDdl($table));
     }
 
     /**
@@ -504,7 +504,7 @@ END
         $expected = "
 ALTER TABLE [foo] DROP CONSTRAINT [foo_pk];
 ";
-        $this->assertEquals($expected, static::getPlatform()->getDropPrimaryKeyDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildDropPrimaryKeyDdl($table));
     }
 
     /**
@@ -516,7 +516,7 @@ ALTER TABLE [foo] DROP CONSTRAINT [foo_pk];
         $expected = "
 ALTER TABLE [foo] ADD CONSTRAINT [foo_pk] PRIMARY KEY ([bar]);
 ";
-        $this->assertEquals($expected, static::getPlatform()->getAddPrimaryKeyDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddPrimaryKeyDdl($table));
     }
 
     /**
@@ -530,7 +530,7 @@ CREATE INDEX [babar] ON [foo] ([bar1],[bar2]);
 
 CREATE INDEX [foo_index] ON [foo] ([bar1]);
 ";
-        $this->assertEquals($expected, static::getPlatform()->getAddIndicesDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddIndicesDdl($table));
     }
 
     /**
@@ -542,7 +542,7 @@ CREATE INDEX [foo_index] ON [foo] ([bar1]);
         $expected = "
 CREATE INDEX [babar] ON [foo] ([bar1],[bar2]);
 ";
-        $this->assertEquals($expected, static::getPlatform()->getAddIndexDDL($index));
+        $this->assertEquals($expected, static::getPlatform()->buildAddIndexDdl($index));
     }
 
     /**
@@ -554,7 +554,7 @@ CREATE INDEX [babar] ON [foo] ([bar1],[bar2]);
         $expected = "
 DROP INDEX [babar];
 ";
-        $this->assertEquals($expected, static::getPlatform()->getDropIndexDDL($index));
+        $this->assertEquals($expected, static::getPlatform()->buildDropIndexDdl($index));
     }
 
     /**
@@ -564,7 +564,7 @@ DROP INDEX [babar];
     public function testGetIndexDDL($index)
     {
         $expected = 'INDEX [babar] ([bar1],[bar2])';
-        $this->assertEquals($expected, static::getPlatform()->getIndexDDL($index));
+        $this->assertEquals($expected, static::getPlatform()->buildIndexDdl($index));
     }
 
     /**
@@ -574,7 +574,7 @@ DROP INDEX [babar];
     public function testGetUniqueDDL($index)
     {
         $expected = 'CONSTRAINT [babar] UNIQUE NONCLUSTERED ([bar1],[bar2]) ON [PRIMARY]';
-        $this->assertEquals($expected, static::getPlatform()->getUniqueDDL($index));
+        $this->assertEquals($expected, static::getPlatform()->buildUniqueDdl($index));
     }
 
     /**
@@ -594,7 +594,7 @@ ALTER TABLE [foo] ADD CONSTRAINT [foo_baz_fk] FOREIGN KEY ([baz_id]) REFERENCES 
 END
 ;
 ";
-        $this->assertEquals($expected, static::getPlatform()->getAddForeignKeysDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddForeignKeysDdl($table));
     }
 
     /**
@@ -609,7 +609,7 @@ ALTER TABLE [foo] ADD CONSTRAINT [foo_bar_fk] FOREIGN KEY ([bar_id]) REFERENCES 
 END
 ;
 ";
-        $this->assertEquals($expected, static::getPlatform()->getAddForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildAddForeignKeyDdl($fk));
     }
 
     /**
@@ -619,7 +619,7 @@ END
     public function testGetAddForeignKeySkipSqlDDL($fk)
     {
         $expected = '';
-        $this->assertEquals($expected, static::getPlatform()->getAddForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildAddForeignKeyDdl($fk));
     }
 
     /**
@@ -628,10 +628,8 @@ END
     #[\PHPUnit\Framework\Attributes\DataProvider('providerForTestGetForeignKeyDDL')]
     public function testGetDropForeignKeyDDL($fk)
     {
-        $expected = "
-ALTER TABLE [foo] DROP CONSTRAINT [foo_bar_fk];
-";
-        $this->assertEquals($expected, static::getPlatform()->getDropForeignKeyDDL($fk));
+        $expected = "\nALTER TABLE [foo] DROP CONSTRAINT [foo_bar_fk];\n";
+        $this->assertEquals($expected, static::getPlatform()->buildDropForeignKeyDdl($fk));
     }
 
     /**
@@ -641,7 +639,7 @@ ALTER TABLE [foo] DROP CONSTRAINT [foo_bar_fk];
     public function testGetDropForeignKeySkipSqlDDL($fk)
     {
         $expected = '';
-        $this->assertEquals($expected, static::getPlatform()->getDropForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildDropForeignKeyDdl($fk));
     }
 
     /**
@@ -651,7 +649,7 @@ ALTER TABLE [foo] DROP CONSTRAINT [foo_bar_fk];
     public function testGetForeignKeyDDL($fk)
     {
         $expected = 'CONSTRAINT [foo_bar_fk] FOREIGN KEY ([bar_id]) REFERENCES [bar] ([id]) ON DELETE CASCADE';
-        $this->assertEquals($expected, static::getPlatform()->getForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildForeignKeyDdl($fk));
     }
 
     /**
@@ -661,7 +659,7 @@ ALTER TABLE [foo] DROP CONSTRAINT [foo_bar_fk];
     public function testGetForeignKeySkipSqlDDL($fk)
     {
         $expected = '';
-        $this->assertEquals($expected, static::getPlatform()->getForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildForeignKeyDdl($fk));
     }
 
     /**
@@ -674,7 +672,7 @@ ALTER TABLE [foo] DROP CONSTRAINT [foo_bar_fk];
 -- foo bar
 -----------------------------------------------------------------------
 ";
-        $this->assertEquals($expected, static::getPlatform()->getCommentBlockDDL('foo bar'));
+        $this->assertEquals($expected, static::getPlatform()->buildCommentBlockDdl('foo bar'));
     }
 
     /**

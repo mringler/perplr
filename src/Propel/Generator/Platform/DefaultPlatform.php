@@ -70,8 +70,22 @@ class DefaultPlatform implements PlatformInterface
     }
 
     /**
-     * Returns the object builder class.
+     * @template T
      *
+     * @param callable(T): string $fun
+     * @param array<T> $array
+     * @param string $separator
+     *
+     * @return string
+     */
+    final protected function mapConcat(callable $fun, array $array, string $separator = ''): string
+    {
+        $lines = array_map($fun, $array);
+
+        return implode($separator, $lines);
+    }
+
+    /**
      * @param string $type
      *
      * @return string
@@ -358,20 +372,20 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getAddTablesDDL(Database $database): string
+    public function buildAddTablesDdl(Database $database): string
     {
-        $ret = $this->getBeginDDL();
+        $ret = $this->buildBeginDdl();
         foreach ($database->getTablesForSql() as $table) {
             $this->normalizeTable($table);
         }
         foreach ($database->getTablesForSql() as $table) {
-            $ret .= $this->getCommentBlockDDL($table->getName());
-            $ret .= $this->getDropTableDDL($table);
-            $ret .= $this->getAddTableDDL($table);
-            $ret .= $this->getAddIndicesDDL($table);
-            $ret .= $this->getAddForeignKeysDDL($table);
+            $ret .= $this->buildCommentBlockDdl($table->getName());
+            $ret .= $this->buildDropTableDdl($table);
+            $ret .= $this->buildAddTableDdl($table);
+            $ret .= $this->buildAddIndicesDdl($table);
+            $ret .= $this->buildAddForeignKeysDdl($table);
         }
-        $ret .= $this->getEndDDL();
+        $ret .= $this->buildEndDdl();
 
         return $ret;
     }
@@ -381,7 +395,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getBeginDDL(): string
+    public function buildBeginDdl(): string
     {
         return '';
     }
@@ -391,7 +405,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getEndDDL(): string
+    public function buildEndDdl(): string
     {
         return '';
     }
@@ -401,7 +415,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getDropTableDDL(Table $table): string
+    public function buildDropTableDdl(Table $table): string
     {
         return "
 DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
@@ -417,22 +431,24 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      * @return string
      */
     #[\Override]
-    public function getAddTableDDL(Table $table): string
+    public function buildAddTableDdl(Table $table): string
     {
-        $tableDescription = $table->hasDescription() ? $this->getCommentLineDDL($table->getDescription()) : '';
+        $tableDescription = $table->hasDescription()
+            ? $this->buildCommentLineDdl($table->getDescription())
+            : '';
 
         $lines = [];
 
         foreach ($table->getColumns() as $column) {
-            $lines[] = $this->getColumnDDL($column);
+            $lines[] = $this->buildColumnDdl($column);
         }
 
         if ($table->hasPrimaryKey()) {
-            $lines[] = $this->getPrimaryKeyDDL($table);
+            $lines[] = $this->buildPrimaryKeyDdl($table);
         }
 
         foreach ($table->getUnices() as $unique) {
-            $lines[] = $this->getUniqueDDL($unique);
+            $lines[] = $this->buildUniqueDdl($unique);
         }
 
         $sep = ",
@@ -454,14 +470,12 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
     }
 
     /**
-     * Builds the DDL SQL for a Column object.
-     *
      * @param \Propel\Generator\Model\Column $col
      *
      * @return string
      */
     #[\Override]
-    public function getColumnDDL(Column $col): string
+    public function buildColumnDdl(Column $col): string
     {
         $ddl = [$this->quoteIdentifier($col->getName())];
         $typeDeclaration = $col->resolveSqlTypeName();
@@ -541,7 +555,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @example
      * <code>
-     * echo $platform->getColumnListDDL(array('foo', 'bar');
+     * echo $platform->buildColumnListDdl(array('foo', 'bar');
      * // '"foo","bar"'
      * </code>
      *
@@ -551,7 +565,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      * @return string
      */
     #[\Override]
-    public function getColumnListDDL(array $columns, string $delimiter = ','): string
+    public function buildColumnListDdl(array $columns, string $delimiter = ','): string
     {
         $list = [];
         foreach ($columns as $column) {
@@ -580,7 +594,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      * @return string
      */
     #[\Override]
-    public function getPrimaryKeyDDL(Table $table): string
+    public function buildPrimaryKeyDdl(Table $table): string
     {
         if ($table->hasPrimaryKey()) {
             return 'PRIMARY KEY (' . $this->getColumnListDDL($table->getPrimaryKey()) . ')';
@@ -594,7 +608,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @return string
      */
-    public function getDropPrimaryKeyDDL(Table $table): string
+    public function buildDropPrimaryKeyDdl(Table $table): string
     {
         if (!$table->hasPrimaryKey()) {
             return '';
@@ -618,7 +632,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getAddPrimaryKeyDDL(Table $table): string
+    public function buildAddPrimaryKeyDdl(Table $table): string
     {
         if (!$table->hasPrimaryKey()) {
             return '';
@@ -640,7 +654,7 @@ ALTER TABLE %s ADD %s;
      *
      * @return string
      */
-    public function getAddIndicesDDL(Table $table): string
+    public function buildAddIndicesDdl(Table $table): string
     {
         $ret = '';
         foreach ($table->getIndices() as $fk) {
@@ -655,7 +669,7 @@ ALTER TABLE %s ADD %s;
      *
      * @return string
      */
-    public function getAddIndexDDL(Index $index): string
+    public function buildAddIndexDdl(Index $index): string
     {
         $pattern = "
 CREATE %sINDEX %s ON %s (%s);
@@ -677,7 +691,7 @@ CREATE %sINDEX %s ON %s (%s);
      *
      * @return string
      */
-    public function getDropIndexDDL(Index $index): string
+    public function buildDropIndexDdl(Index $index): string
     {
         $pattern = "
 DROP INDEX %s;
@@ -694,7 +708,7 @@ DROP INDEX %s;
      *
      * @return string
      */
-    public function getIndexDDL(Index $index): string
+    public function buildIndexDdl(Index $index): string
     {
         return sprintf(
             '%sINDEX %s (%s)',
@@ -705,13 +719,11 @@ DROP INDEX %s;
     }
 
     /**
-     * Builds the DDL SQL for a Unique constraint object.
-     *
      * @param \Propel\Generator\Model\Unique $unique
      *
      * @return string
      */
-    public function getUniqueDDL(Unique $unique): string
+    public function buildUniqueDdl(Unique $unique): string
     {
         return sprintf('UNIQUE (%s)', $this->getColumnListDDL($unique->getColumnObjects()));
     }
@@ -721,7 +733,7 @@ DROP INDEX %s;
      *
      * @return string
      */
-    public function getAddForeignKeysDDL(Table $table): string
+    public function buildAddForeignKeysDdl(Table $table): string
     {
         $ret = '';
         foreach ($table->getForeignKeys() as $fk) {
@@ -736,7 +748,7 @@ DROP INDEX %s;
      *
      * @return string
      */
-    public function getAddForeignKeyDDL(ForeignKey $fk): string
+    public function buildAddForeignKeyDdl(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
@@ -755,9 +767,9 @@ ALTER TABLE %s ADD %s;
     /**
      * @param \Propel\Generator\Model\ForeignKey $fk
      *
-     * @return string|null
+     * @return string
      */
-    public function getDropForeignKeyDDL(ForeignKey $fk): ?string
+    public function buildDropForeignKeyDdl(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return null;
@@ -778,7 +790,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getForeignKeyDDL(ForeignKey $fk): string
+    public function buildForeignKeyDdl(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
@@ -811,7 +823,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getCommentLineDDL(string $comment): string
+    public function buildCommentLineDdl(string $comment): string
     {
         $pattern = "-- %s
 ";
@@ -824,7 +836,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getCommentBlockDDL(string $comment): string
+    public function buildCommentBlockDdl(string $comment): string
     {
         $pattern = "
 -----------------------------------------------------------------------
@@ -840,136 +852,107 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getModifyDatabaseDDL(DatabaseDiff $databaseDiff): string
+    public function buildModifyDatabaseDdl(DatabaseDiff $databaseDiff): string
     {
         $ret = '';
         foreach ($databaseDiff->getRemovedTables() as $table) {
-            $ret .= $this->getDropTableDDL($table);
+            $ret .= $this->buildDropTableDdl($table);
         }
 
         foreach ($databaseDiff->getRenamedTables() as $fromTableName => $toTableName) {
-            $ret .= $this->getRenameTableDDL($fromTableName, $toTableName);
+            $ret .= $this->buildRenameTableDdl($fromTableName, $toTableName);
         }
 
         foreach ($databaseDiff->getAddedTables() as $table) {
-            $ret .= $this->getAddTableDDL($table);
-            $ret .= $this->getAddIndicesDDL($table);
+            $ret .= $this->buildAddTableDdl($table);
+            $ret .= $this->buildAddIndicesDdl($table);
         }
 
         foreach ($databaseDiff->getModifiedTables() as $tableDiff) {
-            $ret .= $this->getModifyTableDDL($tableDiff);
+            $ret .= $this->buildModifyTableDdl($tableDiff);
         }
 
         foreach ($databaseDiff->getAddedTables() as $table) {
-            $ret .= $this->getAddForeignKeysDDL($table);
+            $ret .= $this->buildAddForeignKeysDdl($table);
         }
 
-        if ($ret) {
-            $ret = $this->getBeginDDL() . $ret . $this->getEndDDL();
-        }
-
-        return $ret;
+        return $ret
+            ? $this->buildBeginDdl() . $ret . $this->buildEndDdl()
+            : '';
     }
 
     /**
-     * Builds the DDL SQL to rename a table
-     *
-     * @param string $fromTableName
-     * @param string $toTableName
+     * @param string $currentTableName
+     * @param string $newTableName
      *
      * @return string
      */
-    public function getRenameTableDDL(string $fromTableName, string $toTableName): string
+    public function buildRenameTableDdl(string $currentTableName, string $newTableName): string
     {
-        $pattern = "
-ALTER TABLE %s RENAME TO %s;
-";
+        $currentTableName = $this->quoteIdentifier($currentTableName);
+        $newTableName = $this->quoteIdentifier($newTableName);
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($fromTableName),
-            $this->quoteIdentifier($toTableName),
-        );
+        return "\nALTER TABLE $currentTableName RENAME TO $newTableName;\n";
     }
 
     /**
-     * Builds the DDL SQL to alter a table
-     * based on a TableDiff instance
-     *
      * @param \Propel\Generator\Model\Diff\TableDiff $tableDiff
      *
      * @return string
      */
-    public function getModifyTableDDL(TableDiff $tableDiff): string
+    public function buildModifyTableDdl(TableDiff $tableDiff): string
     {
         $ret = '';
 
         $toTable = $tableDiff->getToTable();
 
         // drop indices, foreign keys
-        foreach ($tableDiff->getRemovedFks() as $fk) {
-            $ret .= $this->getDropForeignKeyDDL($fk);
-        }
-        foreach ($tableDiff->getModifiedFks() as $fkModification) {
-            [$fromFk] = $fkModification;
-            $ret .= $this->getDropForeignKeyDDL($fromFk);
-        }
-        foreach ($tableDiff->getRemovedIndices() as $index) {
-            $ret .= $this->getDropIndexDDL($index);
-        }
-        foreach ($tableDiff->getModifiedIndices() as $indexModification) {
-            [$fromIndex] = $indexModification;
-            $ret .= $this->getDropIndexDDL($fromIndex);
-        }
+        $ret .= $this->mapConcat([$this, 'buildDropForeignKeyDdl'], $tableDiff->getRemovedFks());
+        $fromFks = array_column($tableDiff->getModifiedFks(), 0);
+        $ret .= $this->mapConcat([$this, 'buildDropForeignKeyDdl'], $fromFks);
+
+        $ret .= $this->mapConcat([$this, 'buildDropIndexDdl'], $tableDiff->getRemovedIndices());
+        $fromIndexes = array_column($tableDiff->getModifiedIndices(), 0);
+        $ret .= $this->mapConcat([$this, 'buildDropIndexDdl'], $fromIndexes);
 
         $columnChangeString = '';
 
         // alter table structure
         if ($tableDiff->hasModifiedPk()) {
-            $columnChangeString .= $this->getDropPrimaryKeyDDL($tableDiff->getFromTable());
+            $columnChangeString .= $this->buildDropPrimaryKeyDdl($tableDiff->getFromTable());
         }
         foreach ($tableDiff->getRenamedColumns() as $columnRenaming) {
-            $columnChangeString .= $this->getRenameColumnDDL($columnRenaming[0], $columnRenaming[1]);
+            $columnChangeString .= $this->buildRenameColumnDdl(...$columnRenaming);
         }
 
         $modifiedColumns = $tableDiff->getModifiedColumns();
 
         if ($modifiedColumns) {
-            $columnChangeString .= $this->getModifyColumnsDDL($modifiedColumns);
+            $columnChangeString .= $this->buildModifyColumnsDdl($modifiedColumns);
         }
 
         $addedColumns = $tableDiff->getAddedColumns();
 
         if ($addedColumns) {
-            $columnChangeString .= $this->getAddColumnsDDL($addedColumns);
+            $columnChangeString .= $this->buildAddColumnsDdl($addedColumns);
         }
-
-        foreach ($tableDiff->getRemovedColumns() as $column) {
-            $columnChangeString .= $this->getRemoveColumnDDL($column);
-        }
+        $columnChangeString .= $this->mapConcat([$this, 'buildRemoveColumnDdl'], $tableDiff->getRemovedColumns());
 
         // add new indices and foreign keys
         if ($tableDiff->hasModifiedPk()) {
-            $columnChangeString .= $this->getAddPrimaryKeyDDL($tableDiff->getToTable());
+            $columnChangeString .= $this->buildAddPrimaryKeyDdl($tableDiff->getToTable());
         }
 
         $ret .= AlterTableStatementMerger::merge($toTable, $columnChangeString);
 
         // create indices, foreign keys
-        foreach ($tableDiff->getModifiedIndices() as $indexModification) {
-            [$oldIndex, $toIndex] = $indexModification;
-            $ret .= $this->getAddIndexDDL($toIndex);
-        }
-        foreach ($tableDiff->getAddedIndices() as $index) {
-            $ret .= $this->getAddIndexDDL($index);
-        }
-        foreach ($tableDiff->getModifiedFks() as $fkModification) {
-            [, $toFk] = $fkModification;
-            $ret .= $this->getAddForeignKeyDDL($toFk);
-        }
-        foreach ($tableDiff->getAddedFks() as $fk) {
-            $ret .= $this->getAddForeignKeyDDL($fk);
-        }
+        $toIndex = array_column($tableDiff->getModifiedIndices(), 1);
+        $ret .= $this->mapConcat([$this, 'buildAddIndexDdl'], $toIndex);
+        $ret .= $this->mapConcat([$this, 'buildAddIndexDdl'], $tableDiff->getAddedIndices());
+
+        $toFks = array_column($tableDiff->getModifiedFks(), 1);
+        $ret .= $this->mapConcat([$this, 'buildAddForeignKeyDdl'], $toFks);
+        $ret .= $this->mapConcat([$this, 'buildAddForeignKeyDdl'], $tableDiff->getAddedFks());
 
         return $ret;
     }
@@ -979,16 +962,14 @@ ALTER TABLE %s RENAME TO %s;
      *
      * @return string
      */
-    public function getModifyTableColumnsDDL(TableDiff $tableDiff): string
+    public function buildModifyTableColumnsDdl(TableDiff $tableDiff): string
     {
         $ret = '';
 
-        foreach ($tableDiff->getRemovedColumns() as $column) {
-            $ret .= $this->getRemoveColumnDDL($column);
-        }
+        $ret .= $this->mapConcat([$this, 'buildRemoveColumnDdl'], $tableDiff->getRemovedColumns());
 
         foreach ($tableDiff->getRenamedColumns() as $columnRenaming) {
-            $ret .= $this->getRenameColumnDDL($columnRenaming[0], $columnRenaming[1]);
+            $ret .= $this->buildRenameColumnDdl(...$columnRenaming);
         }
 
         $modifiedColumns = $tableDiff->getModifiedColumns();
@@ -1011,7 +992,7 @@ ALTER TABLE %s RENAME TO %s;
      *
      * @return string
      */
-    public function getModifyTablePrimaryKeyDDL(TableDiff $tableDiff): string
+    public function buildModifyTablePrimaryKeyDdl(TableDiff $tableDiff): string
     {
         $ret = '';
 
@@ -1028,7 +1009,7 @@ ALTER TABLE %s RENAME TO %s;
      *
      * @return string
      */
-    public function getModifyTableIndicesDDL(TableDiff $tableDiff): string
+    public function buildModifyTableIndicesDdl(TableDiff $tableDiff): string
     {
         $ret = '';
 
@@ -1054,7 +1035,7 @@ ALTER TABLE %s RENAME TO %s;
      *
      * @return string
      */
-    public function getModifyTableForeignKeysDDL(TableDiff $tableDiff): string
+    public function buildModifyTableForeignKeysDdl(TableDiff $tableDiff): string
     {
         $ret = '';
 
@@ -1080,7 +1061,7 @@ ALTER TABLE %s RENAME TO %s;
      *
      * @return string
      */
-    public function getRemoveColumnDDL(Column $column): string
+    public function buildRemoveColumnDdl(Column $column): string
     {
         $pattern = "
 ALTER TABLE %s DROP COLUMN %s;
@@ -1101,7 +1082,7 @@ ALTER TABLE %s DROP COLUMN %s;
      *
      * @return string
      */
-    public function getRenameColumnDDL(Column $fromColumn, Column $toColumn): string
+    public function buildRenameColumnDdl(Column $fromColumn, Column $toColumn): string
     {
         $pattern = "
 ALTER TABLE %s RENAME COLUMN %s TO %s;
@@ -1122,7 +1103,7 @@ ALTER TABLE %s RENAME COLUMN %s TO %s;
      *
      * @return string
      */
-    public function getModifyColumnDDL(ColumnDiff $columnDiff): string
+    public function buildModifyColumnDdl(ColumnDiff $columnDiff): string
     {
         $toColumn = $columnDiff->getToColumn();
         $pattern = "
@@ -1137,13 +1118,11 @@ ALTER TABLE %s MODIFY %s;
     }
 
     /**
-     * Builds the DDL SQL to modify a list of columns
-     *
-     * @param array<\Propel\Generator\Model\Diff\ColumnDiff> $columnDiffs
+     * @param \Propel\Generator\Model\Column $column
      *
      * @return string
      */
-    public function getModifyColumnsDDL(array $columnDiffs): string
+    public function buildAddColumnDdl(Column $column): string
     {
         $lines = [];
         $table = null;
@@ -1173,13 +1152,11 @@ ALTER TABLE %s MODIFY
     }
 
     /**
-     * Builds the DDL SQL to remove a column
-     *
-     * @param \Propel\Generator\Model\Column $column
+     * @param array<\Propel\Generator\Model\Diff\ColumnDiff> $columnDiffs
      *
      * @return string
      */
-    public function getAddColumnDDL(Column $column): string
+    public function buildModifyColumnsDdl(array $columnDiffs): string
     {
         $pattern = "
 ALTER TABLE %s ADD %s;
@@ -1197,7 +1174,7 @@ ALTER TABLE %s ADD %s;
      *
      * @return string
      */
-    public function getAddColumnsDDL(array $columns): string
+    public function buildAddColumnsDdl(array $columns): string
     {
         $lines = [];
         $table = null;
@@ -1664,5 +1641,25 @@ if (is_resource($columnValueAccessor)) {
         $valuesCsv = "'" . implode("','", $valueSet) . "'";
 
         return "$typeLiteral($valuesCsv)";
+    }
+
+    /**
+     * @param string $name
+     * @param array $arguments
+     *
+     * @throws \BadMethodCallException
+     *
+     * @return mixed
+     */
+    public function __call(string $name, array $arguments)
+    {
+        if (str_starts_with($name, 'get') && str_ends_with($name, 'DDL')) {
+            $newName = 'build' . substr($name, 3, -3) . 'Ddl';
+            trigger_deprecation('Perpl', '2.10.4', "Update to new function name: $name() is now $newName()");
+
+            return $this->$newName(...$arguments);
+        }
+
+        throw new BadMethodCallException(sprintf('Undefined method %s::%s()', self::class, $name));
     }
 }

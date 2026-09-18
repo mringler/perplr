@@ -140,7 +140,7 @@ class SqlitePlatform extends DefaultPlatform
      * @return string
      */
     #[\Override]
-    public function getAddColumnsDDL(array $columns): string
+    public function buildAddColumnsDdl(array $columns): string
     {
         $ret = '';
         foreach ($columns as $column) {
@@ -158,7 +158,7 @@ ALTER TABLE $tableName ADD $columnDll;
      * @inheritDoc
      */
     #[\Override]
-    public function getModifyTableDDL(TableDiff $tableDiff): string
+    public function buildModifyTableDdl(TableDiff $tableDiff): string
     {
         $changedNotEditableThroughDirectDDL = $this->tableAlteringWorkaround && (
             $tableDiff->hasModifiedFks()
@@ -205,10 +205,10 @@ ALTER TABLE $tableName ADD $columnDll;
         }
 
         if ($changedNotEditableThroughDirectDDL) {
-            return $this->getMigrationTableDDL($tableDiff);
+            return $this->buildMigrationTableDdl($tableDiff);
         }
 
-        return parent::getModifyTableDDL($tableDiff);
+        return parent::buildModifyTableDdl($tableDiff);
     }
 
     /**
@@ -219,7 +219,7 @@ ALTER TABLE $tableName ADD $columnDll;
      *
      * @return string
      */
-    public function getMigrationTableDDL(TableDiff $tableDiff): string
+    public function buildMigrationTableDdl(TableDiff $tableDiff): string
     {
         $pattern = "
 CREATE TEMPORARY TABLE %s AS SELECT %s FROM %s;
@@ -235,7 +235,7 @@ DROP TABLE %s;
         $originTableName = $originTable->getName();
         $tempTableName = $newTable->getCommonName() . '__temp__' . uniqid();
 
-        $originTableFields = $this->getColumnListDDL($originTable->getColumns());
+        $originTableFields = $this->buildColumnListDdl($originTable->getColumns());
 
         $fieldMap = [];
         //start with modified columns
@@ -256,8 +256,8 @@ DROP TABLE %s;
             }
         }
 
-        $createTable = $this->getAddTableDDL($newTable);
-        $createTable .= $this->getAddIndicesDDL($newTable);
+        $createTable = $this->buildAddTableDdl($newTable);
+        $createTable .= $this->buildAddIndicesDdl($newTable);
 
         $sql = sprintf(
             $pattern,
@@ -280,7 +280,7 @@ DROP TABLE %s;
      * @return string
      */
     #[\Override]
-    public function getBeginDDL(): string
+    public function buildBeginDdl(): string
     {
         return '
 PRAGMA foreign_keys = OFF;
@@ -291,7 +291,7 @@ PRAGMA foreign_keys = OFF;
      * @return string
      */
     #[\Override]
-    public function getEndDDL(): string
+    public function buildEndDdl(): string
     {
         return '
 PRAGMA foreign_keys = ON;
@@ -304,17 +304,17 @@ PRAGMA foreign_keys = ON;
      * @return string
      */
     #[\Override]
-    public function getAddTablesDDL(Database $database): string
+    public function buildAddTablesDdl(Database $database): string
     {
         $ret = '';
         foreach ($database->getTablesForSql() as $table) {
             $this->normalizeTable($table);
         }
         foreach ($database->getTablesForSql() as $table) {
-            $ret .= $this->getCommentBlockDDL($table->getName());
-            $ret .= $this->getDropTableDDL($table);
-            $ret .= $this->getAddTableDDL($table);
-            $ret .= $this->getAddIndicesDDL($table);
+            $ret .= $this->buildCommentBlockDdl($table->getName());
+            $ret .= $this->buildDropTableDdl($table);
+            $ret .= $this->buildAddTableDdl($table);
+            $ret .= $this->buildAddIndicesDdl($table);
         }
 
         return $ret;
@@ -385,20 +385,21 @@ PRAGMA foreign_keys = ON;
      * @return string
      */
     #[\Override]
-    public function getPrimaryKeyDDL(Table $table): string
+    public function buildPrimaryKeyDdl(Table $table): string
     {
-        if ($table->hasPrimaryKey() && !$table->hasAutoIncrementPrimaryKey()) {
-            return 'PRIMARY KEY (' . $this->getColumnListDDL($table->getPrimaryKey()) . ')';
+        if (!$table->hasPrimaryKey() || $table->hasAutoIncrementPrimaryKey()) {
+            return '';
         }
+        $columnDdl = $this->buildColumnListDdl($table->getPrimaryKey());
 
-        return '';
+        return "PRIMARY KEY ($columnDdl)";
     }
 
     /**
      * @inheritDoc
      */
     #[\Override]
-    public function getRemoveColumnDDL(Column $column): string
+    public function buildRemoveColumnDdl(Column $column): string
     {
         //not supported
         return '';
@@ -408,7 +409,7 @@ PRAGMA foreign_keys = ON;
      * @inheritDoc
      */
     #[\Override]
-    public function getRenameColumnDDL(Column $fromColumn, Column $toColumn): string
+    public function buildRenameColumnDdl(Column $fromColumn, Column $toColumn): string
     {
         //not supported
         return '';
@@ -418,7 +419,7 @@ PRAGMA foreign_keys = ON;
      * @inheritDoc
      */
     #[\Override]
-    public function getModifyColumnDDL(ColumnDiff $columnDiff): string
+    public function buildModifyColumnDdl(ColumnDiff $columnDiff): string
     {
         //not supported
         return '';
@@ -428,7 +429,7 @@ PRAGMA foreign_keys = ON;
      * @inheritDoc
      */
     #[\Override]
-    public function getModifyColumnsDDL($columnDiffs): string
+    public function buildModifyColumnsDdl($columnDiffs): string
     {
         //not supported
         return '';
@@ -438,7 +439,7 @@ PRAGMA foreign_keys = ON;
      * @inheritDoc
      */
     #[\Override]
-    public function getDropPrimaryKeyDDL(Table $table): string
+    public function buildDropPrimaryKeyDdl(Table $table): string
     {
         //not supported
         return '';
@@ -448,7 +449,7 @@ PRAGMA foreign_keys = ON;
      * @inheritDoc
      */
     #[\Override]
-    public function getAddPrimaryKeyDDL(Table $table): string
+    public function buildAddPrimaryKeyDdl(Table $table): string
     {
         //not supported
         return '';
@@ -500,7 +501,7 @@ PRAGMA foreign_keys = ON;
      * @return string
      */
     #[\Override]
-    public function getColumnDDL(Column $col): string
+    public function buildColumnDdl(Column $col): string
     {
         if ($col->isAutoIncrement()) {
             $col->setUpTypeMapping(ColumnType::INTEGER);
@@ -518,7 +519,7 @@ PRAGMA foreign_keys = ON;
             );
         }
 
-        return parent::getColumnDDL($col);
+        return parent::buildColumnDdl($col);
     }
 
     /**
@@ -527,24 +528,24 @@ PRAGMA foreign_keys = ON;
      * @return string
      */
     #[\Override]
-    public function getAddTableDDL(Table $table): string
+    public function buildAddTableDdl(Table $table): string
     {
         $table = clone $table;
-        $tableDescription = $table->hasDescription() ? $this->getCommentLineDDL($table->getDescription()) : '';
+        $tableDescription = $table->hasDescription() ? $this->buildCommentLineDdl($table->getDescription()) : '';
 
         $lines = [];
 
         foreach ($table->getColumns() as $column) {
-            $lines[] = $this->getColumnDDL($column);
+            $lines[] = $this->buildColumnDdl($column);
         }
 
-        $pk = $this->getPrimaryKeyDDL($table);
+        $pk = $this->buildPrimaryKeyDdl($table);
         if ($pk) {
             $lines[] = $pk;
         }
 
         foreach ($table->getUnices() as $unique) {
-            $lines[] = $this->getUniqueDDL($unique);
+            $lines[] = $this->buildUniqueDdl($unique);
         }
 
         if ($this->foreignKeySupport) {
@@ -552,28 +553,19 @@ PRAGMA foreign_keys = ON;
                 if ($foreignKey->isSkipSql() || $foreignKey->isPolymorphic()) {
                     continue;
                 }
-                $lines[] = str_replace("
-    ", "
-        ", $this->getForeignKeyDDL($foreignKey));
+                $fkDdl = $this->buildForeignKeyDdl($foreignKey);
+                $lines[] = str_replace("\n    ", "\n        ", $fkDdl);
             }
         }
 
-        $sep = ",
-    ";
+        $tableName = $this->quoteIdentifier($table->getName());
+        $columnDefinitions = implode(",\n    ", $lines);
 
-        $pattern = "
-%sCREATE TABLE %s
+        return "
+{$tableDescription}CREATE TABLE $tableName
 (
-    %s
-);
-";
-
-        return sprintf(
-            $pattern,
-            $tableDescription,
-            $this->quoteIdentifier($table->getName()),
-            implode($sep, $lines),
-        );
+    $columnDefinitions
+);\n";
     }
 
     /**
@@ -582,20 +574,15 @@ PRAGMA foreign_keys = ON;
      * @return string
      */
     #[\Override]
-    public function getForeignKeyDDL(ForeignKey $fk): string
+    public function buildForeignKeyDdl(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || !$this->foreignKeySupport || $fk->isPolymorphic()) {
             return '';
         }
 
-        $pattern = 'FOREIGN KEY (%s) REFERENCES %s (%s)';
-
-        $script = sprintf(
-            $pattern,
-            $this->getColumnListDDL($fk->getLocalColumnObjects()),
-            $this->quoteIdentifier($fk->getForeignTableName()),
-            $this->getColumnListDDL($fk->getForeignColumnObjects()),
-        );
+        $localColumns = $this->buildColumnListDdl($fk->getLocalColumnObjects());
+        $foreignTable = $this->quoteIdentifier($fk->getForeignTableName());
+        $foreignColumns = $this->buildColumnListDdl($fk->getForeignColumnObjects());
 
         if ($fk->hasOnUpdate()) {
             $script .= "

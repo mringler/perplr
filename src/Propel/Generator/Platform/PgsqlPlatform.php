@@ -187,7 +187,7 @@ class PgsqlPlatform extends DefaultPlatform
      *
      * @return string
      */
-    protected function getAddSequenceDDL(Table $table): string
+    protected function buildAddSequenceDdl(Table $table): string
     {
         if (
             $table->getIdMethod() == IdMethod::NATIVE
@@ -211,7 +211,7 @@ CREATE SEQUENCE %s;
      *
      * @return string
      */
-    protected function getDropSequenceDDL(Table $table): string
+    protected function buildDropSequenceDdl(Table $table): string
     {
         if (
             $table->getIdMethod() == IdMethod::NATIVE
@@ -235,16 +235,17 @@ DROP SEQUENCE %s;
      *
      * @return string
      */
-    public function getAddSchemasDDL(Database $database): string
+    public function buildAddSchemasDdl(Database $database): string
     {
         $ret = '';
         $schemas = [];
         foreach ($database->getTables() as $table) {
             $vi = $table->getVendorInfoForType('pgsql');
-            if ($vi->hasParameter('schema') && !isset($schemas[$vi->getParameter('schema')])) {
-                $schemas[$vi->getParameter('schema')] = true;
-                $ret .= $this->getAddSchemaDDL($table);
+            if (!$vi->hasParameter('schema') || isset($schemas[$vi->getParameter('schema')])) {
+                continue;
             }
+                $schemas[$vi->getParameter('schema')] = true;
+            $ret .= $this->buildAddSchemaDdl($table);
         }
 
         return $ret;
@@ -255,7 +256,7 @@ DROP SEQUENCE %s;
      *
      * @return string
      */
-    public function getAddSchemaDDL(Table $table): string
+    public function buildAddSchemaDdl(Table $table): string
     {
         $vi = $table->getVendorInfoForType('pgsql');
         if ($vi->hasParameter('schema')) {
@@ -274,7 +275,7 @@ CREATE SCHEMA %s;
      *
      * @return string
      */
-    public function getUseSchemaDDL(Table $table): string
+    public function buildUseSchemaDdl(Table $table): string
     {
         $vi = $table->getVendorInfoForType('pgsql');
         if ($vi->hasParameter('schema')) {
@@ -293,7 +294,7 @@ SET search_path TO %s;
      *
      * @return string
      */
-    public function getResetSchemaDDL(Table $table): string
+    public function buildResetSchemaDdl(Table $table): string
     {
         $vi = $table->getVendorInfoForType('pgsql');
         if ($vi->hasParameter('schema')) {
@@ -311,26 +312,26 @@ SET search_path TO public;
      * @return string
      */
     #[\Override]
-    public function getAddTablesDDL(Database $database): string
+    public function buildAddTablesDdl(Database $database): string
     {
-        $ret = $this->getAddSchemasDDL($database);
+        $ret = $this->buildAddSchemasDdl($database);
 
         foreach ($database->getTablesForSql() as $table) {
             $this->normalizeTable($table);
         }
 
         foreach ($database->getTablesForSql() as $table) {
-            $ret .= $this->getCommentBlockDDL($table->getName());
-            $ret .= $this->getDropTableDDL($table);
-            $ret .= $this->getAddTableDDL($table);
-            $ret .= $this->getAddIndicesDDL($table);
+            $ret .= $this->buildCommentBlockDdl($table->getName());
+            $ret .= $this->buildDropTableDdl($table);
+            $ret .= $this->buildAddTableDdl($table);
+            $ret .= $this->buildAddIndicesDdl($table);
         }
         foreach ($database->getTablesForSql() as $table) {
-            $ret .= $this->getAddForeignKeysDDL($table);
+            $ret .= $this->buildAddForeignKeysDdl($table);
         }
 
         if ($ret) {
-            $ret = $this->getBeginDDL() . $ret . $this->getEndDDL();
+            $ret = $this->buildBeginDdl() . $ret . $this->buildEndDdl();
         }
 
         return $ret;
@@ -342,9 +343,9 @@ SET search_path TO public;
      * @return string
      */
     #[\Override]
-    public function getForeignKeyDDL(ForeignKey $fk): string
+    public function buildForeignKeyDdl(ForeignKey $fk): string
     {
-        $script = parent::getForeignKeyDDL($fk);
+        $script = parent::buildForeignKeyDdl($fk);
 
         $pgVendorInfo = $fk->getVendorInfoForType('pgsql');
         if (filter_var($pgVendorInfo->getParameter('deferrable'), FILTER_VALIDATE_BOOLEAN)) {
@@ -361,7 +362,7 @@ SET search_path TO public;
      * @return string
      */
     #[\Override]
-    public function getBeginDDL(): string
+    public function buildBeginDdl(): string
     {
         return "
 BEGIN;
@@ -372,7 +373,7 @@ BEGIN;
      * @return string
      */
     #[\Override]
-    public function getEndDDL(): string
+    public function buildEndDdl(): string
     {
         return "
 COMMIT;
@@ -383,14 +384,9 @@ COMMIT;
      * @inheritDoc
      */
     #[\Override]
-    public function getAddForeignKeysDDL(Table $table): string
+    public function buildAddForeignKeysDdl(Table $table): string
     {
-        $ret = '';
-        foreach ($table->getForeignKeys() as $fk) {
-            $ret .= $this->getAddForeignKeyDDL($fk);
-        }
-
-        return $ret;
+        return $this->mapConcat([$this, 'buildAddForeignKeyDdl'], $table->getForeignKeys());
     }
 
     /**
@@ -399,23 +395,23 @@ COMMIT;
      * @return string
      */
     #[\Override]
-    public function getAddTableDDL(Table $table): string
+    public function buildAddTableDdl(Table $table): string
     {
-        $ret = $this->getUseSchemaDDL($table);
-        $ret .= $this->getAddSequenceDDL($table);
+        $ret = $this->buildUseSchemaDdl($table);
+        $ret .= $this->buildAddSequenceDdl($table);
 
         $lines = [];
 
         foreach ($table->getColumns() as $column) {
-            $lines[] = $this->getColumnDDL($column);
+            $lines[] = $this->buildColumnDdl($column);
         }
 
         if ($table->hasPrimaryKey()) {
-            $lines[] = $this->getPrimaryKeyDDL($table);
+            $lines[] = $this->buildPrimaryKeyDdl($table);
         }
 
         foreach ($table->getUnices() as $unique) {
-            $lines[] = $this->getUniqueDDL($unique);
+            $lines[] = $this->buildUniqueDdl($unique);
         }
 
         $sep = ",
@@ -492,17 +488,14 @@ COMMENT ON COLUMN %s.%s IS %s;
      * @return string
      */
     #[\Override]
-    public function getDropTableDDL(Table $table): string
+    public function buildDropTableDdl(Table $table): string
     {
-        $ret = $this->getUseSchemaDDL($table);
-        $pattern = "
-DROP TABLE IF EXISTS %s CASCADE;
-";
-        $ret .= sprintf($pattern, $this->quoteIdentifier($table->getName()));
-        $ret .= $this->getDropSequenceDDL($table);
-        $ret .= $this->getResetSchemaDDL($table);
+        $tableName = $this->quoteIdentifier($table->getName());
 
-        return $ret;
+        return $this->buildUseSchemaDdl($table)
+            . "\nDROP TABLE IF EXISTS $tableName CASCADE;\n"
+            . $this->buildDropSequenceDdl($table)
+            . $this->buildResetSchemaDdl($table);
     }
 
     /**
@@ -524,42 +517,14 @@ DROP TABLE IF EXISTS %s CASCADE;
      * @return string
      */
     #[\Override]
-    public function getColumnDDL(Column $col): string
+    public function buildColumnDefaultValueDdl(Column $col): string
     {
-        $ddl = [$this->quoteIdentifier($col->getName())];
-        $sqlType = $col->resolveSqlTypeName();
-        $table = $col->getTable();
-        if ($col->isAutoIncrement() && $table && $table->getIdMethodParameters() == null) {
-            $sqlType = $col->getColumnType() === ColumnType::BIGINT ? 'bigserial' : 'serial';
-        }
-        if ($this->hasSize($sqlType) && $col->isDefaultSqlType($this)) {
-            if ($this->isNumber($sqlType)) {
-                if (strtoupper($sqlType) === 'NUMERIC') {
-                    $ddl[] = $sqlType . $col->getSizeDefinition();
-                } else {
-                    $ddl[] = $sqlType;
-                }
-            } else {
-                $ddl[] = $sqlType . $col->getSizeDefinition();
-            }
-        } else {
-            $ddl[] = $sqlType;
-        }
-
-        if (
-            $col->getDefaultValue()
-            && $col->getDefaultValue()->isExpression()
-            && $col->getDefaultValue()->getValue() === 'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
-        ) {
-            $col->setDefaultValue(
-                new ColumnDefaultValue('CURRENT_TIMESTAMP', ColumnDefaultValue::TYPE_EXPR),
-            );
         }
 
         $default = $this->getColumnDefaultValueDDL($col);
         if ($default) {
             $ddl[] = $default;
-        }
+    }
 
         $notNull = $this->getNullString($col->isNotNull());
         if ($notNull) {
@@ -580,13 +545,12 @@ DROP TABLE IF EXISTS %s CASCADE;
      * @return string
      */
     #[\Override]
-    public function getUniqueDDL(Unique $unique): string
+    public function buildUniqueDdl(Unique $unique): string
     {
-        return sprintf(
-            'CONSTRAINT %s UNIQUE (%s)',
-            $this->quoteIdentifier($unique->getName()),
-            $this->getColumnListDDL($unique->getColumnObjects()),
-        );
+        $name = $this->quoteIdentifier($unique->getName());
+        $ddl = $this->buildColumnListDdl($unique->getColumnObjects());
+
+        return "CONSTRAINT $name UNIQUE ($ddl)";
     }
 
     /**
@@ -596,7 +560,7 @@ DROP TABLE IF EXISTS %s CASCADE;
      * @return string
      */
     #[\Override]
-    public function getRenameTableDDL(string $fromTableName, string $toTableName): string
+    public function buildRenameTableDdl(string $fromTableName, string $toTableName): string
     {
         $pos = strpos($toTableName, '.');
         if ($pos !== false) {
@@ -676,14 +640,14 @@ ALTER TABLE %s RENAME TO %s;
     /**
      * Overrides the implementation from DefaultPlatform
      *
-     * @see DefaultPlatform::getModifyColumnDDL
+     * @see DefaultPlatform::buildModifyColumnDdl
      *
      * @param \Propel\Generator\Model\Diff\ColumnDiff $columnDiff
      *
      * @return string
      */
     #[\Override]
-    public function getModifyColumnDDL(ColumnDiff $columnDiff): string
+    public function buildModifyColumnDdl(ColumnDiff $columnDiff): string
     {
         $ret = '';
         $changedProperties = $columnDiff->getChangedProperties();
@@ -860,28 +824,19 @@ DROP SEQUENCE %s CASCADE;
     }
 
     /**
-     * Overrides the implementation from DefaultPlatform
-     *
-     * @see DefaultPlatform::getModifyColumnsDDL
+     * @see DefaultPlatform::buildModifyColumnsDdl()
      *
      * @param array<\Propel\Generator\Model\Diff\ColumnDiff> $columnDiffs
      *
      * @return string
      */
     #[\Override]
-    public function getModifyColumnsDDL(array $columnDiffs): string
+    public function buildModifyColumnsDdl(array $columnDiffs): string
     {
-        $ret = '';
-        foreach ($columnDiffs as $columnDiff) {
-            $ret .= $this->getModifyColumnDDL($columnDiff);
-        }
-
-        return $ret;
+        return $this->mapConcat([$this, 'buildModifyColumnDdl'], $columnDiffs);
     }
 
     /**
-     * Overrides the implementation from DefaultPlatform
-     *
      * @see DefaultPlatform::getAddColumnsDLL
      *
      * @param array<\Propel\Generator\Model\Column> $columns
@@ -889,41 +844,31 @@ DROP SEQUENCE %s CASCADE;
      * @return string
      */
     #[\Override]
-    public function getAddColumnsDDL(array $columns): string
+    public function buildAddColumnsDdl(array $columns): string
     {
-        $ret = '';
-        foreach ($columns as $column) {
-            $ret .= $this->getAddColumnDDL($column);
-        }
-
-        return $ret;
+        return $this->mapConcat([$this, 'buildAddColumnDdl'], $columns);
     }
 
     /**
      * Overrides the implementation from DefaultPlatform
      *
-     * @see DefaultPlatform::getDropIndexDDL
+     * @see DefaultPlatform::buildDropIndexDdl()
      *
      * @param \Propel\Generator\Model\Index $index
      *
      * @return string
      */
     #[\Override]
-    public function getDropIndexDDL(Index $index): string
+    public function buildDropIndexDdl(Index $index): string
     {
-        if ($index instanceof Unique) {
-            $pattern = "
-ALTER TABLE %s DROP CONSTRAINT %s;
-";
-
-            return sprintf(
-                $pattern,
-                $this->quoteIdentifier($index->getTable()->getName()),
-                $this->quoteIdentifier($index->getName()),
-            );
+        if (!$index instanceof Unique) {
+            return parent::buildDropIndexDdl($index);
         }
 
-        return parent::getDropIndexDDL($index);
+        $tableName = $this->quoteIdentifier($index->getTable()->getName());
+        $indexName = $this->quoteIdentifier($index->getName());
+
+        return "\nALTER TABLE $tableName DROP CONSTRAINT $indexName;\n";
     }
 
     /**
@@ -972,21 +917,16 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      * @return string
      */
     #[\Override]
-    public function getAddIndexDDL(Index $index): string
+    public function buildAddIndexDdl(Index $index): string
     {
         if (!$index->isUnique()) {
-            return parent::getAddIndexDDL($index);
+            return parent::buildAddIndexDdl($index);
         }
 
-        $pattern = "
-ALTER TABLE %s ADD CONSTRAINT %s UNIQUE (%s);
-";
+        $tableName = $this->quoteIdentifier($index->getTable()->getName());
+        $indexName = $this->quoteIdentifier($index->getName());
+        $ddl = $this->buildColumnListDdl($index->getColumnObjects());
 
-        return sprintf(
-            $pattern,
-            $this->quoteIdentifier($index->getTable()->getName()),
-            $this->quoteIdentifier($index->getName()),
-            $this->getColumnListDDL($index->getColumnObjects()),
-        );
+        return "\nALTER TABLE $tableName ADD CONSTRAINT $indexName UNIQUE ($ddl);\n";
     }
 }

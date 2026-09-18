@@ -123,7 +123,7 @@ EOF;
     {
         $database = $this->getDatabaseFromSchema($schema);
         $expected = '';
-        $this->assertEquals($expected, static::getPlatform()->getAddTablesDDL($database));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTablesDdl($database));
     }
 
     /**
@@ -214,7 +214,7 @@ SET search_path TO public;
 COMMIT;
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTablesDDL($database));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTablesDdl($database));
     }
 
     /**
@@ -284,7 +284,7 @@ ALTER TABLE "x"."book_summary" ADD CONSTRAINT "book_summary_fk_23450f"
 COMMIT;
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTablesDDL($database));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTablesDdl($database));
     }
 
     /**
@@ -306,7 +306,7 @@ CREATE TABLE "foo"
 COMMENT ON TABLE "foo" IS 'This is foo table';
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -327,7 +327,7 @@ CREATE TABLE "foo"
 );
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -348,7 +348,7 @@ CREATE TABLE "foo"
 );
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -380,7 +380,7 @@ CREATE TABLE "foo"
 SET search_path TO public;
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -400,7 +400,7 @@ CREATE TABLE "Woopah"."foo"
 );
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -428,7 +428,7 @@ CREATE TABLE "foo"
 );
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -459,7 +459,7 @@ COMMENT ON COLUMN "foo"."id" IS 'identifier column';
 COMMENT ON COLUMN "foo"."bar" IS 'your name here';
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**
@@ -471,7 +471,7 @@ EOF;
         $expected = '
 DROP TABLE IF EXISTS "foo" CASCADE;
 ';
-        $this->assertEquals($expected, static::getPlatform()->getDropTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildDropTableDdl($table));
     }
 
     /**
@@ -499,7 +499,7 @@ DROP TABLE IF EXISTS "foo" CASCADE;
 SET search_path TO public;
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getDropTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildDropTableDdl($table));
     }
 
     /**
@@ -514,7 +514,7 @@ EOF;
 DROP TABLE IF EXISTS "Woopah"."foo" CASCADE;
 
 EOF;
-        $this->assertEquals($expected, static::getPlatform()->getDropTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildDropTableDdl($table));
     }
 
     /**
@@ -532,7 +532,7 @@ DROP TABLE IF EXISTS "foo" CASCADE;
 
 DROP SEQUENCE "foo_sequence";
 ';
-        $this->assertEquals($expected, static::getPlatform()->getDropTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildDropTableDdl($table));
     }
 
     /**
@@ -547,7 +547,7 @@ DROP SEQUENCE "foo_sequence";
         $c->setNotNull(true);
         $c->getTypeMapping()->createDefaultValue(123);
         $expected = '"foo" DOUBLE PRECISION DEFAULT 123 NOT NULL';
-        $this->assertEquals($expected, static::getPlatform()->getColumnDDL($c));
+        $this->assertEquals($expected, static::getPlatform()->buildColumnDdl($c));
     }
 
     /**
@@ -564,8 +564,8 @@ DROP SEQUENCE "foo_sequence";
         $column->setTypeMapping(static::getPlatform()->getColumnTypeMapping(ColumnType::BIGINT));
         $column->setAutoIncrement(true);
         $table->addColumn($column);
-        $expected = '"foo" bigserial';
-        $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
+
+        $this->assertEquals($expected, $platform->buildColumnDdl($column));
     }
 
     /**
@@ -581,7 +581,7 @@ DROP SEQUENCE "foo_sequence";
         $column->getTypeMapping()->createDefaultValue(123);
         $column->getTypeMapping()->setSqlType('DECIMAL(5,6)');
         $expected = '"foo" DECIMAL(5,6) DEFAULT 123 NOT NULL';
-        $this->assertEquals($expected, static::getPlatform()->getColumnDDL($column));
+        $this->assertEquals($expected, static::getPlatform()->buildColumnDdl($column));
     }
 
     /**
@@ -594,7 +594,7 @@ DROP SEQUENCE "foo_sequence";
         $column->setPrimaryKey(true);
         $table->addColumn($column);
         $expected = 'PRIMARY KEY ("bar")';
-        $this->assertEquals($expected, static::getPlatform()->getPrimaryKeyDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildPrimaryKeyDdl($table));
     }
 
     /**
@@ -610,7 +610,7 @@ DROP SEQUENCE "foo_sequence";
         $column2->setPrimaryKey(true);
         $table->addColumn($column2);
         $expected = 'PRIMARY KEY ("bar1","bar2")';
-        $this->assertEquals($expected, static::getPlatform()->getPrimaryKeyDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildPrimaryKeyDdl($table));
     }
 
     /**
@@ -622,7 +622,7 @@ DROP SEQUENCE "foo_sequence";
         $expected = '
 ALTER TABLE "foo" DROP CONSTRAINT "foo_pkey";
 ';
-        $this->assertEquals($expected, static::getPlatform()->getDropPrimaryKeyDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildDropPrimaryKeyDdl($table));
     }
 
     /**
@@ -634,7 +634,7 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_pkey";
         $expected = '
 ALTER TABLE "foo" ADD PRIMARY KEY ("bar");
 ';
-        $this->assertEquals($expected, static::getPlatform()->getAddPrimaryKeyDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddPrimaryKeyDdl($table));
     }
 
     /**
@@ -646,7 +646,7 @@ ALTER TABLE "foo" ADD PRIMARY KEY ("bar");
         $expected = '
 CREATE INDEX "babar" ON "foo" ("bar1","bar2");
 ';
-        $this->assertEquals($expected, static::getPlatform()->getAddIndexDDL($index));
+        $this->assertEquals($expected, static::getPlatform()->buildAddIndexDdl($index));
     }
 
     /**
@@ -660,7 +660,7 @@ CREATE INDEX "babar" ON "foo" ("bar1","bar2");
         $expected = '
 ALTER TABLE "foo" ADD CONSTRAINT "babar" UNIQUE ("bar1");
 ';
-        $this->assertEquals($expected, static::getPlatform()->getAddIndexDDL($index));
+        $this->assertEquals($expected, static::getPlatform()->buildAddIndexDdl($index));
     }
 
     /**
@@ -674,7 +674,7 @@ CREATE INDEX "babar" ON "foo" ("bar1","bar2");
 
 CREATE INDEX "foo_index" ON "foo" ("bar1");
 ';
-        $this->assertEquals($expected, static::getPlatform()->getAddIndicesDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddIndicesDdl($table));
     }
 
     /**
@@ -686,7 +686,7 @@ CREATE INDEX "foo_index" ON "foo" ("bar1");
         $expected = '
 DROP INDEX "babar";
 ';
-        $this->assertEquals($expected, static::getPlatform()->getDropIndexDDL($index));
+        $this->assertEquals($expected, static::getPlatform()->buildDropIndexDdl($index));
     }
 
     /**
@@ -696,7 +696,7 @@ DROP INDEX "babar";
     public function testGetIndexDDL($index)
     {
         $expected = 'INDEX "babar" ("bar1","bar2")';
-        $this->assertEquals($expected, static::getPlatform()->getIndexDDL($index));
+        $this->assertEquals($expected, static::getPlatform()->buildIndexDdl($index));
     }
 
     /**
@@ -706,7 +706,7 @@ DROP INDEX "babar";
     public function testGetUniqueDDL($index)
     {
         $expected = 'CONSTRAINT "babar" UNIQUE ("bar1","bar2")';
-        $this->assertEquals($expected, static::getPlatform()->getUniqueDDL($index));
+        $this->assertEquals($expected, static::getPlatform()->buildUniqueDdl($index));
     }
 
     /**
@@ -726,7 +726,7 @@ ALTER TABLE "foo" ADD CONSTRAINT "foo_baz_fk"
     REFERENCES "baz" ("id")
     ON DELETE SET NULL;
 ';
-        $this->assertEquals($expected, static::getPlatform()->getAddForeignKeysDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddForeignKeysDdl($table));
     }
 
     /**
@@ -741,7 +741,7 @@ ALTER TABLE "foo" ADD CONSTRAINT "foo_bar_fk"
     REFERENCES "bar" ("id")
     ON DELETE CASCADE;
 ';
-        $this->assertEquals($expected, static::getPlatform()->getAddForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildAddForeignKeyDdl($fk));
     }
 
     /**
@@ -751,7 +751,7 @@ ALTER TABLE "foo" ADD CONSTRAINT "foo_bar_fk"
     public function testGetAddForeignKeySkipSqlDDL($fk)
     {
         $expected = '';
-        $this->assertEquals($expected, static::getPlatform()->getAddForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildAddForeignKeyDdl($fk));
     }
 
     /**
@@ -763,7 +763,7 @@ ALTER TABLE "foo" ADD CONSTRAINT "foo_bar_fk"
         $expected = '
 ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
 ';
-        $this->assertEquals($expected, static::getPlatform()->getDropForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildDropForeignKeyDdl($fk));
     }
 
     /**
@@ -773,7 +773,7 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
     public function testGetDropForeignKeySkipSqlDDL($fk)
     {
         $expected = '';
-        $this->assertEquals($expected, static::getPlatform()->getDropForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildDropForeignKeyDdl($fk));
     }
 
     /**
@@ -786,7 +786,7 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
     FOREIGN KEY ("bar_id")
     REFERENCES "bar" ("id")
     ON DELETE CASCADE';
-        $this->assertEquals($expected, static::getPlatform()->getForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildForeignKeyDdl($fk));
     }
 
     /**
@@ -796,7 +796,7 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
     public function testGetForeignKeySkipSqlDDL($fk)
     {
         $expected = '';
-        $this->assertEquals($expected, static::getPlatform()->getForeignKeyDDL($fk));
+        $this->assertEquals($expected, static::getPlatform()->buildForeignKeyDdl($fk));
     }
 
     /**
@@ -809,7 +809,7 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
 -- foo bar
 -----------------------------------------------------------------------
 ";
-        $this->assertEquals($expected, static::getPlatform()->getCommentBlockDDL('foo bar'));
+        $this->assertEquals($expected, static::getPlatform()->buildCommentBlockDdl('foo bar'));
     }
 
     /**
@@ -818,7 +818,7 @@ ALTER TABLE "foo" DROP CONSTRAINT "foo_bar_fk";
     public function assertCreateTableMatches(string $expected, $schema, ?string $tableName = 'foo' )
     {
         $table = $this->getTableFromSchema($schema, $tableName);
-        $this->assertEquals($expected, static::getPlatform()->getAddTableDDL($table));
+        $this->assertEquals($expected, static::getPlatform()->buildAddTableDdl($table));
     }
 
     /**

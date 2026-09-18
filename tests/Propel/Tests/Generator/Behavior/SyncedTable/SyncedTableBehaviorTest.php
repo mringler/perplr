@@ -980,7 +980,7 @@ EOT;
     {
         $inputMessage ??= '';
         $platform = new MysqlPlatform();
-        $sql = $platform->getModifyTableDDL($diff);
+        $sql = $platform->buildModifyTableDdl($diff);
 
         return <<<EOT
 $inputMessage

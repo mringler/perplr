@@ -254,16 +254,16 @@ class MysqlPlatform extends DefaultPlatform
      * @return string
      */
     #[\Override]
-    public function getAddTablesDDL(Database $database): string
+    public function buildAddTablesDdl(Database $database): string
     {
         $ret = '';
         foreach ($database->getTablesForSql() as $table) {
-            $ret .= $this->getCommentBlockDDL($table->getName());
-            $ret .= $this->getDropTableDDL($table);
-            $ret .= $this->getAddTableDDL($table);
+            $ret .= $this->buildCommentBlockDdl($table->getName());
+            $ret .= $this->buildDropTableDdl($table);
+            $ret .= $this->buildAddTableDdl($table);
         }
         if ($ret) {
-            $ret = $this->getBeginDDL() . $ret . $this->getEndDDL();
+            $ret = $this->buildBeginDdl() . $ret . $this->buildEndDdl();
         }
 
         return $ret;
@@ -273,7 +273,7 @@ class MysqlPlatform extends DefaultPlatform
      * @return string
      */
     #[\Override]
-    public function getBeginDDL(): string
+    public function buildBeginDdl(): string
     {
         return "
 # This is a fix for InnoDB in MySQL >= 4.1.x
@@ -286,7 +286,7 @@ SET FOREIGN_KEY_CHECKS = 0;
      * @return string
      */
     #[\Override]
-    public function getEndDDL(): string
+    public function buildEndDdl(): string
     {
         return "
 # This restores the fkey checks, after having unset them earlier
@@ -295,14 +295,12 @@ SET FOREIGN_KEY_CHECKS = 1;
     }
 
     /**
-     * Returns the SQL for the primary key of a Table object
-     *
      * @param \Propel\Generator\Model\Table $table
      *
      * @return string
      */
     #[\Override]
-    public function getPrimaryKeyDDL(Table $table): string
+    public function buildPrimaryKeyDdl(Table $table): string
     {
         if ($table->hasPrimaryKey()) {
             $keys = $table->getPrimaryKey();
@@ -331,24 +329,24 @@ SET FOREIGN_KEY_CHECKS = 1;
      * @return string
      */
     #[\Override]
-    public function getAddTableDDL(Table $table): string
+    public function buildAddTableDdl(Table $table): string
     {
         $lines = [];
 
         foreach ($table->getColumns() as $column) {
-            $lines[] = $this->getColumnDDL($column);
+            $lines[] = $this->buildColumnDdl($column);
         }
 
         if ($table->hasPrimaryKey()) {
-            $lines[] = $this->getPrimaryKeyDDL($table);
+            $lines[] = $this->buildPrimaryKeyDdl($table);
         }
 
         foreach ($table->getUnices() as $unique) {
-            $lines[] = $this->getUniqueDDL($unique);
+            $lines[] = $this->buildUniqueDdl($unique);
         }
 
         foreach ($table->getIndices() as $index) {
-            $lines[] = $this->getIndexDDL($index);
+            $lines[] = $this->buildIndexDdl($index);
         }
 
         if ($this->supportsForeignKeys($table)) {
@@ -356,9 +354,7 @@ SET FOREIGN_KEY_CHECKS = 1;
                 if ($foreignKey->isSkipSql() || $foreignKey->isPolymorphic()) {
                     continue;
                 }
-                $lines[] = str_replace("
-    ", "
-        ", $this->getForeignKeyDDL($foreignKey));
+                $lines[] = str_replace("\n    ", "\n        ", $this->buildForeignKeyDdl($foreignKey));
             }
         }
 
@@ -466,7 +462,7 @@ CREATE TABLE %s
      * @return string
      */
     #[\Override]
-    public function getDropTableDDL(Table $table): string
+    public function buildDropTableDdl(Table $table): string
     {
         return "
 DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
@@ -481,7 +477,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      * @return string
      */
     #[\Override]
-    public function getColumnDDL(Column $col): string
+    public function buildColumnDdl(Column $col): string
     {
         $typeMapping = $col->getTypeMapping();
         $sqlType = $col->resolveSqlTypeName();
@@ -614,7 +610,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @return string
      */
-    protected function getIndexColumnListDDL(Index $index): string
+    protected function buildIndexColumnListDdl(Index $index): string
     {
         $list = [];
         foreach ($index->getColumns() as $col) {
@@ -631,7 +627,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      * @return string
      */
     #[\Override]
-    public function getDropPrimaryKeyDDL(Table $table): string
+    public function buildDropPrimaryKeyDdl(Table $table): string
     {
         if (!$table->hasPrimaryKey()) {
             return '';
@@ -648,7 +644,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      * @return string
      */
     #[\Override]
-    public function getAddIndexDDL(Index $index): string
+    public function buildAddIndexDdl(Index $index): string
     {
         $pattern = "
 CREATE %sINDEX %s ON %s (%s);
@@ -671,7 +667,7 @@ CREATE %sINDEX %s ON %s (%s);
      * @return string
      */
     #[\Override]
-    public function getDropIndexDDL(Index $index): string
+    public function buildDropIndexDdl(Index $index): string
     {
         $pattern = "
 DROP INDEX %s ON %s;
@@ -685,14 +681,12 @@ DROP INDEX %s ON %s;
     }
 
     /**
-     * Builds the DDL SQL for an Index object.
-     *
      * @param \Propel\Generator\Model\Index $index
      *
      * @return string
      */
     #[\Override]
-    public function getIndexDDL(Index $index): string
+    public function buildIndexDdl(Index $index): string
     {
         return sprintf(
             '%sINDEX %s (%s)',
@@ -726,7 +720,7 @@ DROP INDEX %s ON %s;
      * @return string
      */
     #[\Override]
-    public function getUniqueDDL(Unique $unique): string
+    public function buildUniqueDdl(Unique $unique): string
     {
         return sprintf(
             'UNIQUE INDEX %s (%s)',
@@ -741,10 +735,10 @@ DROP INDEX %s ON %s;
      * @return string
      */
     #[\Override]
-    public function getAddForeignKeyDDL(ForeignKey $fk): string
+    public function buildAddForeignKeyDdl(ForeignKey $fk): string
     {
         if ($this->supportsForeignKeys($fk->getTable())) {
-            return parent::getAddForeignKeyDDL($fk);
+            return parent::buildAddForeignKeyDdl($fk);
         }
 
         return '';
@@ -756,22 +750,20 @@ DROP INDEX %s ON %s;
      * @return string
      */
     #[\Override]
-    public function getForeignKeyDDL(ForeignKey $fk): string
+    public function buildForeignKeyDdl(ForeignKey $fk): string
     {
-        if ($this->supportsForeignKeys($fk->getTable())) {
-            return parent::getForeignKeyDDL($fk);
-        }
-
-        return '';
+        return $this->supportsForeignKeys($fk->getTable())
+            ? parent::buildForeignKeyDdl($fk)
+            : '';
     }
 
     /**
      * @param \Propel\Generator\Model\ForeignKey $fk
      *
-     * @return string|null
+     * @return string
      */
     #[\Override]
-    public function getDropForeignKeyDDL(ForeignKey $fk): ?string
+    public function buildDropForeignKeyDdl(ForeignKey $fk): string
     {
         if (!$this->supportsForeignKeys($fk->getTable())) {
             return '';
@@ -813,28 +805,28 @@ ALTER TABLE %s DROP FOREIGN KEY %s;
      * @return string
      */
     #[\Override]
-    public function getModifyDatabaseDDL(DatabaseDiff $databaseDiff): string
+    public function buildModifyDatabaseDdl(DatabaseDiff $databaseDiff): string
     {
         $ret = '';
 
         foreach ($databaseDiff->getRemovedTables() as $table) {
-            $ret .= $this->getDropTableDDL($table);
+            $ret .= $this->buildDropTableDdl($table);
         }
 
         foreach ($databaseDiff->getRenamedTables() as $fromTableName => $toTableName) {
-            $ret .= $this->getRenameTableDDL($fromTableName, $toTableName);
+            $ret .= $this->buildRenameTableDdl($fromTableName, $toTableName);
         }
 
         foreach ($databaseDiff->getModifiedTables() as $tableDiff) {
-            $ret .= $this->getModifyTableDDL($tableDiff);
+            $ret .= $this->buildModifyTableDdl($tableDiff);
         }
 
         foreach ($databaseDiff->getAddedTables() as $table) {
-            $ret .= $this->getAddTableDDL($table);
+            $ret .= $this->buildAddTableDdl($table);
         }
 
         if ($ret) {
-            $ret = $this->getBeginDDL() . $ret . $this->getEndDDL();
+            $ret = $this->buildBeginDdl() . $ret . $this->buildEndDdl();
         }
 
         return $ret;
@@ -847,7 +839,7 @@ ALTER TABLE %s DROP FOREIGN KEY %s;
      * @return string
      */
     #[\Override]
-    public function getRenameTableDDL(string $fromTableName, string $toTableName): string
+    public function buildRenameTableDdl(string $fromTableName, string $toTableName): string
     {
         $pattern = "
 RENAME TABLE %s TO %s;
@@ -861,14 +853,12 @@ RENAME TABLE %s TO %s;
     }
 
     /**
-     * Builds the DDL SQL to remove a column
-     *
      * @param \Propel\Generator\Model\Column $column
      *
      * @return string
      */
     #[\Override]
-    public function getRemoveColumnDDL(Column $column): string
+    public function buildRemoveColumnDdl(Column $column): string
     {
         $pattern = "
 ALTER TABLE %s DROP %s;
@@ -890,9 +880,9 @@ ALTER TABLE %s DROP %s;
      * @return string
      */
     #[\Override]
-    public function getRenameColumnDDL(Column $fromColumn, Column $toColumn): string
+    public function buildRenameColumnDdl(Column $fromColumn, Column $toColumn): string
     {
-        return $this->getChangeColumnDDL($fromColumn, $toColumn);
+        return $this->buildChangeColumnDdl($fromColumn, $toColumn);
     }
 
     /**
@@ -903,7 +893,7 @@ ALTER TABLE %s DROP %s;
      * @return string
      */
     #[\Override]
-    public function getModifyColumnDDL(ColumnDiff $columnDiff): string
+    public function buildModifyColumnDdl(ColumnDiff $columnDiff): string
     {
         $fromColumn = $columnDiff->getFromColumn();
         $toColumn = $columnDiff->getToColumn();
@@ -918,7 +908,7 @@ ALTER TABLE %s DROP %s;
             return $this->getChangeColumnFromUuidBinaryType($fromColumn, $toColumn);
         }
 
-        return $this->getChangeColumnDDL($fromColumn, $toColumn);
+        return $this->buildChangeColumnDdl($fromColumn, $toColumn);
     }
 
     /**
@@ -929,11 +919,11 @@ ALTER TABLE %s DROP %s;
      *
      * @return string
      */
-    public function getChangeColumnDDL(Column $fromColumn, Column $toColumn): string
+    public function buildChangeColumnDdl(Column $fromColumn, Column $toColumn): string
     {
         $tableName = $this->quoteIdentifier($fromColumn->getTable()->getName());
         $columnName = $this->quoteIdentifier($fromColumn->getName());
-        $columnDefinition = $this->getColumnDDL($toColumn);
+        $columnDefinition = $this->buildColumnDdl($toColumn);
 
         return "\nALTER TABLE $tableName CHANGE $columnName $columnDefinition;\n";
     }
@@ -946,9 +936,9 @@ ALTER TABLE %s DROP %s;
      * @return string
      */
     #[\Override]
-    public function getModifyColumnsDDL(array $columnDiffs): string
+    public function buildModifyColumnsDdl(array $columnDiffs): string
     {
-        $modifyColumnStatements = array_map([$this, 'getModifyColumnDDL'], $columnDiffs);
+        $modifyColumnStatements = array_map([$this, 'buildModifyColumnDdl'], $columnDiffs);
 
         return implode('', $modifyColumnStatements);
     }
@@ -961,14 +951,14 @@ ALTER TABLE %s DROP %s;
      * @return string
      */
     #[\Override]
-    public function getAddColumnDDL(Column $column): string
+    public function buildAddColumnDdl(Column $column): string
     {
         $tableColumns = $column->getTable()->getColumns();
         $index = $column->getPosition(); // 1-based position
         $insertPositionDDL = $index > 1 ? 'AFTER ' . $this->quoteIdentifier($tableColumns[$index - 2]->getName()) : 'FIRST';
 
         $tableName = $this->quoteIdentifier($column->getTableName());
-        $columnDdl = $this->getColumnDDL($column);
+        $columnDdl = $this->buildColumnDdl($column);
 
         return "\nALTER TABLE $tableName ADD $columnDdl $insertPositionDDL;\n";
     }
@@ -981,14 +971,9 @@ ALTER TABLE %s DROP %s;
      * @return string
      */
     #[\Override]
-    public function getAddColumnsDDL(array $columns): string
+    public function buildAddColumnsDdl(array $columns): string
     {
-        $lines = '';
-        foreach ($columns as $column) {
-            $lines .= $this->getAddColumnDDL($column);
-        }
-
-        return $lines;
+        return $this->mapConcat([$this, 'buildAddColumnDdl'], $columns);
     }
 
     /**

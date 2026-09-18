@@ -103,7 +103,7 @@ class Issue617Test extends PlatformDatabaseBuildTimeBase
         $builder->setSchemaXml($schema);
 
         $diff = DatabaseComparator::computeDiff($this->database, $builder->getDatabase());
-        $sql = $this->database->getPlatform()->getModifyDatabaseDDL($diff);
+        $sql = $this->database->getPlatform()->buildModifyDatabaseDdl($diff);
 
         $expected = '
 CREATE TABLE `issue617_user`
@@ -168,7 +168,7 @@ CREATE TABLE `issue617_group`
         $this->updatedBuilder->setSchemaXml($updatedSchema);
 
         $diff = DatabaseComparator::computeDiff($this->database, $this->updatedBuilder->getDatabase());
-        $sql = $this->database->getPlatform()->getModifyDatabaseDDL($diff);
+        $sql = $this->database->getPlatform()->buildModifyDatabaseDdl($diff);
 
         $expected = '
 ALTER TABLE `issue617_user` DROP FOREIGN KEY `issue617_user_fk_5936b3`;
@@ -195,7 +195,7 @@ ALTER TABLE `issue617_user`
     {
         $this->readDatabase();
         $diff = DatabaseComparator::computeDiff($this->database, $this->updatedBuilder->getDatabase());
-        $sql = $this->database->getPlatform()->getModifyDatabaseDDL($diff);
+        $sql = $this->database->getPlatform()->buildModifyDatabaseDdl($diff);
 
         $expected = 'issue617_user';
 

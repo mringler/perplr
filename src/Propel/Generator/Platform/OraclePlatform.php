@@ -165,7 +165,7 @@ class OraclePlatform extends DefaultPlatform
      * @return string
      */
     #[\Override]
-    public function getBeginDDL(): string
+    public function buildBeginDdl(): string
     {
         return "
 ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD';
@@ -179,23 +179,23 @@ ALTER SESSION SET NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS';
      * @return string
      */
     #[\Override]
-    public function getAddTablesDDL(Database $database): string
+    public function buildAddTablesDdl(Database $database): string
     {
-        $ret = $this->getBeginDDL();
+        $ret = $this->buildBeginDdl();
         foreach ($database->getTablesForSql() as $table) {
-            $ret .= $this->getCommentBlockDDL($table->getName());
-            $ret .= $this->getDropTableDDL($table);
-            $ret .= $this->getAddTableDDL($table);
-            $ret .= $this->getAddIndicesDDL($table);
+            $ret .= $this->buildCommentBlockDdl($table->getName());
+            $ret .= $this->buildDropTableDdl($table);
+            $ret .= $this->buildAddTableDdl($table);
+            $ret .= $this->buildAddIndicesDdl($table);
         }
         $ret2 = '';
         foreach ($database->getTablesForSql() as $table) {
-            $ret2 .= $this->getAddForeignKeysDDL($table);
+            $ret2 .= $this->buildAddForeignKeysDdl($table);
         }
         if ($ret2) {
-            $ret .= $this->getCommentBlockDDL('Foreign Keys') . $ret2;
+            $ret .= $this->buildCommentBlockDdl('Foreign Keys') . $ret2;
         }
-        $ret .= $this->getEndDDL();
+        $ret .= $this->buildEndDdl();
 
         return $ret;
     }
@@ -206,18 +206,18 @@ ALTER SESSION SET NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS';
      * @return string
      */
     #[\Override]
-    public function getAddTableDDL(Table $table): string
+    public function buildAddTableDdl(Table $table): string
     {
-        $tableDescription = $table->hasDescription() ? $this->getCommentLineDDL($table->getDescription()) : '';
+        $tableDescription = $table->hasDescription() ? $this->buildCommentLineDdl($table->getDescription()) : '';
 
         $lines = [];
 
         foreach ($table->getColumns() as $column) {
-            $lines[] = $this->getColumnDDL($column);
+            $lines[] = $this->buildColumnDdl($column);
         }
 
         foreach ($table->getUnices() as $unique) {
-            $lines[] = $this->getUniqueDDL($unique);
+            $lines[] = $this->buildUniqueDdl($unique);
         }
 
         $sep = ",
@@ -237,8 +237,8 @@ ALTER SESSION SET NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS';
             $this->generateBlockStorage($table),
         );
 
-        $ret .= $this->getAddPrimaryKeyDDL($table);
-        $ret .= $this->getAddSequencesDDL($table);
+        $ret .= $this->buildAddPrimaryKeyDdl($table);
+        $ret .= $this->buildAddSequencesDdl($table);
 
         return $ret;
     }
@@ -249,13 +249,11 @@ ALTER SESSION SET NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS';
      * @return string
      */
     #[\Override]
-    public function getAddPrimaryKeyDDL(Table $table): string
+    public function buildAddPrimaryKeyDdl(Table $table): string
     {
-        if (is_array($table->getPrimaryKey()) && count($table->getPrimaryKey())) {
-            return parent::getAddPrimaryKeyDDL($table);
-        }
-
-        return '';
+        return is_array($table->getPrimaryKey()) && count($table->getPrimaryKey())
+            ? parent::buildAddPrimaryKeyDdl($table)
+            : '';
     }
 
     /**
@@ -263,7 +261,7 @@ ALTER SESSION SET NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS';
      *
      * @return string
      */
-    public function getAddSequencesDDL(Table $table): string
+    public function buildAddSequencesDdl(Table $table): string
     {
         if ($table->getIdMethod() === 'native') {
             $pattern = "
@@ -286,7 +284,7 @@ CREATE SEQUENCE %s
      * @return string
      */
     #[\Override]
-    public function getDropTableDDL(Table $table): string
+    public function buildDropTableDdl(Table $table): string
     {
         $ret = "
 DROP TABLE " . $this->quoteIdentifier($table->getName()) . " CASCADE CONSTRAINTS;
@@ -321,7 +319,7 @@ DROP SEQUENCE " . $this->quoteIdentifier($this->getSequenceName($table)) . ";
      * @return string
      */
     #[\Override]
-    public function getPrimaryKeyDDL(Table $table): string
+    public function buildPrimaryKeyDdl(Table $table): string
     {
         if ($table->hasPrimaryKey()) {
             $pattern = 'CONSTRAINT %s PRIMARY KEY (%s)%s';
@@ -329,7 +327,7 @@ DROP SEQUENCE " . $this->quoteIdentifier($this->getSequenceName($table)) . ";
             return sprintf(
                 $pattern,
                 $this->quoteIdentifier($this->getPrimaryKeyName($table)),
-                $this->getColumnListDDL($table->getPrimaryKey()),
+                $this->buildColumnListDdl($table->getPrimaryKey()),
                 $this->generateBlockStorage($table, true),
             );
         }
@@ -343,12 +341,12 @@ DROP SEQUENCE " . $this->quoteIdentifier($this->getSequenceName($table)) . ";
      * @return string
      */
     #[\Override]
-    public function getUniqueDDL(Unique $unique): string
+    public function buildUniqueDdl(Unique $unique): string
     {
         return sprintf(
             'CONSTRAINT %s UNIQUE (%s)',
             $this->quoteIdentifier($unique->getName()),
-            $this->getColumnListDDL($unique->getColumnObjects()),
+            $this->buildColumnListDdl($unique->getColumnObjects()),
         );
     }
 
@@ -358,7 +356,7 @@ DROP SEQUENCE " . $this->quoteIdentifier($this->getSequenceName($table)) . ";
      * @return string
      */
     #[\Override]
-    public function getForeignKeyDDL(ForeignKey $fk): string
+    public function buildForeignKeyDdl(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
@@ -369,9 +367,9 @@ DROP SEQUENCE " . $this->quoteIdentifier($this->getSequenceName($table)) . ";
         $script = sprintf(
             $pattern,
             $this->quoteIdentifier($fk->getName()),
-            $this->getColumnListDDL($fk->getLocalColumnObjects()),
+            $this->buildColumnListDdl($fk->getLocalColumnObjects()),
             $this->quoteIdentifier($fk->getForeignTableName()),
-            $this->getColumnListDDL($fk->getForeignColumnObjects()),
+            $this->buildColumnListDdl($fk->getForeignColumnObjects()),
         );
         if ($fk->hasOnDelete()) {
             $script .= "
@@ -494,7 +492,7 @@ USING INDEX
      * @return string
      */
     #[\Override]
-    public function getAddIndexDDL(Index $index): string
+    public function buildAddIndexDdl(Index $index): string
     {
         // don't create index form primary key
         if ($this->getPrimaryKeyName($index->getTable()) == $this->quoteIdentifier($index->getName())) {
@@ -510,7 +508,7 @@ CREATE %sINDEX %s ON %s (%s)%s;
             $index->isUnique() ? 'UNIQUE ' : '',
             $this->quoteIdentifier($index->getName()),
             $this->quoteIdentifier($index->getTable()->getName()),
-            $this->getColumnListDDL($index->getColumnObjects()),
+            $this->buildColumnListDdl($index->getColumnObjects()),
             $this->generateBlockStorage($index),
         );
     }
