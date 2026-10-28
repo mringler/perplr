@@ -20,6 +20,7 @@ use Propel\Runtime\Connection\PdoConnection;
 use RuntimeException;
 use SQLite3;
 use function array_keys;
+use function assert;
 use function class_exists;
 use function filter_var;
 use function implode;
@@ -661,8 +662,10 @@ PRAGMA foreign_keys = ON;
         if ($pdoStatement === false) {
             throw new RuntimeException('PdoConnection::query() did not return a result set as a statement object.');
         }
+        $versionRow = $pdoStatement->fetch(PDO::FETCH_NUM);
+        assert($versionRow !== false);
 
-        return (string)$pdoStatement->fetch(PDO::FETCH_NUM)[0];
+        return (string)$versionRow[0];
     }
 
     /**

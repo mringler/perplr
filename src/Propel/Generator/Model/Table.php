@@ -1566,7 +1566,7 @@ class Table extends ScopedMappingModel
      */
     public function getNumLazyLoadColumns(): int
     {
-        return array_reduce($this->columns, fn ($cnt, Column $col) => $col->isLazyLoad() ? $cnt + 1 : $cnt, 0);
+        return (int)array_reduce($this->columns, fn ($cnt, Column $col) => $col->isLazyLoad() ? $cnt + 1 : $cnt, 0);
     }
 
     /**

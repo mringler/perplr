@@ -41,7 +41,7 @@ abstract class FileLoader extends SymfonyFileLoader
     }
 
     /**
-     * Loads a Json file.
+     * Loads a config file.
      *
      * @param mixed $resource The resource
      * @param string|null $type The resource type
