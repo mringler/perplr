@@ -24,6 +24,7 @@ use Propel\Runtime\Exception\EntityNotFoundException;
 use Propel\Runtime\Exception\LogicException;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Exception\UnexpectedValueException;
+use Propel\Runtime\Formatter\SimpleArrayFormatter;
 use Propel\Runtime\Map\Exception\ColumnNotFoundException;
 use Propel\Runtime\Map\RelationMap;
 use Propel\Runtime\Perpl;
@@ -1245,7 +1246,11 @@ class ModelCriteria extends BaseModelCriteria
     }
 
     /**
-     * Same as find(), but returns a (typed) ArrayCollection.
+     * Typed version of find(), returning an ArrayCollection.
+     *
+     * NOTE: In contrast to {@see static::findRows()}, this will resolve
+     * values according to model logic - values match return values of
+     * getters rather than the raw database values.
      *
      * @param \Propel\Runtime\Connection\ConnectionInterface|null $con
      *
@@ -1254,6 +1259,25 @@ class ModelCriteria extends BaseModelCriteria
     public function findTuples(?ConnectionInterface $con = null): ArrayCollection
     {
         $this->setFormatter(static::FORMAT_ARRAY);
+
+        return $this->find($con);
+    }
+
+    /**
+     * Typed version of find(), returning an ArrayCollection. Mainly used in
+     * combination with {@see static::select()}.
+     *
+     * NOTE: In contrast to {@see static::findTuples()}, this will copy values
+     * directly from row data, without resolving model logic. If a model getter
+     * returns processed values, this will still return raw input values.
+     *
+     * @param \Propel\Runtime\Connection\ConnectionInterface|null $con
+     *
+     * @return \Propel\Runtime\Collection\ArrayCollection
+     */
+    public function findRows(?ConnectionInterface $con = null): ArrayCollection
+    {
+        $this->setFormatter(SimpleArrayFormatter::class);
 
         return $this->find($con);
     }
