@@ -2266,9 +2266,11 @@ class Table extends ScopedMappingModel
      */
     public function getCollectionClassNameFq(): string
     {
-        return $this->getAttribute('collection-class')
+        $class = $this->getAttribute('collection-class')
             ?? $this->getDatabase()->getAttribute('collection-class')
-            ?? '\\' . ObjectCollection::class;
+            ?? ObjectCollection::class;
+
+        return $this->makeClassNameAbsolute($class);
     }
 
     /**

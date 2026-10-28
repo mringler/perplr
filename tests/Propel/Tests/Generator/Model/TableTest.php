@@ -17,6 +17,7 @@ use Propel\Generator\Model\Database;
 use Propel\Generator\Model\IdMethod;
 use Propel\Generator\Model\IdMethodParameter;
 use Propel\Generator\Model\Index;
+use Propel\Generator\Model\MappingModel;
 use Propel\Generator\Model\Schema;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\DefaultPlatform;
@@ -1169,5 +1170,24 @@ class TableTest extends ModelTestCase
     public function testGetSequenceNameDefault(Table $table, $expectedSequenceName)
     {
         $this->assertEquals($expectedSequenceName, $table->resolveDefaultIdSequenceName());
+    }
+
+    public static function CollectionClassNameDataProvider(): array
+    {
+        return [
+            [['collection-class' => 'Unqualified\Namespace'], '\Unqualified\Namespace'],
+            [[], '\Propel\Runtime\Collection\ObjectCollection']
+        ];
+    }
+
+    #[DataProvider('CollectionClassNameDataProvider')]
+    public function testSetCollectionClassIsAbsolute(array $attributes, string $expected)
+    {
+        $table = new Table('t');
+        $table->setDatabase(new Database());
+        $this->setObjectPropertyValue($table, 'attributes', $attributes, MappingModel::class);
+
+        $collectionClassNameFq = $table->getCollectionClassNameFq();
+        $this->assertSame($expected, $collectionClassNameFq);
     }
 }
