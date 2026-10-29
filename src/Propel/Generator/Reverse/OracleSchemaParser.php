@@ -12,6 +12,7 @@ use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\IdMethodParameter;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
+use function assert;
 use function count;
 use function str_replace;
 use function strpos;
@@ -241,11 +242,13 @@ class OracleSchemaParser extends AbstractSchemaParser
             /** @var \PDOStatement $stmt2 */
             $stmt2 = $this->con->query("SELECT COLUMN_NAME FROM USER_CONS_COLUMNS WHERE CONSTRAINT_NAME = '" . $row['CONSTRAINT_NAME'] . "' AND TABLE_NAME = '" . $table->getName() . "'");
             $localReferenceInfo = $stmt2->fetch(PDO::FETCH_ASSOC);
+            assert($localReferenceInfo !== false);
 
             // Foreign reference
             /** @var \PDOStatement $stmt3 */
             $stmt3 = $this->con->query("SELECT TABLE_NAME, COLUMN_NAME FROM USER_CONS_COLUMNS WHERE CONSTRAINT_NAME = '" . $row['R_CONSTRAINT_NAME'] . "'");
             $foreignReferenceInfo = $stmt3->fetch(PDO::FETCH_ASSOC);
+            assert($foreignReferenceInfo !== false);
 
             if (!isset($foreignKeys[(string)$row['CONSTRAINT_NAME']])) {
                 $fk = new ForeignKey($row['CONSTRAINT_NAME']);

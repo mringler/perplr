@@ -13,9 +13,11 @@ use Propel\Runtime\Collection\ArrayCollection;
 use Propel\Runtime\Exception\InvalidArgumentException;
 use Propel\Runtime\Formatter\AbstractFormatter;
 use Propel\Runtime\Formatter\ArrayFormatter;
+use Propel\Runtime\Formatter\SimpleArrayFormatter;
 use Propel\Runtime\Formatter\StatementFormatter;
 use Propel\Tests\Bookstore\Base\Collection\BookCollection;
 use Propel\Tests\Bookstore\Book;
+use Propel\Tests\Bookstore\Book2Query;
 use Propel\Tests\Bookstore\BookQuery;
 use Propel\Tests\Helpers\Bookstore\BookstoreDataPopulator;
 use Propel\Tests\Helpers\Bookstore\BookstoreTestBase;
@@ -211,9 +213,19 @@ class ModelCriteriaFormatterTest extends BookstoreTestBase
      */
     public function testFindTuples()
     {
-        $collection = BookQuery::create()->setFormatter(ModelCriteria::FORMAT_OBJECT)->findTuples();
+        $collection = Book2Query::create()->setFormatter(ModelCriteria::FORMAT_OBJECT)->findTuples();
         $this->assertInstanceOf(ArrayCollection::class, $collection);
+        $this->assertInstanceOf(ArrayFormatter::class, $collection->getFormatter());
     }
 
+    /**
+     * @return void
+     */
+    public function testFindRows()
+    {
+        $collection = Book2Query::create()->setFormatter(ModelCriteria::FORMAT_OBJECT)->findRows();
+        $this->assertInstanceOf(ArrayCollection::class, $collection);
+        $this->assertInstanceOf(SimpleArrayFormatter::class, $collection->getFormatter());
+    }
 
 }

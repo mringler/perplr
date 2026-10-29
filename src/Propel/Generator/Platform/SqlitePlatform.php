@@ -20,6 +20,7 @@ use Propel\Runtime\Connection\PdoConnection;
 use RuntimeException;
 use SQLite3;
 use function array_keys;
+use function assert;
 use function class_exists;
 use function filter_var;
 use function implode;
@@ -53,7 +54,7 @@ class SqlitePlatform extends DefaultPlatform
     {
         parent::initialize();
 
-        $version = $this->getVersion();
+        $version = $this->resolveVersionNumber();
 
         $this->foreignKeySupport = version_compare($version, '3.6.19') >= 0;
     }
@@ -644,25 +645,32 @@ PRAGMA foreign_keys = ON;
     }
 
     /**
+     * @return string
+     */
+    protected function resolveVersionNumber(): string
+    {
+        return class_exists(SQLite3::class)
+            ? SQLite3::version()['versionString']
+            : $this->loadVersionNumberFromDb();
+    }
+
+    /**
      * @throws \RuntimeException
      *
      * @return string
      */
-    protected function getVersion(): string
+    protected function loadVersionNumberFromDb(): string
     {
-        if (class_exists(SQLite3::class)) {
-            return SQLite3::version()['versionString'];
-        }
-
-        //if php_sqlite3 extension is not installed, we need to query the database
         $connection = new PdoConnection('sqlite::memory:');
         $pdoStatement = $connection->query('SELECT sqlite_version()');
 
         if ($pdoStatement === false) {
             throw new RuntimeException('PdoConnection::query() did not return a result set as a statement object.');
         }
+        $versionRow = $pdoStatement->fetch(PDO::FETCH_NUM);
+        assert($versionRow !== false);
 
-        return (string)$pdoStatement->fetch(PDO::FETCH_NUM)[0];
+        return (string)$versionRow[0];
     }
 
     /**

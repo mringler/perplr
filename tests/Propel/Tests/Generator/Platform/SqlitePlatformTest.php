@@ -422,4 +422,12 @@ CREATE TABLE [foo]
 
         $this->assertCreateTableMatches($expected, $schema);
     }
+
+    public function testLoadVersionNumber()
+    {
+        $loadedNumber = $this->callMethod(new SqlitePlatform(), 'loadVersionNumberFromDb');
+        $expected = \SQLite3::version()['versionString']; // loadVersionNumberFromDb() is fallback when SQLite3 is not avaiable
+
+        $this->assertSame($expected, $loadedNumber);
+    }
 }

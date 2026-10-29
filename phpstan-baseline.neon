@@ -103,6 +103,11 @@ parameters:
 			path: src/Propel/Generator/Platform/Util/MysqlUuidMigrationBuilder.php
 
 		-
+			message: '#^Offset 0 on non\-empty\-array\<string, mixed\> in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Propel/Generator/Reverse/OracleSchemaParser.php
+		-
 			message: '#^Call to function is_array\(\) with non\-empty\-list\{0\?\: string, 1\?\: ''CASCADE''\|''NO ACTION''\|''RESTRICT''\|''SET NULL''\} will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -240,6 +245,11 @@ parameters:
 			identifier: method.notFound
 			count: 1
 			path: src/Propel/Runtime/Adapter/Pdo/SqliteAdapter.php
+		-
+			message: '#^Cannot call method bindParam\(\) on Propel\\Runtime\\Connection\\StatementInterface\|resource\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Propel/Runtime/Adapter/Pdo/SqlsrvAdapter.php
 
 		-
 			message: '#^Call to an undefined method Propel\\Runtime\\ActiveRecord\\ActiveRecordInterface\:\:delete\(\)\.$#'
