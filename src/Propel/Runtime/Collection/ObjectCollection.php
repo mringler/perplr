@@ -433,7 +433,7 @@ class ObjectCollection extends Collection
         $getSourceFromTarget = 'get' . $relationToOneName;
         $registerTargetOnSource = 'add' . $relationToManyName;
         foreach ($manySideObjects as $targetObject) {
-            $targetObject->$getSourceFromTarget()->$registerTargetOnSource($targetObject);
+            $targetObject->$getSourceFromTarget()?->$registerTargetOnSource($targetObject);
         }
     }
 
