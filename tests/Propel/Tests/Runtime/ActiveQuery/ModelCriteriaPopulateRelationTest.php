@@ -335,7 +335,7 @@ XML;
             couple.person_1_id,
             couple.person_2_id,
             p1.id,
-            p2.id,
+            p2.id
         FROM couple
         LEFT JOIN person p1 ON (couple.person_1_id=p1.id)
         LEFT JOIN person p2 ON (couple.person_2_id=p2.id)
