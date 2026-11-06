@@ -7,10 +7,8 @@ namespace Propel\Runtime;
 use Propel\Runtime\Adapter\AdapterInterface;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Connection\ConnectionManagerInterface;
-use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\DatabaseMap;
-use Propel\Runtime\ServiceContainer\ServiceContainerInterface;
-use Propel\Runtime\ServiceContainer\StandardServiceContainer;
+use Propel\Runtime\ServiceContainer\ServiceContainer;
 use Propel\Runtime\Util\Profiler;
 use Psr\Log\LoggerInterface;
 use function class_alias;
@@ -91,7 +89,7 @@ class Perpl
      */
     public const LOG_DEBUG = 100;
 
-    private static ServiceContainerInterface|null $serviceContainer = null;
+    private static ServiceContainer|null $serviceContainer = null;
 
     private static bool $isInstancePoolingEnabled = true;
 
@@ -115,48 +113,35 @@ class Perpl
     /**
      * Get the service container instance.
      *
-     * @return \Propel\Runtime\ServiceContainer\ServiceContainerInterface
+     * @return \Propel\Runtime\ServiceContainer\ServiceContainer
      */
-    public static function getServiceContainer(): ServiceContainerInterface
+    public static function getServiceContainer(): ServiceContainer
     {
         if (!self::$serviceContainer) {
-            self::$serviceContainer = new StandardServiceContainer();
+            self::$serviceContainer = new ServiceContainer();
         }
 
         return self::$serviceContainer;
     }
 
     /**
-     * Returns the service container if it is an instance of
-     * StandardServiceContainer or throws an error if another service container
-     * is used.
+     * @deprecated Use type-fixed {@see static::getServiceContainer()}
      *
-     * This method allows type-safe access to methods of
-     * StandardServiceContainer, it provides no other advantage over
-     * {@link Perpl::getServiceContainer()}
-     *
-     * @throws \Propel\Runtime\Exception\PropelException
-     *
-     * @return \Propel\Runtime\ServiceContainer\StandardServiceContainer
+     * @return \Propel\Runtime\ServiceContainer\ServiceContainer
      */
-    public static function getStandardServiceContainer(): StandardServiceContainer
+    public static function getStandardServiceContainer(): ServiceContainer
     {
-        $sc = self::getServiceContainer();
-        if ($sc instanceof StandardServiceContainer) {
-            return $sc;
-        }
-
-        throw new PropelException('Instance was configured to not use StandardServiceContainer. Use Perpl::getServiceContainer()');
+        return self::getServiceContainer();
     }
 
     /**
      * Set the service container instance.
      *
-     * @param \Propel\Runtime\ServiceContainer\ServiceContainerInterface $serviceContainer
+     * @param \Propel\Runtime\ServiceContainer\ServiceContainer $serviceContainer
      *
      * @return void
      */
-    public static function setServiceContainer(ServiceContainerInterface $serviceContainer): void
+    public static function setServiceContainer(ServiceContainer $serviceContainer): void
     {
         self::$serviceContainer = $serviceContainer;
     }
@@ -231,7 +216,7 @@ class Perpl
      *
      * @return \Propel\Runtime\Connection\ConnectionInterface A database connection
      */
-    public static function getConnection(?string $name = null, string $mode = ServiceContainerInterface::CONNECTION_WRITE): ConnectionInterface
+    public static function getConnection(?string $name = null, string $mode = ServiceContainer::CONNECTION_WRITE): ConnectionInterface
     {
         return self::$serviceContainer->getConnection($name, $mode);
     }

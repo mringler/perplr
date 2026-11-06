@@ -20,17 +20,16 @@ use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Exception\RuntimeException;
 use Propel\Runtime\Map\DatabaseMap;
 use Propel\Runtime\Propel;
-use Propel\Runtime\ServiceContainer\ServiceContainerInterface;
-use Propel\Runtime\ServiceContainer\StandardServiceContainer;
+use Propel\Runtime\ServiceContainer\ServiceContainer;
 use Propel\Runtime\Util\Profiler;
 use Propel\Tests\Helpers\BaseTestCase;
 use Propel\Runtime\Connection\ConnectionWrapper;
 use Propel\Runtime\Connection\ConnectionFactory;
 
-class StandardServiceContainerTest extends BaseTestCase
+class ServiceContainerTest extends BaseTestCase
 {
     /**
-     * @var \Propel\Runtime\ServiceContainer\StandardServiceContainer
+     * @var \Propel\Runtime\ServiceContainer\ServiceContainer
      */
     protected $sc;
 
@@ -39,7 +38,7 @@ class StandardServiceContainerTest extends BaseTestCase
      */
     protected function setUp(): void
     {
-        $this->sc = new StandardServiceContainer();
+        $this->sc = new ServiceContainer();
         $this->sc->initDatabaseMaps([]);
     }
 
@@ -210,7 +209,7 @@ class StandardServiceContainerTest extends BaseTestCase
     public function testCheckValidVersion(): void
     {
         try {
-            $this->sc->checkVersion(StandardServiceContainer::CONFIGURATION_VERSION);
+            $this->sc->checkVersion(ServiceContainer::CONFIGURATION_VERSION);
         } catch (PropelException $e) {
             $this->fail('The current configuration version should pass a check, but failed with message: ' . $e->getMessage());
         }
@@ -221,7 +220,7 @@ class StandardServiceContainerTest extends BaseTestCase
      */
     public function testUninitializedDatabaseMapThrowsException(): void
     {
-        $sc = new StandardServiceContainer();
+        $sc = new ServiceContainer();
         $this->expectException(PropelException::class);
         $this->expectExceptionMessage('Database map was not initialized. Please check the database loader script included by your conf.');
 
@@ -233,7 +232,7 @@ class StandardServiceContainerTest extends BaseTestCase
      */
     public function testInitializedDatabaseMapContainsTableMaps(): void
     {
-        $sc = new StandardServiceContainer();
+        $sc = new ServiceContainer();
         $dbName = 'myBookstore';
         $dbMap = [
             $dbName => [
@@ -253,7 +252,7 @@ class StandardServiceContainerTest extends BaseTestCase
      */
     public function testInitializingdDatabaseMapsAccumulates(): void
     {
-        $sc = new StandardServiceContainer();
+        $sc = new ServiceContainer();
         $dbName = 'myBookstore';
         $dbMap1 = [
             $dbName => [
@@ -279,12 +278,12 @@ class StandardServiceContainerTest extends BaseTestCase
     }
 
     /**
-     * @param \Propel\Runtime\ServiceContainer\StandardServiceContainer $sc
+     * @param \Propel\Runtime\ServiceContainer\ServiceContainer $sc
      * @param String[][] $dbMap
      *
      * @return void
      */
-    private function runInitDatabaseMapsOnContainer(StandardServiceContainer $sc, array $dbMap): void
+    private function runInitDatabaseMapsOnContainer(ServiceContainer $sc, array $dbMap): void
     {
         $initialServiceContainer = Propel::getServiceContainer();
         try {
@@ -472,7 +471,7 @@ class StandardServiceContainerTest extends BaseTestCase
     {
         $this->sc->setConnectionManager(new TestableConnectionManagerSingle('foo'));
         $this->sc->setAdapter('foo', new SqliteAdapter());
-        $this->assertEquals('write', $this->sc->getConnection('foo', ServiceContainerInterface::CONNECTION_WRITE)->getName());
+        $this->assertEquals('write', $this->sc->getConnection('foo', ServiceContainer::CONNECTION_WRITE)->getName());
     }
 
     /**
@@ -482,7 +481,7 @@ class StandardServiceContainerTest extends BaseTestCase
     {
         $this->sc->setConnectionManager(new TestableConnectionManagerSingle('foo'));
         $this->sc->setAdapter('foo', new SqliteAdapter());
-        $this->assertEquals('read', $this->sc->getConnection('foo', ServiceContainerInterface::CONNECTION_READ)->getName());
+        $this->assertEquals('read', $this->sc->getConnection('foo', ServiceContainer::CONNECTION_READ)->getName());
     }
 
     /**
@@ -699,11 +698,11 @@ class StandardServiceContainerTest extends BaseTestCase
     }
 }
 
-class TestableServiceContainer extends StandardServiceContainer
+class TestableServiceContainer extends ServiceContainer
 {
-    public $adapterClasses = [];
+    public array $adapterClasses = [];
 
-    public $adapters = [];
+    public array $adapters = [];
 }
 
 class MyDatabaseMap extends DatabaseMap

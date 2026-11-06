@@ -7,7 +7,7 @@ namespace Propel\Generator\Command;
 use Propel\Common\Config\ConfigurationManager;
 use Propel\Generator\Builder\Om\TableLoaderScriptBuilder;
 use Propel\Generator\Config\ArrayToPhpConverter;
-use Propel\Runtime\ServiceContainer\StandardServiceContainer;
+use Propel\Runtime\ServiceContainer\ServiceContainer;
 use RuntimeException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -108,7 +108,7 @@ class ConfigConvertCommand extends AbstractCommand
         $options['profiler'] = $configManager->getConfigProperty('runtime.profiler');
 
         $stringifiedOptions = ArrayToPhpConverter::convert($options);
-        $runtimeVersion = StandardServiceContainer::CONFIGURATION_VERSION;
+        $runtimeVersion = ServiceContainer::CONFIGURATION_VERSION;
         $phpConf = "<?php
 \$serviceContainer = \Propel\Runtime\Perpl::getServiceContainer();
 \$serviceContainer->checkVersion($runtimeVersion);

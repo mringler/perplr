@@ -10,7 +10,7 @@ namespace Propel\Tests\Runtime\ActiveQuery\QueryExecutor;
 
 use Propel\Runtime\ActiveQuery\QueryExecutor\SelectQueryExecutor;
 use Propel\Runtime\Connection\ConnectionInterface;
-use Propel\Runtime\ServiceContainer\ServiceContainerInterface;
+use Propel\Runtime\ServiceContainer\ServiceContainer;
 use Propel\Tests\Bookstore\BookQuery;
 use Propel\Tests\Helpers\Bookstore\BookstoreTestBase;
 
@@ -28,7 +28,7 @@ class SelectQueryExecutorTest extends BookstoreTestBase
         $executor = new class ($query) extends SelectQueryExecutor{
             public $isWriteConnection;
 
-            protected function retrieveConnection(ServiceContainerInterface $sc, string $dbName, bool $getWritableConnection = false): ConnectionInterface
+            protected function retrieveConnection(ServiceContainer $sc, string $dbName, bool $getWritableConnection = false): ConnectionInterface
             {
                 $this->isWriteConnection = $getWritableConnection;
 

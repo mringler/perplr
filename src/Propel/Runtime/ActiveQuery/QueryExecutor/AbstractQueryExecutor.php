@@ -10,7 +10,7 @@ use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Connection\ConnectionWrapper;
 use Propel\Runtime\Connection\StatementWrapper;
 use Propel\Runtime\Perpl;
-use Propel\Runtime\ServiceContainer\ServiceContainerInterface;
+use Propel\Runtime\ServiceContainer\ServiceContainer;
 use RuntimeException;
 use Throwable;
 use const PHP_EOL;
@@ -70,13 +70,13 @@ abstract class AbstractQueryExecutor
     /**
      * Retrieves a read or write connection from the service container.
      *
-     * @param \Propel\Runtime\ServiceContainer\ServiceContainerInterface $sc
+     * @param \Propel\Runtime\ServiceContainer\ServiceContainer $sc
      * @param string $dbName
      * @param bool $getWritableConnection
      *
      * @return \Propel\Runtime\Connection\ConnectionInterface
      */
-    protected function retrieveConnection(ServiceContainerInterface $sc, string $dbName, bool $getWritableConnection = true): ConnectionInterface
+    protected function retrieveConnection(ServiceContainer $sc, string $dbName, bool $getWritableConnection = true): ConnectionInterface
     {
         return ($getWritableConnection) ? $sc->getWriteConnection($dbName) : $sc->getReadConnection($dbName);
     }

@@ -13,7 +13,7 @@ use Propel\Runtime\ActiveQuery\QueryExecutor\QueryExecutionException;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Connection\ConnectionWrapper;
 use Propel\Runtime\Exception\PropelException;
-use Propel\Runtime\ServiceContainer\ServiceContainerInterface;
+use Propel\Runtime\ServiceContainer\ServiceContainer;
 use Propel\Tests\Bookstore\BookQuery;
 use Propel\Tests\Helpers\Bookstore\BookstoreTestBase;
 
@@ -73,7 +73,7 @@ class AbstractQueryExecutorTest extends BookstoreTestBase
         $executor = new class ($query) extends AbstractQueryExecutor{
             public $isWriteConnection;
 
-            protected function retrieveConnection(ServiceContainerInterface $sc, string $dbName, bool $getWritableConnection = false): ConnectionInterface
+            protected function retrieveConnection(ServiceContainer $sc, string $dbName, bool $getWritableConnection = false): ConnectionInterface
             {
                 $this->isWriteConnection = $getWritableConnection;
 

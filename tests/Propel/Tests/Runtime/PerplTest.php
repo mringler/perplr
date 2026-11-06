@@ -9,8 +9,8 @@
 namespace Propel\Tests\Runtime;
 
 use Propel\Runtime\Perpl;
+use Propel\Runtime\ServiceContainer\ServiceContainer;
 use Propel\Runtime\ServiceContainer\ServiceContainerInterface;
-use Propel\Runtime\ServiceContainer\StandardServiceContainer;
 use Propel\Tests\Helpers\BaseTestCase;
 use Propel\Runtime\Exception\PropelException;
 use Psr\Log\LoggerInterface;
@@ -35,7 +35,7 @@ class PerplTest extends BaseTestCase
      */
     public function testGetServiceContainerReturnsAServiceContainer()
     {
-        $this->assertInstanceOf(ServiceContainerInterface::class, Perpl::getServiceContainer());
+        $this->assertInstanceOf(ServiceContainer::class, Perpl::getServiceContainer());
     }
 
     /**
@@ -53,7 +53,7 @@ class PerplTest extends BaseTestCase
      */
     public function testSetServiceContainerOverridesTheExistingServiceContainer()
     {
-        $newSC = new StandardServiceContainer();
+        $newSC = new ServiceContainer();
         Perpl::setServiceContainer($newSC);
         $this->assertSame($newSC, Perpl::getServiceContainer());
     }
@@ -61,16 +61,7 @@ class PerplTest extends BaseTestCase
     public function testGetStandardServiceContainerWithDefaultContainer()
     {
         $sc = Perpl::getStandardServiceContainer();
-        $this->assertInstanceOf(StandardServiceContainer::class, $sc);
-    }
-    
-    
-    public function testGetStandardServiceContainerThrowsErrorWithNonStandardContainer()
-    {
-        $sc = $this->createMock(ServiceContainerInterface::class);
-        Perpl::setServiceContainer($sc);
-        $this->expectException(PropelException::class);
-        Perpl::getStandardServiceContainer();
+        $this->assertInstanceOf(ServiceContainer::class, $sc);
     }
 
     public function testGetServiceContainerSetsInstance(): void
@@ -78,7 +69,7 @@ class PerplTest extends BaseTestCase
         $this->setObjectPropertyValue(null, 'serviceContainer', null, Perpl::class);
         Perpl::getServiceContainer();
         $sc = $this->getObjectPropertyValue(Perpl::class, 'serviceContainer');
-        $this->assertInstanceOf(StandardServiceContainer::class, $sc);
+        $this->assertInstanceOf(ServiceContainer::class, $sc);
     }
 
     /**
@@ -103,7 +94,7 @@ class PerplTest extends BaseTestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('ServiceContainerFacadedMethodsProvider')]
     public function testGetDatabaseMap(string $facedMethodName, array $args = []): void
     {
-        $sc = $this->createMock(ServiceContainerInterface::class);
+        $sc = $this->createMock(ServiceContainer::class);
         $sc->expects($this->once())
             ->method($facedMethodName);
         Perpl::setServiceContainer($sc);
@@ -134,7 +125,7 @@ class PerplTest extends BaseTestCase
         $logger->expects($this->once())
             ->method($loggerMethodName);
 
-        $sc = $this->createMock(ServiceContainerInterface::class);
+        $sc = $this->createMock(ServiceContainer::class);
         $sc->expects($this->once())
             ->method('getLogger')->willReturn($logger);
 
